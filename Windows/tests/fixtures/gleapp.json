@@ -1,0 +1,43 @@
+{
+  "tag_name": "v2026.5.4",
+  "draft": false,
+  "prerelease": false,
+  "assets": [
+    {
+      "name": "GLEAPP-2026.5.4-linux-x64.tar.gz",
+      "browser_download_url": "https://github.com/abrignoni/GLEAPP/releases/download/v2026.5.4/GLEAPP-2026.5.4-linux-x64.tar.gz",
+      "digest": "sha256:09afd7050f8d368ca99ac822a22846281c9001e4dad29229b4c09b04a8cc8469",
+      "size": 291981482
+    },
+    {
+      "name": "GLEAPP-2026.5.4-macos-arm64.dmg",
+      "browser_download_url": "https://github.com/abrignoni/GLEAPP/releases/download/v2026.5.4/GLEAPP-2026.5.4-macos-arm64.dmg",
+      "digest": "sha256:110d5ef2bcadccb94c0c7262e1eda801c844c1e74e721cd6d6e06609d068e8ea",
+      "size": 285681565
+    },
+    {
+      "name": "GLEAPP-2026.5.4-macos-x64.dmg",
+      "browser_download_url": "https://github.com/abrignoni/GLEAPP/releases/download/v2026.5.4/GLEAPP-2026.5.4-macos-x64.dmg",
+      "digest": "sha256:e08fc4abd9d70f31d9a873a5d335c989dec383510481d1309a0cc6fc0d0b472e",
+      "size": 319955721
+    },
+    {
+      "name": "GLEAPP-2026.5.4-windows-x64-portable.zip",
+      "browser_download_url": "https://github.com/abrignoni/GLEAPP/releases/download/v2026.5.4/GLEAPP-2026.5.4-windows-x64-portable.zip",
+      "digest": "sha256:106875f23bbef9e060c341b8ffb912c0b6607da216b3ff06b250bf473e614c40",
+      "size": 251291408
+    },
+    {
+      "name": "GLEAPP-2026.5.4-windows-x64-setup.exe",
+      "browser_download_url": "https://github.com/abrignoni/GLEAPP/releases/download/v2026.5.4/GLEAPP-2026.5.4-windows-x64-setup.exe",
+      "digest": "sha256:de604fdeba58b08d4ef68365f67a83724b8778964c64d6354551edeca3aa455a",
+      "size": 210631084
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "browser_download_url": "https://github.com/abrignoni/GLEAPP/releases/download/v2026.5.4/SHA256SUMS.txt",
+      "digest": "sha256:65b63144727958f595a466d69faa83fe71e01e496cb2abe08adfd2c4a4cb7ed6",
+      "size": 504
+    }
+  ]
+}

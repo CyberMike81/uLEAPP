@@ -1,0 +1,43 @@
+{
+  "tag_name": "v0.15.0",
+  "draft": false,
+  "prerelease": false,
+  "assets": [
+    {
+      "name": "LAVA-0.15.0-Linux_arm64.AppImage",
+      "browser_download_url": "https://github.com/leapps-org/LAVA-releases/releases/download/v0.15.0/LAVA-0.15.0-Linux_arm64.AppImage",
+      "digest": "sha256:a0775bfe179b3e3f0f280b58421186cf485dd3ea3434809f7391e2b704cf0a87",
+      "size": 160399759
+    },
+    {
+      "name": "LAVA-0.15.0-Linux_x64.AppImage",
+      "browser_download_url": "https://github.com/leapps-org/LAVA-releases/releases/download/v0.15.0/LAVA-0.15.0-Linux_x64.AppImage",
+      "digest": "sha256:1c833e62180f441a8525db5e3645c07e6103ef86a49d4353cf257386082527fb",
+      "size": 160088012
+    },
+    {
+      "name": "LAVA-0.15.0-macOS-Apple_Silicon.dmg",
+      "browser_download_url": "https://github.com/leapps-org/LAVA-releases/releases/download/v0.15.0/LAVA-0.15.0-macOS-Apple_Silicon.dmg",
+      "digest": "sha256:56310d197e125b673083066575980816ddcf42eeb9c365eae56e94ba7a045c18",
+      "size": 151938960
+    },
+    {
+      "name": "LAVA-0.15.0-macOS-Mac_Intel.dmg",
+      "browser_download_url": "https://github.com/leapps-org/LAVA-releases/releases/download/v0.15.0/LAVA-0.15.0-macOS-Mac_Intel.dmg",
+      "digest": "sha256:7d43b0c641a08592da97824bd3a4fc045c69d211fe6957b1ce901054bf82154b",
+      "size": 160956277
+    },
+    {
+      "name": "LAVA-0.15.0-Windows_arm64-Setup.exe",
+      "browser_download_url": "https://github.com/leapps-org/LAVA-releases/releases/download/v0.15.0/LAVA-0.15.0-Windows_arm64-Setup.exe",
+      "digest": "sha256:397ae348c75e045ced291c3453dd48df09a33d32eb43157f42343de67859969d",
+      "size": 126685528
+    },
+    {
+      "name": "LAVA-0.15.0-Windows_x64-Setup.exe",
+      "browser_download_url": "https://github.com/leapps-org/LAVA-releases/releases/download/v0.15.0/LAVA-0.15.0-Windows_x64-Setup.exe",
+      "digest": "sha256:8c5fcf2d162e579f118531f53aac561b6408e32bce271d75b9c85cff5d6d76b2",
+      "size": 125646885
+    }
+  ]
+}

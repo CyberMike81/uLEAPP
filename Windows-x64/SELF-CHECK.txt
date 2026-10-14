@@ -1,0 +1,118 @@
+uLEAPP 0.2.2 self-check
+ok - seven supported tools; no extra applications
+ok - LAVA actual catalog icon is embedded and decodes without an installed app
+ok - ALEAPP actual catalog icon is embedded and decodes without an installed app
+ok - iLEAPP actual catalog icon is embedded and decodes without an installed app
+ok - RLEAPP actual catalog icon is embedded and decodes without an installed app
+ok - VLEAPP actual catalog icon is embedded and decodes without an installed app
+ok - DLEAPP actual catalog icon is embedded and decodes without an installed app
+ok - GLEAPP actual catalog icon is embedded and decodes without an installed app
+ok - missing apps keep their Install button
+ok - an up-to-date app hides Update and notifies the interface
+ok - an available update restores the Update button
+ok - newer installed releases are never downgraded
+ok - matching versions are left alone
+ok - an older version can be updated
+ok - packaged notice: LICENSE
+ok - packaged notice: THIRD-PARTY-NOTICES.md
+ok - packaged notice: licenses/Swift.txt
+ok - packaged notice: licenses/LAVA-EULA.txt
+ok - packaged notice: runtime-notices
+ok - exact runtime licenses and third-party notices are present
+ok - LAVA official asset for arm64
+ok - LAVA official setup for existing installer-managed copies
+ok - LAVA official asset for x64
+ok - LAVA official setup for existing installer-managed copies
+ok - ALEAPP official asset for arm64
+ok - ALEAPP official setup for existing installer-managed copies
+ok - ALEAPP official asset for x64
+ok - ALEAPP official setup for existing installer-managed copies
+ok - iLEAPP official asset for arm64
+ok - iLEAPP official setup for existing installer-managed copies
+ok - iLEAPP official asset for x64
+ok - iLEAPP official setup for existing installer-managed copies
+ok - RLEAPP official asset for arm64
+ok - RLEAPP official setup for existing installer-managed copies
+ok - RLEAPP official asset for x64
+ok - RLEAPP official setup for existing installer-managed copies
+ok - VLEAPP official asset for arm64
+ok - VLEAPP official setup for existing installer-managed copies
+ok - VLEAPP official asset for x64
+ok - VLEAPP official setup for existing installer-managed copies
+ok - DLEAPP official asset for arm64
+ok - DLEAPP official setup for existing installer-managed copies
+ok - DLEAPP official asset for x64
+ok - DLEAPP official setup for existing installer-managed copies
+ok - GLEAPP official asset for arm64
+ok - GLEAPP official setup for existing installer-managed copies
+ok - GLEAPP official asset for x64
+ok - GLEAPP official setup for existing installer-managed copies
+ok - native Windows ARM package selection
+ok - GLEAPP explicitly uses its published x64 fallback
+ok - LAVA uses its official interactive installer
+ok - newer LAVA releases prefer their native ARM package
+ok - LAVA 0.15.0 on ARM uses the working official x64 installer
+ok - LAVA x64 selection remains native on Intel and AMD Windows
+ok - LAVA 0.15.0 refuses an incomplete ARM-only release if no x64 compatibility installer exists
+ok - a release without a checksum is refused
+ok - packages outside the official repository are refused
+ok - duplicate matching release assets are refused with a publisher-specific message
+ok - ambiguous GLEAPP x64 fallback packages are refused
+ok - invalid truncated settings recover with a visible notice
+ok - original truncated settings are preserved without overwriting a backup
+ok - settings can be saved after truncated recovery
+ok - invalid relative-root settings recover with a visible notice
+ok - original relative-root settings are preserved without overwriting a backup
+ok - settings can be saved after relative-root recovery
+ok - invalid network-root settings recover with a visible notice
+ok - original network-root settings are preserved without overwriting a backup
+ok - settings can be saved after network-root recovery
+ok - invalid protected-root settings recover with a visible notice
+ok - original protected-root settings are preserved without overwriting a backup
+ok - settings can be saved after protected-root recovery
+ok - invalid null-state settings recover with a visible notice
+ok - original null-state settings are preserved without overwriting a backup
+ok - settings can be saved after null-state recovery
+ok - invalid missing-root settings recover with a visible notice
+ok - original missing-root settings are preserved without overwriting a backup
+ok - settings can be saved after missing-root recovery
+ok - invalid null-record settings recover with a visible notice
+ok - original null-record settings are preserved without overwriting a backup
+ok - settings can be saved after null-record recovery
+ok - invalid invalid-record settings recover with a visible notice
+ok - original invalid-record settings are preserved without overwriting a backup
+ok - settings can be saved after invalid-record recovery
+ok - missing or null Installed arrays are accepted as an empty list
+ok - missing or null Installed arrays are accepted as an empty list
+ok - unreadable locked settings open with temporary defaults
+ok - blocked settings saves preserve the original root
+ok - installation is refused when original settings cannot be backed up
+ok - inaccessible settings are left byte-for-byte unchanged
+ok - unsafe archive path is refused: ../outside.exe
+ok - unsafe archive is rejected before extraction
+ok - unsafe archive path is refused: ..\outside.exe
+ok - unsafe archive is rejected before extraction
+ok - unsafe archive path is refused: /absolute.exe
+ok - unsafe archive is rejected before extraction
+ok - unsafe archive path is refused: C:/absolute.exe
+ok - unsafe archive is rejected before extraction
+ok - unsafe archive path is refused: CON.txt
+ok - unsafe archive is rejected before extraction
+ok - unsafe archive path is refused: folder/trailing. 
+ok - unsafe archive is rejected before extraction
+ok - unsafe archive path is refused: folder/file:stream
+ok - unsafe archive is rejected before extraction
+ok - case-insensitive duplicate files are refused
+ok - Windows archive separators and support files are preserved
+ok - upstream license and notice files are preserved
+ok - official portable executable is found
+ok - extraction stays inside its new app folder
+ok - downloaded bytes are checked against size and SHA-256
+ok - a checksum mismatch blocks installation
+ok - download redirects outside GitHub are refused
+ok - verified portable installation is recorded and discoverable
+ok - installation preserves previous versions and case files
+ok - installed app retains upstream license files
+ok - failed replacement keeps the working app and state
+uLEAPP self-check passed: 115 checks. No installed apps were changed.
+

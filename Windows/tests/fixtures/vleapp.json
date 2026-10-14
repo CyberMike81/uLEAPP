@@ -1,0 +1,61 @@
+{
+  "tag_name": "v2026.4.3",
+  "draft": false,
+  "prerelease": false,
+  "assets": [
+    {
+      "name": "SHA256SUMS.txt",
+      "browser_download_url": "https://github.com/abrignoni/VLEAPP/releases/download/v2026.4.3/SHA256SUMS.txt",
+      "digest": "sha256:1a0282329e6a76f52ef9689502053fc533f5189dc3fe16d4412f94bc92c01d1a",
+      "size": 824
+    },
+    {
+      "name": "VLEAPP-2026.4.3-linux-arm64.AppImage",
+      "browser_download_url": "https://github.com/abrignoni/VLEAPP/releases/download/v2026.4.3/VLEAPP-2026.4.3-linux-arm64.AppImage",
+      "digest": "sha256:1c4f51678faa7c240040f3bb754cf3bb07e131998fe1e0e2ea34cd26a49d373d",
+      "size": 46324232
+    },
+    {
+      "name": "VLEAPP-2026.4.3-linux-x64.AppImage",
+      "browser_download_url": "https://github.com/abrignoni/VLEAPP/releases/download/v2026.4.3/VLEAPP-2026.4.3-linux-x64.AppImage",
+      "digest": "sha256:742c7d12d2015324d2e2e0d1ef20639a131da5c58ea385b68f1de92d4ce5cad2",
+      "size": 48208376
+    },
+    {
+      "name": "VLEAPP-2026.4.3-macos-arm64.dmg",
+      "browser_download_url": "https://github.com/abrignoni/VLEAPP/releases/download/v2026.4.3/VLEAPP-2026.4.3-macos-arm64.dmg",
+      "digest": "sha256:7e0ebcc05040778c36038e9adebfdd8a49aa1b496034930ea204d5b8e29301c3",
+      "size": 32146294
+    },
+    {
+      "name": "VLEAPP-2026.4.3-macos-x64.dmg",
+      "browser_download_url": "https://github.com/abrignoni/VLEAPP/releases/download/v2026.4.3/VLEAPP-2026.4.3-macos-x64.dmg",
+      "digest": "sha256:64e7996ac7efc04d493dfb3668ade41eeaa0e66a8c4e751fbe74b9cd73908370",
+      "size": 33426298
+    },
+    {
+      "name": "VLEAPP-2026.4.3-windows-arm64-portable.zip",
+      "browser_download_url": "https://github.com/abrignoni/VLEAPP/releases/download/v2026.4.3/VLEAPP-2026.4.3-windows-arm64-portable.zip",
+      "digest": "sha256:f632a70e3bc11b0e5a3601b05edee9fc78f12d537c6f37d7ab9bd79f00f93019",
+      "size": 27880030
+    },
+    {
+      "name": "VLEAPP-2026.4.3-windows-arm64-setup.exe",
+      "browser_download_url": "https://github.com/abrignoni/VLEAPP/releases/download/v2026.4.3/VLEAPP-2026.4.3-windows-arm64-setup.exe",
+      "digest": "sha256:5146ef7fdfaf21b6655538c8d88d10373af2f883df1ae6746bbca1e245fc9d4d",
+      "size": 24118210
+    },
+    {
+      "name": "VLEAPP-2026.4.3-windows-x64-portable.zip",
+      "browser_download_url": "https://github.com/abrignoni/VLEAPP/releases/download/v2026.4.3/VLEAPP-2026.4.3-windows-x64-portable.zip",
+      "digest": "sha256:1d7397e062510f494cf54ec2545df24cdeaa76b9e6acd928a7ad08afc50eb26d",
+      "size": 33209889
+    },
+    {
+      "name": "VLEAPP-2026.4.3-windows-x64-setup.exe",
+      "browser_download_url": "https://github.com/abrignoni/VLEAPP/releases/download/v2026.4.3/VLEAPP-2026.4.3-windows-x64-setup.exe",
+      "digest": "sha256:da5adc51916ada0fc0f1b94df38668d6665749fa7ef72f2de6292dd881507b96",
+      "size": 26994964
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "version": "0.2.2",
+  "publication": "community preview",
+  "artifacts": {
+    "macOS": {
+      "version": "0.2.2",
+      "executable": "macOS/uLEAPP.app/Contents/MacOS/uLEAPP",
+      "sha256": "cc8461f48a3283e507b38607711166e09f2b458a9f49d33984b0e3e6a291f180",
+      "architectures": [
+        "arm64",
+        "x86_64"
+      ]
+    },
+    "Windows-ARM64": {
+      "version": "0.2.2",
+      "executable": "Windows-ARM64/uLEAPP.exe",
+      "sha256": "423c82f5025a6463da932dcaed8d2cb0ef6bce197b363ca52db19cd75f66857d",
+      "build": {
+        "AppVersion": "0.2.2",
+        "Architecture": "win-arm64",
+        "Sdk": "10.0.402",
+        "RuntimePacks": [
+          "runtimepack.Microsoft.NETCore.App.Runtime.win-arm64/10.0.13",
+          "runtimepack.Microsoft.WindowsDesktop.App.Runtime.win-arm64/10.0.13"
+        ]
+      },
+      "self_checks": 115,
+      "test_environment": "Windows 11 ARM64; x64 uses emulation"
+    },
+    "Windows-x64": {
+      "version": "0.2.2",
+      "executable": "Windows-x64/uLEAPP.exe",
+      "sha256": "1a1561f92575048b41ce34369e93e1c32d40e6225208f407d94345ca0cceefd9",
+      "build": {
+        "AppVersion": "0.2.2",
+        "Architecture": "win-x64",
+        "Sdk": "10.0.402",
+        "RuntimePacks": [
+          "runtimepack.Microsoft.NETCore.App.Runtime.win-x64/10.0.13",
+          "runtimepack.Microsoft.WindowsDesktop.App.Runtime.win-x64/10.0.13"
+        ]
+      },
+      "self_checks": 115,
+      "test_environment": "Windows 11 ARM64; x64 uses emulation"
+    }
+  },
+  "audited_updater_source_unchanged": true
+}

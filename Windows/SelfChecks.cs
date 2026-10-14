@@ -1,0 +1,223 @@
+// SPDX-License-Identifier: MIT
+using System.IO.Compression;
+using System.Net;
+using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+
+namespace uLEAPP;
+
+public static class SelfChecks
+{
+    private static int checks;
+    private static void Check(bool condition, string description)
+    {
+        if (!condition) throw new Exception("Self-check failed: " + description);
+        checks++; Console.WriteLine("ok - " + description);
+    }
+    private static void Reject(Action action, string description)
+    {
+        try { action(); } catch (InvalidDataException) { Check(true, description); return; }
+        throw new Exception("Self-check failed: " + description);
+    }
+    public static async Task RunAsync(string? fixtures = null)
+    {
+        Console.WriteLine("uLEAPP " + Catalog.Version + " self-check");
+        Check(Catalog.All.Length == 7 && Catalog.All.Select(t => t.Id).Distinct().Count() == 7, "seven supported tools; no extra applications");
+        foreach (var tool in Catalog.All)
+        {
+            var icon = ToolIcons.Load(tool.Id);
+            Check(icon.IsFrozen && icon.PixelWidth == 256 && icon.PixelHeight == 256,tool.Name + " actual catalog icon is embedded and decodes without an installed app");
+        }
+        var actionRow = new ToolRow(Catalog.All[0]);
+        Check(actionRow.ActionLabel == "Install" && actionRow.ActionVisibility == System.Windows.Visibility.Visible,"missing apps keep their Install button");
+        bool visibilityChanged = false;
+        actionRow.PropertyChanged += (_, args) => { if (args.PropertyName == nameof(ToolRow.ActionVisibility)) visibilityChanged = true; };
+        actionRow.Version = "0.15.0"; actionRow.Status = "Up to date";
+        Check(visibilityChanged && actionRow.ActionVisibility == System.Windows.Visibility.Collapsed,"an up-to-date app hides Update and notifies the interface");
+        actionRow.Status = "Update available";
+        Check(actionRow.ActionVisibility == System.Windows.Visibility.Visible,"an available update restores the Update button");
+        Check(!Installer.NeedsUpdate("2026.4.4", "2026.4.3"), "newer installed releases are never downgraded");
+        Check(!Installer.NeedsUpdate("v2026.4.4", "2026.4.4"), "matching versions are left alone");
+        Check(Installer.NeedsUpdate("2026.4.3", "2026.4.4"), "an older version can be updated");
+        foreach (string name in new[] { "LICENSE", "THIRD-PARTY-NOTICES.md", "licenses/Swift.txt", "licenses/LAVA-EULA.txt", "runtime-notices" })
+            Check(File.Exists(Path.Combine(AppContext.BaseDirectory,name)) || Directory.Exists(Path.Combine(AppContext.BaseDirectory,name)), "packaged notice: " + name);
+        Check(Directory.GetFiles(Path.Combine(AppContext.BaseDirectory,"runtime-notices"), "*", SearchOption.AllDirectories).Length >= 4, "exact runtime licenses and third-party notices are present");
+        if (fixtures != null)
+        {
+            foreach (var tool in Catalog.All)
+            {
+                using var releaseFixture = JsonDocument.Parse(File.ReadAllText(Path.Combine(fixtures,tool.Id + ".json")));
+                foreach (string architecture in new[] { "arm64", "x64" })
+                {
+                    var selected = ReleaseClient.Select(tool,releaseFixture.RootElement,architecture);
+                    Check(selected.Asset.Architecture == architecture || architecture == "arm64" && selected.Asset.Architecture == "x64" &&
+                          (tool.Id == "gleapp" || tool.Id == "lava" && selected.Version == "0.15.0"), tool.Name + " official asset for " + architecture);
+                    Check(ReleaseClient.Select(tool,releaseFixture.RootElement,architecture,true).Asset.IsInstaller,tool.Name + " official setup for existing installer-managed copies");
+                }
+            }
+        }
+
+        var ileapp = Catalog.All.Single(t => t.Id == "ileapp");
+        var gleapp = Catalog.All.Single(t => t.Id == "gleapp");
+        var lava = Catalog.All.Single(t => t.Id == "lava");
+        using var metadata = JsonDocument.Parse(Metadata(ileapp, "arm64"));
+        Check(ReleaseClient.Select(ileapp, metadata.RootElement, "arm64").Asset.Architecture == "arm64", "native Windows ARM package selection");
+        using var x64metadata = JsonDocument.Parse(Metadata(gleapp,"x64"));
+        Check(ReleaseClient.Select(gleapp,x64metadata.RootElement,"arm64").Asset.Architecture == "x64", "GLEAPP explicitly uses its published x64 fallback");
+        using var lavaMetadata = JsonDocument.Parse(Metadata(lava,"arm64",true));
+        Check(ReleaseClient.Select(lava,lavaMetadata.RootElement,"arm64").Asset.IsInstaller,"LAVA uses its official interactive installer");
+        Check(ReleaseClient.Select(lava,lavaMetadata.RootElement,"arm64").Asset.Architecture == "arm64","newer LAVA releases prefer their native ARM package");
+        using var lavaArmCompatibility = JsonDocument.Parse(Metadata(lava,"arm64",true).Replace("1.2.3","0.15.0"));
+        using var lavaX64Compatibility = JsonDocument.Parse(Metadata(lava,"x64",true).Replace("1.2.3","0.15.0"));
+        using var lavaCompatibility = JsonDocument.Parse(JsonSerializer.Serialize(new {
+            tag_name="v0.15.0", assets=new[] {
+                lavaArmCompatibility.RootElement.GetProperty("assets")[0],
+                lavaX64Compatibility.RootElement.GetProperty("assets")[0]
+            }
+        }));
+        var compatibleLava = ReleaseClient.Select(lava,lavaCompatibility.RootElement,"arm64");
+        Check(compatibleLava.Asset.Architecture == "x64" && compatibleLava.Asset.IsInstaller,"LAVA 0.15.0 on ARM uses the working official x64 installer");
+        Check(ReleaseClient.Select(lava,lavaCompatibility.RootElement,"x64").Asset.Architecture == "x64","LAVA x64 selection remains native on Intel and AMD Windows");
+        try { ReleaseClient.Select(lava,lavaArmCompatibility.RootElement,"arm64"); throw new Exception("The incomplete ARM-only LAVA 0.15.0 package was selected"); }
+        catch (IOException) { Check(true,"LAVA 0.15.0 refuses an incomplete ARM-only release if no x64 compatibility installer exists"); }
+        using var missingHash = JsonDocument.Parse(Metadata(ileapp,"arm64").Replace("sha256:" + new string('a',64),""));
+        Reject(() => ReleaseClient.Select(ileapp,missingHash.RootElement,"arm64"),"a release without a checksum is refused");
+        using var wrongHost = JsonDocument.Parse(Metadata(ileapp,"arm64").Replace("github.com", "example.org"));
+        Reject(() => ReleaseClient.Select(ileapp,wrongHost.RootElement,"arm64"),"packages outside the official repository are refused");
+        using var duplicated = JsonDocument.Parse(JsonSerializer.Serialize(new { tag_name="v1.2.3", assets=new[] { metadata.RootElement.GetProperty("assets")[0], metadata.RootElement.GetProperty("assets")[0] } }));
+        Reject(() => ReleaseClient.Select(ileapp,duplicated.RootElement,"arm64"),"duplicate matching release assets are refused with a publisher-specific message");
+        using var duplicatedFallback = JsonDocument.Parse(JsonSerializer.Serialize(new { tag_name="v1.2.3", assets=new[] { x64metadata.RootElement.GetProperty("assets")[0], x64metadata.RootElement.GetProperty("assets")[0] } }));
+        Reject(() => ReleaseClient.Select(gleapp,duplicatedFallback.RootElement,"arm64"),"ambiguous GLEAPP x64 fallback packages are refused");
+
+        string scratch = Path.Combine(Path.GetTempPath(),"uLEAPP-selfcheck-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(scratch);
+        string caseFile = Path.Combine(scratch,"case-evidence.txt"); File.WriteAllText(caseFile,"unchanged");
+        try
+        {
+            CheckSettingsRecovery(scratch);
+            foreach (string unsafeName in new[] { "../outside.exe", @"..\outside.exe", "/absolute.exe", "C:/absolute.exe", "CON.txt", "folder/trailing. ", "folder/file:stream" })
+            {
+                string zip = Path.Combine(scratch, Guid.NewGuid().ToString("N") + ".zip");
+                MakeZip(zip, [unsafeName]);
+                string destination = Path.Combine(scratch,Guid.NewGuid().ToString("N"));
+                Reject(() => PortablePackage.Extract(zip,destination), "unsafe archive path is refused: " + unsafeName);
+                Check(!Directory.Exists(destination),"unsafe archive is rejected before extraction");
+            }
+            string duplicates = Path.Combine(scratch,"duplicate.zip"); MakeZip(duplicates,["Tool.exe","tool.EXE"]);
+            Reject(() => PortablePackage.Extract(duplicates,Path.Combine(scratch,"duplicates")),"case-insensitive duplicate files are refused");
+            string valid = Path.Combine(scratch,"valid.zip"); MakeZip(valid,[@"vleapp.exe",@"_internal\support.dll","LICENSE.txt","THIRD-PARTY-NOTICES.txt"]);
+            string app = Path.Combine(scratch,"app"); PortablePackage.Extract(valid,app);
+            Check(File.Exists(Path.Combine(app,"_internal","support.dll")),"Windows archive separators and support files are preserved");
+            Check(File.Exists(Path.Combine(app,"LICENSE.txt")) && File.Exists(Path.Combine(app,"THIRD-PARTY-NOTICES.txt")),"upstream license and notice files are preserved");
+            Check(PortablePackage.FindExecutable(app,Catalog.All.Single(t => t.Id == "vleapp")) != null,"official portable executable is found");
+            Check(File.ReadAllText(caseFile) == "unchanged","extraction stays inside its new app folder");
+            byte[] data = Encoding.UTF8.GetBytes("verified package");
+            var asset = new Asset("test.zip", new Uri("https://github.com/abrignoni/iLEAPP/releases/download/v1.0/test.zip"),Convert.ToHexString(SHA256.HashData(data)),data.Length,false,"arm64");
+            using var client = new ReleaseClient(new FakeHandler(data));
+            await client.DownloadAsync(asset,Path.Combine(scratch,"download.zip"), _ => { },CancellationToken.None);
+            Check(File.ReadAllBytes(Path.Combine(scratch,"download.zip")).SequenceEqual(data),"downloaded bytes are checked against size and SHA-256");
+            try
+            {
+                await client.DownloadAsync(asset with { Sha256 = new string('0',64) },Path.Combine(scratch,"bad.zip"), _ => { },CancellationToken.None);
+                throw new Exception("A checksum mismatch was accepted");
+            }
+            catch (InvalidDataException) { Check(true,"a checksum mismatch blocks installation"); }
+            using var redirect = new ReleaseClient(new FakeHandler(data,true));
+            try
+            {
+                await redirect.DownloadAsync(asset,Path.Combine(scratch,"redirect.zip"),_ => { },CancellationToken.None);
+                throw new Exception("An unsafe download redirect was accepted");
+            }
+            catch (IOException) { Check(true,"download redirects outside GitHub are refused"); }
+
+            string integrationRoot = Path.Combine(scratch,"integration");
+            try
+            {
+                var store = new InstallationStore(Path.Combine(integrationRoot,"state"));
+                store.ChangeRoot(Path.Combine(integrationRoot,"apps"));
+                var tool = Catalog.All.Single(t => t.Id == "vleapp");
+                string old = Path.Combine(store.Root,tool.Name,"older"); Directory.CreateDirectory(old);
+                string evidence = Path.Combine(old,"case.txt"); File.WriteAllText(evidence,"keep this case");
+                byte[] package = File.ReadAllBytes(valid);
+                using var installClient = new ReleaseClient(new FakeHandler(package));
+                var installer = new Installer(installClient,store);
+                var release = new Release("1.2.3",new("VLEAPP-1.2.3-windows-arm64-portable.zip",new Uri("https://github.com/abrignoni/VLEAPP/releases/download/v1.2.3/test.zip"),Convert.ToHexString(SHA256.HashData(package)),package.Length,false,"arm64"),"https://github.com/abrignoni/VLEAPP/releases/tag/v1.2.3");
+                var installed = await installer.InstallAsync(tool,release,null,_ => { },_ => { },CancellationToken.None);
+                Check(File.Exists(installed.Path) && store.Find(tool)?.Version == "1.2.3","verified portable installation is recorded and discoverable");
+                Check(File.ReadAllText(evidence) == "keep this case","installation preserves previous versions and case files");
+                Check(File.Exists(Path.Combine(Path.GetDirectoryName(installed.Path)!,"LICENSE.txt")),"installed app retains upstream license files");
+                bool failed = false;
+                try { await installer.InstallAsync(tool,release with { Version="1.2.4", Asset=release.Asset with { Sha256=new string('0',64) } },installed,_ => { },_ => { },CancellationToken.None); }
+                catch (InvalidDataException) { failed=true; }
+                Check(failed && store.Find(tool)?.Version == "1.2.3" && File.Exists(installed.Path),"failed replacement keeps the working app and state");
+            }
+            finally { if (Directory.Exists(integrationRoot)) Directory.Delete(integrationRoot,true); }
+        }
+        finally { Directory.Delete(scratch,true); }
+        Console.WriteLine($"uLEAPP self-check passed: {checks} checks. No installed apps were changed.");
+    }
+    private static void CheckSettingsRecovery(string scratch)
+    {
+        string validRoot = Path.Combine(Path.GetPathRoot(scratch)!, "uLEAPP-test-location-" + Guid.NewGuid().ToString("N"));
+        string defaultRoot = new InstallationStore(Path.Combine(scratch,"new-state")).Root;
+        foreach (var sample in new[] {
+            (Name:"truncated", Text:"{ not json"),
+            (Name:"relative-root", Text:JsonSerializer.Serialize(new { Root="relative", Installed=Array.Empty<object>() })),
+            (Name:"network-root", Text:JsonSerializer.Serialize(new { Root=@"\\server\share\LEAPPs", Installed=Array.Empty<object>() })),
+            (Name:"protected-root", Text:JsonSerializer.Serialize(new { Root=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),"LEAPPs"), Installed=Array.Empty<object>() })),
+            (Name:"null-state", Text:"null"),
+            (Name:"missing-root", Text:"{\"Installed\":[]}"),
+            (Name:"null-record", Text:JsonSerializer.Serialize(new { Root=validRoot, Installed=new object?[] { null } })),
+            (Name:"invalid-record", Text:JsonSerializer.Serialize(new { Root=validRoot, Installed=new[] { new { Id="ileapp", Version="1.2.3", Path="relative.exe", Architecture="arm64" } } }))
+        })
+        {
+            string data = Path.Combine(scratch,sample.Name); Directory.CreateDirectory(data);
+            string settings = Path.Combine(data,"settings.json"); File.WriteAllText(settings,sample.Text);
+            var recovered = new InstallationStore(data);
+            Check(recovered.Root == defaultRoot && recovered.RecoveryMessage != null,"invalid " + sample.Name + " settings recover with a visible notice");
+            Check(recovered.RecoveryBackupPath != null && File.ReadAllText(recovered.RecoveryBackupPath) == sample.Text && !File.Exists(settings),"original " + sample.Name + " settings are preserved without overwriting a backup");
+            recovered.ChangeRoot(validRoot);
+            Check(new InstallationStore(data).Root == validRoot && File.ReadAllText(recovered.RecoveryBackupPath!) == sample.Text,"settings can be saved after " + sample.Name + " recovery");
+        }
+        foreach (string array in new[] { "", ",\"Installed\":null" })
+        {
+            string data = Path.Combine(scratch,Guid.NewGuid().ToString("N")); Directory.CreateDirectory(data);
+            File.WriteAllText(Path.Combine(data,"settings.json"),"{\"Root\":" + JsonSerializer.Serialize(validRoot) + array + "}");
+            var store = new InstallationStore(data);
+            Check(store.Root == validRoot && store.RecoveryMessage == null,"missing or null Installed arrays are accepted as an empty list");
+        }
+        string lockedData = Path.Combine(scratch,"locked-state"); Directory.CreateDirectory(lockedData);
+        string lockedSettings = Path.Combine(lockedData,"settings.json"); File.WriteAllText(lockedSettings,"{ locked invalid settings");
+        using (var locked = new FileStream(lockedSettings,FileMode.Open,FileAccess.Read,FileShare.None))
+        {
+            var store = new InstallationStore(lockedData);
+            Check(store.RecoveryMessage != null && store.RecoveryBackupPath == null,"unreadable locked settings open with temporary defaults");
+            try { store.ChangeRoot(validRoot); throw new Exception("Locked settings were overwritten"); }
+            catch (IOException) { Check(store.Root == defaultRoot,"blocked settings saves preserve the original root"); }
+            try { store.EnsureSettingsWritable(); throw new Exception("Installation was allowed without writable state"); }
+            catch (IOException) { Check(true,"installation is refused when original settings cannot be backed up"); }
+        }
+        Check(File.ReadAllText(lockedSettings) == "{ locked invalid settings","inaccessible settings are left byte-for-byte unchanged");
+    }
+    private static string Metadata(Tool tool, string architecture, bool installer = false)
+    {
+        string name = $"{tool.Name}-1.2.3-windows-{architecture}-" + (installer ? "setup.exe" : "portable.zip");
+        return JsonSerializer.Serialize(new { tag_name="v1.2.3", draft=false, prerelease=false, assets=new[] { new { name, browser_download_url=$"https://github.com/{tool.Repository}/releases/download/v1.2.3/{name}", digest="sha256:" + new string('a',64), size=1024 } } });
+    }
+    private static void MakeZip(string path, string[] names)
+    {
+        using var zip=ZipFile.Open(path,ZipArchiveMode.Create);
+        foreach (string name in names) { using var writer=new StreamWriter(zip.CreateEntry(name).Open()); writer.Write("test content"); }
+    }
+    private sealed class FakeHandler(byte[] data, bool redirect = false) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var response = new HttpResponseMessage(redirect ? HttpStatusCode.Redirect : HttpStatusCode.OK) { Content = new ByteArrayContent(data) };
+            if (redirect) response.Headers.Location = new Uri("https://example.org/untrusted.exe");
+            return Task.FromResult(response);
+        }
+    }
+}

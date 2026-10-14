@@ -1,0 +1,61 @@
+{
+  "tag_name": "v2026.4.4",
+  "draft": false,
+  "prerelease": false,
+  "assets": [
+    {
+      "name": "iLEAPP-2026.4.4-linux-arm64.AppImage",
+      "browser_download_url": "https://github.com/abrignoni/iLEAPP/releases/download/v2026.4.4/iLEAPP-2026.4.4-linux-arm64.AppImage",
+      "digest": "sha256:a168c7450438ac863203600fd292277164e2e8317d67932c19d068b26466e373",
+      "size": 86645256
+    },
+    {
+      "name": "iLEAPP-2026.4.4-linux-x64.AppImage",
+      "browser_download_url": "https://github.com/abrignoni/iLEAPP/releases/download/v2026.4.4/iLEAPP-2026.4.4-linux-x64.AppImage",
+      "digest": "sha256:dbefb0177c1fe165babb10e2ede9df588d48ca4e8ccef8a87cb0d2f8afb002ad",
+      "size": 89590264
+    },
+    {
+      "name": "iLEAPP-2026.4.4-macos-arm64.dmg",
+      "browser_download_url": "https://github.com/abrignoni/iLEAPP/releases/download/v2026.4.4/iLEAPP-2026.4.4-macos-arm64.dmg",
+      "digest": "sha256:0f3f99b6e93a0fac604466381b7a7da35d2b2126217f6b210e27e9b4543c7939",
+      "size": 64349282
+    },
+    {
+      "name": "iLEAPP-2026.4.4-macos-x64.dmg",
+      "browser_download_url": "https://github.com/abrignoni/iLEAPP/releases/download/v2026.4.4/iLEAPP-2026.4.4-macos-x64.dmg",
+      "digest": "sha256:c44ed94e1ebde5444d15609ed1fde618d8b2875e066350bb7e8614ee2f215f1c",
+      "size": 66751181
+    },
+    {
+      "name": "iLEAPP-2026.4.4-windows-arm64-portable.zip",
+      "browser_download_url": "https://github.com/abrignoni/iLEAPP/releases/download/v2026.4.4/iLEAPP-2026.4.4-windows-arm64-portable.zip",
+      "digest": "sha256:8b6930c587924a408b7bbd42aef38f1d940be7da2f40f1041154d621d9701d25",
+      "size": 61419978
+    },
+    {
+      "name": "iLEAPP-2026.4.4-windows-arm64-setup.exe",
+      "browser_download_url": "https://github.com/abrignoni/iLEAPP/releases/download/v2026.4.4/iLEAPP-2026.4.4-windows-arm64-setup.exe",
+      "digest": "sha256:ee51b5e2636a3479d0128b63f20d97e998b33f0f07231a02ee47acfd39197a66",
+      "size": 47297860
+    },
+    {
+      "name": "iLEAPP-2026.4.4-windows-x64-portable.zip",
+      "browser_download_url": "https://github.com/abrignoni/iLEAPP/releases/download/v2026.4.4/iLEAPP-2026.4.4-windows-x64-portable.zip",
+      "digest": "sha256:24250d2008a6b57308bfb1b945942b66e35e99bb84a3774103529323e2294bd8",
+      "size": 71991067
+    },
+    {
+      "name": "iLEAPP-2026.4.4-windows-x64-setup.exe",
+      "browser_download_url": "https://github.com/abrignoni/iLEAPP/releases/download/v2026.4.4/iLEAPP-2026.4.4-windows-x64-setup.exe",
+      "digest": "sha256:f3215b6b7435d14c247aedc412470b762d78138876b22a77dcbda9a0a58e0e02",
+      "size": 53196495
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "browser_download_url": "https://github.com/abrignoni/iLEAPP/releases/download/v2026.4.4/SHA256SUMS.txt",
+      "digest": "sha256:c6775fd31dfc71d00875d3e24145f68519327d5fe84b6329721b3cfd67b1a1d4",
+      "size": 824
+    }
+  ]
+}

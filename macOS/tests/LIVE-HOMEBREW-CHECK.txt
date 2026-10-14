@@ -1,0 +1,119 @@
+Live Homebrew integration: trust/tap/update skipped; no apps were changed.
+
+Current official cask metadata
+
+LEAPP Updater
+=============
+Checking your installed LEAPP apps for updates.
+
+Preparing the official LEAPP Homebrew tap...
+ULEAPP	phase		preparing	Preparing Homebrew
+ULEAPP	phase		refreshing	Refreshing Homebrew
+
+--- LAVA ---
+ULEAPP	version	lava		v0.15.0
+ULEAPP	app	lava	checking	Checking for updates
+ULEAPP	app	lava	current	Up to date
+LAVA: up to date.
+
+--- ALEAPP ---
+ULEAPP	version	aleapp-gui		v2026.4.3
+ULEAPP	app	aleapp-gui	checking	Checking for updates
+ULEAPP	app	aleapp-gui	current	Up to date
+ALEAPP: up to date.
+
+--- iLEAPP ---
+ULEAPP	version	ileapp-gui		v2026.4.4
+ULEAPP	app	ileapp-gui	checking	Checking for updates
+ULEAPP	app	ileapp-gui	current	Up to date
+iLEAPP: up to date.
+
+--- RLEAPP ---
+ULEAPP	version	rleapp-gui		v2026.4.3
+ULEAPP	app	rleapp-gui	checking	Checking for updates
+ULEAPP	app	rleapp-gui	current	Up to date
+RLEAPP: up to date.
+
+--- VLEAPP ---
+ULEAPP	version	vleapp-gui		v2026.4.3
+ULEAPP	app	vleapp-gui	checking	Checking for updates
+ULEAPP	app	vleapp-gui	current	Up to date
+VLEAPP: up to date.
+
+--- DLEAPP ---
+ULEAPP	version	dleapp-gui		v2026.4.3
+ULEAPP	app	dleapp-gui	checking	Checking for updates
+ULEAPP	app	dleapp-gui	current	Up to date
+DLEAPP: up to date.
+
+--- GLEAPP ---
+ULEAPP	version	gleapp		v2026.5.4
+ULEAPP	app	gleapp	checking	Checking for updates
+ULEAPP	app	gleapp	current	Up to date
+GLEAPP: up to date.
+
+=============
+Checked: 7 apps; 0 updates available; 0 failed; 0 skipped.
+Read-only integration: skipped Homebrew preparation (trust).
+Read-only integration: skipped Homebrew preparation (tap).
+Read-only integration: skipped Homebrew preparation (update).
+Verified: 7 installed versions and 7 final statuses; exit 0.
+
+Controlled minimum-version query for iLEAPP (not a published update)
+
+LEAPP Updater
+=============
+Checking your installed LEAPP apps for updates.
+
+Preparing the official LEAPP Homebrew tap...
+ULEAPP	phase		preparing	Preparing Homebrew
+ULEAPP	phase		refreshing	Refreshing Homebrew
+
+--- LAVA ---
+ULEAPP	version	lava		v0.15.0
+ULEAPP	app	lava	checking	Checking for updates
+ULEAPP	app	lava	current	Up to date
+LAVA: up to date.
+
+--- ALEAPP ---
+ULEAPP	version	aleapp-gui		v2026.4.3
+ULEAPP	app	aleapp-gui	checking	Checking for updates
+ULEAPP	app	aleapp-gui	current	Up to date
+ALEAPP: up to date.
+
+--- iLEAPP ---
+ULEAPP	version	ileapp-gui		v2026.4.4
+ULEAPP	app	ileapp-gui	checking	Checking for updates
+ULEAPP	app	ileapp-gui	available	Update available
+iLEAPP: update available.
+
+--- RLEAPP ---
+ULEAPP	version	rleapp-gui		v2026.4.3
+ULEAPP	app	rleapp-gui	checking	Checking for updates
+ULEAPP	app	rleapp-gui	current	Up to date
+RLEAPP: up to date.
+
+--- VLEAPP ---
+ULEAPP	version	vleapp-gui		v2026.4.3
+ULEAPP	app	vleapp-gui	checking	Checking for updates
+ULEAPP	app	vleapp-gui	current	Up to date
+VLEAPP: up to date.
+
+--- DLEAPP ---
+ULEAPP	version	dleapp-gui		v2026.4.3
+ULEAPP	app	dleapp-gui	checking	Checking for updates
+ULEAPP	app	dleapp-gui	current	Up to date
+DLEAPP: up to date.
+
+--- GLEAPP ---
+ULEAPP	version	gleapp		v2026.5.4
+ULEAPP	app	gleapp	checking	Checking for updates
+ULEAPP	app	gleapp	current	Up to date
+GLEAPP: up to date.
+
+=============
+Checked: 7 apps; 1 updates available; 0 failed; 0 skipped.
+Read-only integration: skipped Homebrew preparation (trust).
+Read-only integration: skipped Homebrew preparation (tap).
+Read-only integration: skipped Homebrew preparation (update).
+Verified: 7 installed versions and 7 final statuses; exit 0.

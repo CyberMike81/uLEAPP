@@ -1,0 +1,61 @@
+{
+  "tag_name": "v2026.4.3",
+  "draft": false,
+  "prerelease": false,
+  "assets": [
+    {
+      "name": "RLEAPP-2026.4.3-linux-arm64.AppImage",
+      "browser_download_url": "https://github.com/abrignoni/RLEAPP/releases/download/v2026.4.3/RLEAPP-2026.4.3-linux-arm64.AppImage",
+      "digest": "sha256:24afb5e4667a22dd393b248072041808720569d06bfe2b370620f4ceb4a46c7d",
+      "size": 65485320
+    },
+    {
+      "name": "RLEAPP-2026.4.3-linux-x64.AppImage",
+      "browser_download_url": "https://github.com/abrignoni/RLEAPP/releases/download/v2026.4.3/RLEAPP-2026.4.3-linux-x64.AppImage",
+      "digest": "sha256:5b459d752be04c5feee15b07f7584bd06e3c29e7bfebb408b50a309f7c515df4",
+      "size": 67115512
+    },
+    {
+      "name": "RLEAPP-2026.4.3-macos-arm64.dmg",
+      "browser_download_url": "https://github.com/abrignoni/RLEAPP/releases/download/v2026.4.3/RLEAPP-2026.4.3-macos-arm64.dmg",
+      "digest": "sha256:3358dc51466962098dd2cd5620443a4051af8a9eb2f6e9d3ff5cd93df4695050",
+      "size": 50269481
+    },
+    {
+      "name": "RLEAPP-2026.4.3-macos-x64.dmg",
+      "browser_download_url": "https://github.com/abrignoni/RLEAPP/releases/download/v2026.4.3/RLEAPP-2026.4.3-macos-x64.dmg",
+      "digest": "sha256:ffd6a5ca0e700a25839f88ca0f4445d3c92db9c3c6945c51ff4f4d2eb3497442",
+      "size": 50270027
+    },
+    {
+      "name": "RLEAPP-2026.4.3-windows-arm64-portable.zip",
+      "browser_download_url": "https://github.com/abrignoni/RLEAPP/releases/download/v2026.4.3/RLEAPP-2026.4.3-windows-arm64-portable.zip",
+      "digest": "sha256:a4fb772f9c42bd6defc75d323f3a39bf83e0a1eecc5e8179e8d76c7816575c06",
+      "size": 45147399
+    },
+    {
+      "name": "RLEAPP-2026.4.3-windows-arm64-setup.exe",
+      "browser_download_url": "https://github.com/abrignoni/RLEAPP/releases/download/v2026.4.3/RLEAPP-2026.4.3-windows-arm64-setup.exe",
+      "digest": "sha256:59f8842b5c7adc0236ed354ec09967b7d15dd73afba5b1075e6ee419a7a1fe6e",
+      "size": 36828237
+    },
+    {
+      "name": "RLEAPP-2026.4.3-windows-x64-portable.zip",
+      "browser_download_url": "https://github.com/abrignoni/RLEAPP/releases/download/v2026.4.3/RLEAPP-2026.4.3-windows-x64-portable.zip",
+      "digest": "sha256:457a29bda5f4e90a591b1cc53ee64ba621ecca887090675df9039eddfd0c5f76",
+      "size": 52932470
+    },
+    {
+      "name": "RLEAPP-2026.4.3-windows-x64-setup.exe",
+      "browser_download_url": "https://github.com/abrignoni/RLEAPP/releases/download/v2026.4.3/RLEAPP-2026.4.3-windows-x64-setup.exe",
+      "digest": "sha256:c3cded7fd429fb5121376dd90f05712042c5db2516a4a651c459785cf0bee211",
+      "size": 40844800
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "browser_download_url": "https://github.com/abrignoni/RLEAPP/releases/download/v2026.4.3/SHA256SUMS.txt",
+      "digest": "sha256:58af8e9f679f7695e36579dfd0a18e4545bca376fd90759c6d9be6ce98e18c34",
+      "size": 824
+    }
+  ]
+}

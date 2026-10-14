@@ -1,0 +1,79 @@
+[
+  {
+    "tool": "LAVA",
+    "installed_bundle_version": "0.15.0",
+    "source": "/Applications/LAVA.app/Contents/Resources/icon.icns",
+    "source_icns_sha256": "b03868899161f3edea57977f58051453446ad478cf5ff15d2800d732f97162e2",
+    "source_git_blob_sha1": "22ce3653620b7c7ef0ff88db91de38f35314f92a",
+    "png": "lava.png",
+    "png_sha256": "4ef4224dc258f9f9c07c573cb63ac45b1280ef7c96699c535359eb02aa10d57d",
+    "conversion": "ICNS to 256px PNG using macOS ImageIO",
+    "license_reference": "licenses/LAVA-EULA.txt"
+  },
+  {
+    "tool": "ALEAPP",
+    "installed_bundle_version": "2026.4.3",
+    "source": "/Applications/ALEAPP.app/Contents/Resources/icon.icns",
+    "source_icns_sha256": "391f6f5dc3bddee837cd4d6daac74ade1bc966a724a9f0aecfd381fecad1ddeb",
+    "source_git_blob_sha1": "1deb422e3144655fe8ae8b02c918ae2116ddf8f1",
+    "png": "aleapp.png",
+    "png_sha256": "ef69b66897575f29ccf07115631e81105a7b66dc8e7a8bc9fc51a759aad0bc90",
+    "conversion": "unchanged embedded PNG frame",
+    "license_reference": "licenses/ALEAPP.txt"
+  },
+  {
+    "tool": "iLEAPP",
+    "installed_bundle_version": "2026.4.5",
+    "source": "/Applications/iLEAPP.app/Contents/Resources/icon.icns",
+    "source_icns_sha256": "217e5d8733fd211abc335a2925e8dee05d119b1176105b4729e02522aa102e75",
+    "source_git_blob_sha1": "d16dc1cee2820064080847366e6940ef22460f70",
+    "png": "ileapp.png",
+    "png_sha256": "112610b4826d1c5efcec7763a27b4c398ecb10e584914fc676bc9442a917eaec",
+    "conversion": "unchanged embedded PNG frame",
+    "license_reference": "licenses/iLEAPP.txt"
+  },
+  {
+    "tool": "RLEAPP",
+    "installed_bundle_version": "2026.4.3",
+    "source": "/Applications/RLEAPP.app/Contents/Resources/icon.icns",
+    "source_icns_sha256": "5a4e81f63ecb94a068eea84c336569a327baa748c1adab03b80693d3f6599be8",
+    "source_git_blob_sha1": "4068c0431370c0a3cc8b9b6ba28d36b20f0caa48",
+    "png": "rleapp.png",
+    "png_sha256": "f3a6eeae00773b8b35fd9949f565f0659856a9a748b5dce6683719bfcbe7c52c",
+    "conversion": "unchanged embedded PNG frame",
+    "license_reference": "licenses/RLEAPP.txt"
+  },
+  {
+    "tool": "VLEAPP",
+    "installed_bundle_version": "2026.4.3",
+    "source": "/Applications/VLEAPP.app/Contents/Resources/icon.icns",
+    "source_icns_sha256": "e680c52daae89a5aa3662cc241e53e4ce75ce4b868cd45dd20f5e586d1f385da",
+    "source_git_blob_sha1": "5a0e819cfeae6372ddcb6bad17cfa529d289c651",
+    "png": "vleapp.png",
+    "png_sha256": "5cc6753d7c0d0fc46fc3216a98eedbfbbaee63233e6537172f82997bfc84b1a3",
+    "conversion": "unchanged embedded PNG frame",
+    "license_reference": "licenses/VLEAPP.txt"
+  },
+  {
+    "tool": "DLEAPP",
+    "installed_bundle_version": "2026.4.3",
+    "source": "/Applications/DLEAPP.app/Contents/Resources/icon.icns",
+    "source_icns_sha256": "71c563985eafe8a6c1a5a6561f02417003a018ced1f780841e8cd97734883dde",
+    "source_git_blob_sha1": "3a473002b6834f8eb499c60d03fb46558c9ded91",
+    "png": "dleapp.png",
+    "png_sha256": "96380b2b4e54b412e77d05d8a6a2e65d18becf6e88920e5740d2ec8014b57de6",
+    "conversion": "unchanged embedded PNG frame",
+    "license_reference": "licenses/DLEAPP.txt"
+  },
+  {
+    "tool": "GLEAPP",
+    "installed_bundle_version": "2026.5.4",
+    "source": "/Applications/GLEAPP.app/Contents/Resources/gleapp.icns",
+    "source_icns_sha256": "3df23cdcc1d3f07b5b5e00bd6be92782e614292ea0cfb43a7f311753a798917a",
+    "source_git_blob_sha1": "74d286d7b82a297b25206d5b4f9785ec8b586461",
+    "png": "gleapp.png",
+    "png_sha256": "b1375ed192181d2b80578e42c9cdf45dee39abd8f7fe76f153e66bc687008714",
+    "conversion": "unchanged embedded PNG frame",
+    "license_reference": "licenses/GLEAPP.txt"
+  }
+]

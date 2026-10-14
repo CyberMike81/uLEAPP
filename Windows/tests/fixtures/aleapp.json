@@ -1,0 +1,61 @@
+{
+  "tag_name": "v2026.4.3",
+  "draft": false,
+  "prerelease": false,
+  "assets": [
+    {
+      "name": "ALEAPP-2026.4.3-linux-arm64.AppImage",
+      "browser_download_url": "https://github.com/abrignoni/ALEAPP/releases/download/v2026.4.3/ALEAPP-2026.4.3-linux-arm64.AppImage",
+      "digest": "sha256:40f76e42f0841592b5660757545f6c2aad10eafa40fb19bc2913bfaaf843cba9",
+      "size": 76302856
+    },
+    {
+      "name": "ALEAPP-2026.4.3-linux-x64.AppImage",
+      "browser_download_url": "https://github.com/abrignoni/ALEAPP/releases/download/v2026.4.3/ALEAPP-2026.4.3-linux-x64.AppImage",
+      "digest": "sha256:11f518ef2847cf86c016abc9da5e24c740fd442ead98e47548f38cdcfed75023",
+      "size": 78756344
+    },
+    {
+      "name": "ALEAPP-2026.4.3-macos-arm64.dmg",
+      "browser_download_url": "https://github.com/abrignoni/ALEAPP/releases/download/v2026.4.3/ALEAPP-2026.4.3-macos-arm64.dmg",
+      "digest": "sha256:05aa019a8bc68208e0611f829289a236c51c66caf3a00780aeb20194c15c4125",
+      "size": 48015005
+    },
+    {
+      "name": "ALEAPP-2026.4.3-macos-x64.dmg",
+      "browser_download_url": "https://github.com/abrignoni/ALEAPP/releases/download/v2026.4.3/ALEAPP-2026.4.3-macos-x64.dmg",
+      "digest": "sha256:70b84e0bffa3cf4ecd94503d109a0e5575c05c134645186f6bd520937fbfab18",
+      "size": 50826833
+    },
+    {
+      "name": "ALEAPP-2026.4.3-windows-arm64-portable.zip",
+      "browser_download_url": "https://github.com/abrignoni/ALEAPP/releases/download/v2026.4.3/ALEAPP-2026.4.3-windows-arm64-portable.zip",
+      "digest": "sha256:5887b244daf2fc8b39a5fed6ee7ca930decde497288b299dcdff4686177ba093",
+      "size": 47382227
+    },
+    {
+      "name": "ALEAPP-2026.4.3-windows-arm64-setup.exe",
+      "browser_download_url": "https://github.com/abrignoni/ALEAPP/releases/download/v2026.4.3/ALEAPP-2026.4.3-windows-arm64-setup.exe",
+      "digest": "sha256:b627209cc91cd78883b0692473813edc9bbf8f74f7137768ab2434e4f423a67a",
+      "size": 38787323
+    },
+    {
+      "name": "ALEAPP-2026.4.3-windows-x64-portable.zip",
+      "browser_download_url": "https://github.com/abrignoni/ALEAPP/releases/download/v2026.4.3/ALEAPP-2026.4.3-windows-x64-portable.zip",
+      "digest": "sha256:e0c1585969c180886d9f4b177bef6513685c4153c1f545962bb771f0f8fa518f",
+      "size": 54714333
+    },
+    {
+      "name": "ALEAPP-2026.4.3-windows-x64-setup.exe",
+      "browser_download_url": "https://github.com/abrignoni/ALEAPP/releases/download/v2026.4.3/ALEAPP-2026.4.3-windows-x64-setup.exe",
+      "digest": "sha256:7c763e8652da7c010c12e08ff169d6ce12d2d5bce59e01a6181e341e95123b9e",
+      "size": 42762253
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "browser_download_url": "https://github.com/abrignoni/ALEAPP/releases/download/v2026.4.3/SHA256SUMS.txt",
+      "digest": "sha256:65870275f92de077bd27631ed781603e342b578b2e68e40068e0cd736b9ab158",
+      "size": 824
+    }
+  ]
+}

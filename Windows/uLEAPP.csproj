@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>uLEAPP</AssemblyName>
+    <Version>0.2.2</Version>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <ApplicationIcon>../assets/uLEAPP.ico</ApplicationIcon>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="tests/**/*.cs" />
+    <Resource Include="../assets/uLEAPP.png" Link="uLEAPP.png" />
+    <EmbeddedResource Include="../assets/tool-icons/*.png" LogicalName="uLEAPP.tool-icons.%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,61 @@
+{
+  "tag_name": "v2026.4.3",
+  "draft": false,
+  "prerelease": false,
+  "assets": [
+    {
+      "name": "DLEAPP-2026.4.3-linux-arm64.AppImage",
+      "browser_download_url": "https://github.com/abrignoni/DLEAPP/releases/download/v2026.4.3/DLEAPP-2026.4.3-linux-arm64.AppImage",
+      "digest": "sha256:27d275d5eae299f27ca8a16f51170439dc6c96d1aa81c709bdd00b03ba545b8a",
+      "size": 65919496
+    },
+    {
+      "name": "DLEAPP-2026.4.3-linux-x64.AppImage",
+      "browser_download_url": "https://github.com/abrignoni/DLEAPP/releases/download/v2026.4.3/DLEAPP-2026.4.3-linux-x64.AppImage",
+      "digest": "sha256:a44df135564d0c2843a0579e5e2f8578d043d421d8ee776d730e63a8f51420f3",
+      "size": 68102648
+    },
+    {
+      "name": "DLEAPP-2026.4.3-macos-arm64.dmg",
+      "browser_download_url": "https://github.com/abrignoni/DLEAPP/releases/download/v2026.4.3/DLEAPP-2026.4.3-macos-arm64.dmg",
+      "digest": "sha256:b3b63adbab63a9667e49a230ff0bb72d1526bb42e4f16934f2fecd64215bdae0",
+      "size": 49478439
+    },
+    {
+      "name": "DLEAPP-2026.4.3-macos-x64.dmg",
+      "browser_download_url": "https://github.com/abrignoni/DLEAPP/releases/download/v2026.4.3/DLEAPP-2026.4.3-macos-x64.dmg",
+      "digest": "sha256:840656dc32d566adf914a6034993fd40b8aa32066e4b60d9317955cb109db78c",
+      "size": 49664939
+    },
+    {
+      "name": "DLEAPP-2026.4.3-windows-arm64-portable.zip",
+      "browser_download_url": "https://github.com/abrignoni/DLEAPP/releases/download/v2026.4.3/DLEAPP-2026.4.3-windows-arm64-portable.zip",
+      "digest": "sha256:daf9f4b853469075b978aa35067dc40110031dd66a8c074e6abc6665313d6259",
+      "size": 43948833
+    },
+    {
+      "name": "DLEAPP-2026.4.3-windows-arm64-setup.exe",
+      "browser_download_url": "https://github.com/abrignoni/DLEAPP/releases/download/v2026.4.3/DLEAPP-2026.4.3-windows-arm64-setup.exe",
+      "digest": "sha256:af069d77cab64c7a4aa94fc826e0447b4e1e6eca7b29fadba490183e947f5dc4",
+      "size": 36051043
+    },
+    {
+      "name": "DLEAPP-2026.4.3-windows-x64-portable.zip",
+      "browser_download_url": "https://github.com/abrignoni/DLEAPP/releases/download/v2026.4.3/DLEAPP-2026.4.3-windows-x64-portable.zip",
+      "digest": "sha256:0e54e2cb6fd9f4810259d434720f911120b126d575fe3308d90c10dd5c494f41",
+      "size": 51776794
+    },
+    {
+      "name": "DLEAPP-2026.4.3-windows-x64-setup.exe",
+      "browser_download_url": "https://github.com/abrignoni/DLEAPP/releases/download/v2026.4.3/DLEAPP-2026.4.3-windows-x64-setup.exe",
+      "digest": "sha256:694b99fe718dc77545452acc9a527cecf1057784b24cf05ee12d2bcdd0163e27",
+      "size": 40075979
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "browser_download_url": "https://github.com/abrignoni/DLEAPP/releases/download/v2026.4.3/SHA256SUMS.txt",
+      "digest": "sha256:26cd49d49ea06a8ad506b48fcd14cb401e8dcb12d7830fa37207e7cb61a559ef",
+      "size": 824
+    }
+  ]
+}
