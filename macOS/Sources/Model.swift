@@ -89,6 +89,29 @@ final class UpdaterModel: ObservableObject {
             + (ProcessInfo.processInfo.environment["PATH"] ?? "").split(separator: ":").map { "\($0)/brew" }
         return paths.first { FileManager.default.isExecutableFile(atPath: $0) }
     }
+    func launch(_ tool: LEAPPTool) {
+        guard !busy, !loading, !demo else { return }
+        guard let path = tool.existingBundlePath else {
+            showLaunchError(tool, message: "The app could not be found in Applications. Refresh your installed apps or install it again.")
+            return
+        }
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = true
+        NSWorkspace.shared.openApplication(at: URL(fileURLWithPath: path), configuration: configuration) { [weak self] _, error in
+            if let error = error {
+                DispatchQueue.main.async {
+                    self?.showLaunchError(tool, message: error.localizedDescription)
+                }
+            }
+        }
+    }
+    private func showLaunchError(_ tool: LEAPPTool, message: String) {
+        let alert = NSAlert()
+        alert.messageText = "Could not launch \(tool.name)"
+        alert.informativeText = message
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
+    }
     func loadInstalled() {
         guard !busy, !loading else { return }
         if demo {

@@ -5,7 +5,7 @@
     "macOS": {
       "version": "0.2.2",
       "executable": "macOS/uLEAPP.app/Contents/MacOS/uLEAPP",
-      "sha256": "cc8461f48a3283e507b38607711166e09f2b458a9f49d33984b0e3e6a291f180",
+      "sha256": "01d13f5ee224d4025924b31971802ec34ad7904c4ab2ce9b5b5308da380bad4e",
       "architectures": [
         "arm64",
         "x86_64"
@@ -44,5 +44,6 @@
       "test_environment": "Windows 11 ARM64; x64 uses emulation"
     }
   },
-  "audited_updater_source_unchanged": true
+  "audited_updater_source_unchanged": false,
+  "macOS_launch_refresh": "2026-10-19; Homebrew worker unchanged; GUI Launch added"
 }

@@ -6,10 +6,11 @@ script and now provides a native GUI for checking versions, installing missing
 apps and updating installed tools with visible status and logs.
 
 The 0.2.0 audit's five confirmed defects are fixed. The independent 0.2.2
-re-audit confirmed those fixes and found no new confirmed defects. The updater
-source is unchanged from the audited 0.2.2 review archive; this publication adds
-screenshots and refreshes release documentation/notices. Mac package resources
-were re-signed locally after the notice refresh.
+re-audit confirmed those fixes and found no new confirmed defects. The Homebrew worker is unchanged from the audited 0.2.2 review archive. The
+October 19 refresh adds Launch buttons to the Mac interface, matching Windows.
+Launch opens installed apps from system or personal Applications folders and is
+disabled during updates and installations. The universal Mac app was rebuilt
+and its package checks passed; launching RLEAPP was verified interactively.
 
 Validation: 79 Mac worker checks; 115 packaged checks for each Windows build on
 Windows 11 ARM (x64 uses emulation); Mac native/Rosetta package checks and real

@@ -32,6 +32,8 @@ struct ActionStyle: ButtonStyle {
 struct ToolRow: View {
     let tool: LEAPPTool
     let actionsDisabled: Bool
+    let launchDisabled: Bool
+    let launch: () -> Void
     let install: () -> Void
     var stateColor: Color {
         switch tool.status {
@@ -77,6 +79,13 @@ struct ToolRow: View {
             .foregroundStyle(stateColor)
             .padding(.horizontal, 10).padding(.vertical, 7)
             .background(stateColor.opacity(0.09)).clipShape(Capsule())
+            if tool.existingBundlePath != nil {
+                Button("Launch") { launch() }
+                    .controlSize(.small).tint(Palette.green)
+                    .disabled(launchDisabled)
+                    .help("Open \(tool.name)")
+                    .accessibilityLabel("Launch \(tool.name)")
+            }
             if tool.version.isEmpty {
                 Button(tool.existingBundlePath == nil ? "Install" : "Add") { install() }
                     .controlSize(.small).tint(Palette.green)
@@ -142,7 +151,11 @@ struct UpdaterView: View {
             ScrollView {
                 VStack(spacing: 0) {
                     ForEach(model.tools) { tool in
-                        ToolRow(tool: tool, actionsDisabled: model.busy || model.loading || !model.brewFound) { model.start(.install, cask: tool.id) }
+                        ToolRow(tool: tool,
+                                actionsDisabled: model.busy || model.loading || !model.brewFound,
+                                launchDisabled: model.busy || model.loading,
+                                launch: { model.launch(tool) },
+                                install: { model.start(.install, cask: tool.id) })
                         if tool.id != model.tools.last?.id {
                             Rectangle().fill(Palette.border).frame(height: 1).padding(.leading, 76)
                         }

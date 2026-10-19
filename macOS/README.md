@@ -4,7 +4,7 @@ Idea by [@CyberMike81](https://github.com/CyberMike81).
 
 A local desktop updater for the seven LEAPP apps distributed by the official `leapps-org/leapps` Homebrew tap: LAVA, ALEAPP, iLEAPP, RLEAPP, VLEAPP, DLEAPP and GLEAPP.
 
-The app shows installed versions, checks for updates, updates installed tools, and offers **Install** beside a missing app plus **Install missing apps** for the group. Details and logs are available when an operation needs attention. Batch LEAPP and GLEAPP Map Downloader are outside this version's scope.
+The app shows installed versions, checks for updates, updates installed tools, and offers **Install** beside a missing app plus **Install missing apps** for the group. **Launch** opens an existing app from `/Applications` or your personal `~/Applications` folder, including manually installed apps. Launch is unavailable while an update or installation is running. Details and logs are available when an operation needs attention. Batch LEAPP and GLEAPP Map Downloader are outside this version's scope.
 
 ## Build and run
 
