@@ -88,6 +88,29 @@ class CoreTests(unittest.TestCase):
                 store.launch(tool)
                 self.assertEqual(spawn.call_args.args[0], [str(store.tool_root(tool)/'1.2.4/test.AppImage')])
 
+    def test_internal_library_link_is_materialized(self):
+        with tempfile.TemporaryDirectory() as temp:
+            package = Path(temp).resolve()/'test.tar.gz'
+            with tarfile.open(package, 'w:gz') as tar:
+                info = tarfile.TarInfo('app/libs/lib.so'); info.size = 4
+                tar.addfile(info, io.BytesIO(b'data'))
+                link = tarfile.TarInfo('app/lib.so'); link.type = tarfile.SYMTYPE; link.linkname = 'libs/lib.so'
+                tar.addfile(link)
+            out = Path(temp).resolve()/'out'
+            extract_archive(package, out)
+            self.assertEqual((out/'app/lib.so').read_bytes(), b'data')
+            self.assertFalse((out/'app/lib.so').is_symlink())
+
+    def test_concurrent_install_is_rejected(self):
+        import fcntl
+        with tempfile.TemporaryDirectory() as temp:
+            store = Store(Path(temp).resolve()); tool = TOOLS[1]
+            root = store.tool_root(tool); root.mkdir(parents=True)
+            with (root/'.install.lock').open('w') as lock:
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                with self.assertRaisesRegex(ValueError, 'Another uLEAPP'):
+                    store.install(tool, Release('1.2.3','test.AppImage','','',1))
+
     def test_tar_install_finds_nested_executable(self):
         with tempfile.TemporaryDirectory() as temp:
             def fetch(_release, destination, _progress):

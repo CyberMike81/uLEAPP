@@ -162,6 +162,10 @@ class Store:
         root = self.tool_root(tool)
         try: record = json.loads((root / 'current.json').read_text())
         except FileNotFoundError: return None
+        if (not isinstance(record, dict) or not isinstance(record.get('path'), str)
+                or not isinstance(record.get('version'), str)
+                or not re.fullmatch(r'\d+(?:\.\d+){1,3}', record['version'])):
+            raise ValueError(f'{tool.name} has an invalid installation record.')
         executable = root / record['path']
         if (Path(record['path']).is_absolute() or '..' in Path(record['path']).parts
                 or not executable.resolve().is_relative_to(root.resolve())
