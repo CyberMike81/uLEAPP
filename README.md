@@ -50,6 +50,13 @@ These preview builds are unsigned on Windows and locally ad hoc signed on Mac;
 they have no Developer ID notarization. See the platform READMEs for operation,
 logs and build instructions.
 
+## Linux preview
+
+A Linux desktop preview is available in [`Linux/`](Linux/README.md), with Install,
+Update and Launch controls. It uses Python 3.10+ and Tk and manages official Linux
+packages in your user folder. GLEAPP is currently x64-only on Linux.
+Build the portable archive with `python3 Linux/package.py`.
+
 ## Screenshots
 
 macOS with all seven tools detected:

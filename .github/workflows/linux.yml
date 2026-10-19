@@ -1,0 +1,35 @@
+name: Linux preview
+on:
+  push:
+    paths: ['Linux/**', '.github/workflows/linux.yml']
+  pull_request:
+    paths: ['Linux/**', '.github/workflows/linux.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install desktop test dependencies
+        run: sudo apt-get update && sudo apt-get install -y python3-tk xvfb
+      - name: Core tests
+        run: python3 -m unittest discover -s Linux/tests -v
+      - name: Desktop smoke test (no downloads)
+        run: xvfb-run -a python3 Linux/uleapp.py --demo --smoke-test
+      - name: Package portable source distribution
+        run: python3 Linux/package.py
+      - name: Verify extracted distribution
+        run: |
+          mkdir /tmp/uleapp-package
+          tar -xzf Linux/dist/uLEAPP-0.3.0-Linux.tar.gz -C /tmp/uleapp-package
+          /tmp/uleapp-package/uLEAPP-0.3.0-Linux/uleapp --version
+          xvfb-run -a /tmp/uleapp-package/uLEAPP-0.3.0-Linux/uleapp --demo --smoke-test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uLEAPP-Linux-${{ matrix.os }}
+          path: Linux/dist/*
