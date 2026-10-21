@@ -176,8 +176,8 @@ final class UpdaterModel: ObservableObject {
             } catch {
                 DispatchQueue.main.async {
                     self?.loading = false
-                    self?.title = "Could not start Homebrew"
-                    self?.subtitle = error.localizedDescription
+                    self?.title = self?.stopRequested == true ? "Stopped safely" : "Could not start Homebrew"
+                    self?.subtitle = self?.stopRequested == true ? "Installed-app discovery was cancelled." : error.localizedDescription
                 }
             }
         }

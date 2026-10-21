@@ -130,6 +130,21 @@ class CoreTests(unittest.TestCase):
                 self.assertLess(time.monotonic() - start, 1)
             finally: blocked.set(); timer.join()
 
+    def test_successful_download_throttles_progress_and_verifies_bytes(self):
+        import time
+        payload = b'x' * (2 * 1024**2)
+        release = Release('1.2.3', 'test', 'unused', hashlib.sha256(payload).hexdigest(), len(payload))
+        updates = []
+        with tempfile.TemporaryDirectory() as temp:
+            destination = Path(temp)/'download'
+            with patch('core.request', return_value=io.BytesIO(payload)):
+                start = time.monotonic()
+                download(release, destination, updates.append)
+                elapsed = time.monotonic() - start
+            self.assertEqual(destination.read_bytes(), payload)
+        self.assertEqual(updates[-1], 1)
+        self.assertLessEqual(len(updates), int(elapsed * 10) + 2)
+
     def test_stalled_reader_times_out(self):
         import threading
         from core import stream_bytes

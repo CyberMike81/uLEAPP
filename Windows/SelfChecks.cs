@@ -118,6 +118,15 @@ public static class SelfChecks
             using var client = new ReleaseClient(new FakeHandler(data));
             await client.DownloadAsync(asset,Path.Combine(scratch,"download.zip"), _ => { },CancellationToken.None);
             Check(File.ReadAllBytes(Path.Combine(scratch,"download.zip")).SequenceEqual(data),"downloaded bytes are checked against size and SHA-256");
+            byte[] largeData = new byte[2 * 1024 * 1024];
+            var largeAsset = asset with { Size = largeData.Length, Sha256 = Convert.ToHexString(SHA256.HashData(largeData)) };
+            using (var largeClient = new ReleaseClient(new FakeHandler(largeData)))
+            {
+                int reports = 0;
+                var clock = System.Diagnostics.Stopwatch.StartNew();
+                await largeClient.DownloadAsync(largeAsset, Path.Combine(scratch,"large.zip"), _ => reports++, CancellationToken.None);
+                Check(reports >= 1 && reports <= clock.ElapsedMilliseconds / 100 + 1, "large downloads throttle progress to ten reports per second plus completion");
+            }
             using (var stalled = new ReleaseClient(new StalledHandler()) { ReadIdleTimeout = TimeSpan.FromMilliseconds(30) })
             {
                 try {
