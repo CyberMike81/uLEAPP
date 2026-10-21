@@ -18,6 +18,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private readonly ReleaseClient releases = new();
     private readonly bool demo;
     private bool busy, stopping;
+    private CancellationTokenSource? operationCancellation;
     private string title = "Your first LEAPP starts here", detail = "Install an app below, or install your missing apps together.", phase = "", log = "";
     private double progress;
     private StreamWriter? logWriter;
@@ -30,7 +31,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public bool DetailsExpanded { get; set; }
     public bool ActionsEnabled => !busy;
     public bool StopEnabled => busy && !stopping;
-    public string StopLabel => stopping ? "Stopping after this app…" : "Stop after this app";
+    public string StopLabel => stopping ? "Stopping…" : "Stop";
     public Visibility ProgressVisibility => busy ? Visibility.Visible : Visibility.Collapsed;
     public int InstalledCount => Rows.Count(r => r.IsInstalled);
     public string InstalledSummary => $"{InstalledCount} of 7 installed";
@@ -104,6 +105,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (busy) return;
         var targets = selected.ToArray(); if (targets.Length == 0) return;
         if (!check && !ConfirmLava(targets)) return;
+        operationCancellation = new CancellationTokenSource();
+        var cancellation = operationCancellation.Token;
         busy = true; stopping = false; Log = ""; Progress = 0; RefreshControls();
         StatusTitle = check ? "Looking for the latest LEAPPs" : "Keeping your LEAPPs current";
         StatusDetail = check ? "Checking official releases for your Windows architecture." : "Keep your LEAPP apps closed. Official setup windows may ask you to finish installation.";
@@ -125,14 +128,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 {
                     if (demo)
                     {
-                        await Task.Delay(300);
+                        await Task.Delay(300, cancellation);
                         if (!check && !row.IsInstalled) row.Version = row.Tool.Id == "lava" ? "0.15.0" : "2026.4.3";
                         row.Status = check && row.IsInstalled ? "Update available" : (row.IsInstalled ? "Up to date" : "Not installed");
                         WriteLog(row.Name + ": " + row.Status + " (demo)");
                     }
                     else
                     {
-                        row.Release = await releases.LatestAsync(row.Tool, Catalog.Architecture, row.Installed?.InstallerManaged ?? false, CancellationToken.None);
+                        row.Release = await releases.LatestAsync(row.Tool, Catalog.Architecture, row.Installed?.InstallerManaged ?? false, cancellation);
                         var release = row.Release;
                         row.Latest = "Latest " + release.Version + (release.Asset.Architecture != Catalog.Architecture ? " · x64 through Windows emulation" : "");
                         if (row.IsInstalled && !Installer.NeedsUpdate(row.Version, release.Version)) row.Status = "Up to date";
@@ -145,13 +148,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                         {
                             row.Status = row.IsInstalled ? "Updating" : "Installing";
                             WriteLog($"{row.Name}: official {release.Asset.Name}; SHA-256 {release.Asset.Sha256}");
-                            var installed = await installer.InstallAsync(row.Tool, release, row.Installed,
-                                text => { Phase = text; row.Status = text.StartsWith("Downloading") ? "Downloading" : text.StartsWith("Complete") ? "Finish setup" : "Installing"; },
-                                fraction => { Progress = (complete + fraction * 0.7) / targets.Length; }, CancellationToken.None);
+                            var existing = row.Installed;
+                            var installed = await Task.Run(() => installer.InstallAsync(row.Tool, release, existing,
+                                text => Dispatcher.Invoke(() => { Phase = text; row.Status = text.StartsWith("Downloading") ? "Downloading" : text.StartsWith("Complete") ? "Finish setup" : "Installing"; }),
+                                fraction => Dispatcher.Invoke(() => { Progress = (complete + fraction * 0.7) / targets.Length; }), cancellation));
                             ApplyInstalled(row, installed); row.Status = "Up to date";
                         }
                         WriteLog(row.Name + ": " + row.Status);
                     }
+                }
+                catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+                {
+                    row.Status = "Stopped"; WriteLog(row.Name + ": stopped before installation completed.");
                 }
                 catch (Exception error)
                 {
@@ -165,13 +173,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             else { StatusTitle = "Your LEAPP apps are ready"; StatusDetail = "Installed apps are current. Older portable versions and your case files have been kept."; }
         }
         catch (Exception error) { StatusTitle = "Could not finish this operation"; StatusDetail = error.Message; WriteLog(error.Message); }
-        finally { logWriter?.Dispose(); logWriter = null; busy = false; RefreshControls(); }
+        finally { logWriter?.Dispose(); logWriter = null; operationCancellation?.Dispose(); operationCancellation = null; busy = false; RefreshControls(); }
     }
     private async void CheckClicked(object sender, RoutedEventArgs e) => await RunAsync(true, Rows);
     private async void PrimaryClicked(object sender, RoutedEventArgs e) => await RunAsync(false, InstalledCount == 0 ? Rows.Where(r => !r.IsInstalled) : Rows.Where(r => r.IsInstalled));
     private async void InstallMissingClicked(object sender, RoutedEventArgs e) => await RunAsync(false, Rows.Where(r => !r.IsInstalled));
     private async void RowActionClicked(object sender, RoutedEventArgs e) { if ((sender as Button)?.Tag is ToolRow row) await RunAsync(false, [row]); }
-    private void StopClicked(object sender, RoutedEventArgs e) { stopping = true; StatusDetail = "Will stop after this app finishes."; RefreshControls(); }
+    private void StopClicked(object sender, RoutedEventArgs e) { stopping = true; operationCancellation?.Cancel(); StatusDetail = "Cancelling downloads. An installer already running will finish safely."; RefreshControls(); }
     private void CopyLogClicked(object sender, RoutedEventArgs e) { try { Clipboard.SetText(Log); } catch (System.Runtime.InteropServices.COMException) { StatusDetail = "The clipboard is busy. Try copying the log again."; } }
     private void ChooseFolderClicked(object sender, RoutedEventArgs e)
     {
@@ -186,7 +194,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     }
     private void WindowClosing(object? sender, CancelEventArgs e)
     {
-        if (busy) { e.Cancel = true; StatusDetail = "Keep uLEAPP open while this app finishes. Choose Stop after this app to finish the run early."; }
+        if (busy) { e.Cancel = true; StatusDetail = "Keep uLEAPP open while this app finishes. Choose Stop to cancel downloads; an installer already running will finish safely."; }
         else releases.Dispose();
     }
     public static SolidColorBrush Brush(string color) => (SolidColorBrush)new BrushConverter().ConvertFromString(color)!;

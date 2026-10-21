@@ -4,6 +4,9 @@ from dataclasses import dataclass
 import hashlib
 import fcntl
 import json
+import queue
+import threading
+import time
 import os
 from pathlib import Path
 import platform
@@ -83,10 +86,54 @@ def select_release(tool, data, arch):
     return Release(tag.lstrip('v'), asset['name'], expected, digest[7:].lower(), asset['size'])
 
 
-def latest(tool, arch):
-    with request(f'https://api.github.com/repos/{tool.repo}/releases/latest') as response:
-        data = response.read(8 * 1024**2 + 1)
-    if len(data) > 8 * 1024**2: raise ValueError('Release metadata is too large.')
+class Cancelled(Exception):
+    """The user stopped before an installation was committed."""
+
+
+def check_cancel(cancel):
+    if cancel is not None and cancel.is_set(): raise Cancelled('Stopped at your request.')
+
+
+def stream_bytes(url, cancel=None, idle_timeout=60):
+    # A bounded reader queue keeps Stop responsive even during a blocking socket
+    # read. Only this consumer writes files; a cancelled reader can never install.
+    chunks = queue.Queue(maxsize=2)
+    stopped = threading.Event()
+    def send(value):
+        while not stopped.is_set():
+            try: chunks.put(value, timeout=0.1); return
+            except queue.Full: pass
+    def reader():
+        try:
+            with request(url) as response:
+                read = getattr(response, 'read1', response.read)
+                while not stopped.is_set():
+                    data = read(128 * 1024)
+                    send(data)
+                    if not data: break
+        except Exception as error: send(error)
+    check_cancel(cancel)
+    threading.Thread(target=reader, daemon=True).start()
+    last_data = time.monotonic()
+    try:
+        while True:
+            check_cancel(cancel)
+            if time.monotonic() - last_data >= idle_timeout:
+                raise TimeoutError('No download data arrived for 60 seconds. Please try again.')
+            try: item = chunks.get(timeout=min(0.1, idle_timeout))
+            except queue.Empty: continue
+            if isinstance(item, Exception): raise item
+            if not item: break
+            last_data = time.monotonic()
+            yield item
+    finally: stopped.set()
+
+
+def latest(tool, arch, cancel=None):
+    data = bytearray()
+    for chunk in stream_bytes(f'https://api.github.com/repos/{tool.repo}/releases/latest', cancel):
+        data.extend(chunk)
+        if len(data) > 8 * 1024**2: raise ValueError('Release metadata is too large.')
     return select_release(tool, json.loads(data), arch)
 
 
@@ -94,23 +141,26 @@ def needs_update(installed, target):
     return tuple(map(int, installed.lstrip('v').split('.'))) < tuple(map(int, target.split('.')))
 
 
-def download(release, destination, progress=lambda _: None):
+def download(release, destination, progress=lambda _: None, cancel=None):
     digest = hashlib.sha256()
     count = 0
-    with request(release.url) as response, destination.open('xb') as output:
-        while True:
-            block = response.read(128 * 1024)
-            if not block: break
+    last_progress = 0.0
+    with destination.open('xb') as output:
+        for block in stream_bytes(release.url, cancel):
             count += len(block)
             if count > release.size: raise ValueError('Download exceeds its published size.')
             digest.update(block)
             output.write(block)
-            progress(count / release.size)
+            now = time.monotonic()
+            if now - last_progress >= 0.1 or count == release.size:
+                progress(count / release.size)
+                last_progress = now
+    check_cancel(cancel)
     if count != release.size or digest.hexdigest() != release.digest:
         raise ValueError('Download checksum or size does not match. Nothing was installed.')
 
 
-def extract_archive(package, destination):
+def extract_archive(package, destination, cancel=None):
     # Internal links in PyInstaller bundles are materialized as ordinary files.
     # No archive link is ever created on disk.
     with tarfile.open(package, 'r:gz') as archive:
@@ -138,6 +188,7 @@ def extract_archive(package, destination):
             if total > 8 * 1024**3: raise ValueError('Extracted package is too large.')
             sources.append((item, source))
         for item, source in sources:
+            check_cancel(cancel)
             target = destination / item.name
             if item.isdir(): target.mkdir(parents=True, exist_ok=True)
             else:
@@ -173,7 +224,7 @@ class Store:
             raise ValueError(f'{tool.name} has an invalid installation record.')
         return record
 
-    def install(self, tool, release, progress=lambda _: None):
+    def install(self, tool, release, progress=lambda _: None, cancel=None):
         root = self.tool_root(tool)
         root.mkdir(parents=True, exist_ok=True)
         lockpath = root / '.install.lock'
@@ -181,9 +232,9 @@ class Store:
         with os.fdopen(descriptor, 'w') as lock:
             try: fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except BlockingIOError: raise ValueError('Another uLEAPP installation is running for this tool.')
-            return self._install(tool, release, progress)
+            return self._install(tool, release, progress, cancel)
 
-    def _install(self, tool, release, progress):
+    def _install(self, tool, release, progress, cancel):
         root = self.tool_root(tool)
         root.mkdir(parents=True, exist_ok=True)
         destination = root / release.version
@@ -191,7 +242,8 @@ class Store:
         with tempfile.TemporaryDirectory(prefix='.staging-', dir=root) as temp:
             stage = Path(temp)
             package = stage / release.name
-            download(release, package, progress)
+            if cancel is None: download(release, package, progress)
+            else: download(release, package, progress, cancel)
             payload = stage / 'payload'
             payload.mkdir()
             if release.name.lower().endswith('.appimage'):
@@ -199,13 +251,14 @@ class Store:
                 package.rename(executable)
                 executable.chmod(0o755)
             else:
-                extract_archive(package, payload)
+                extract_archive(package, payload, cancel)
                 matches = [p for p in payload.rglob('*') if p.is_file() and
                            p.name.lower() == tool.id and os.access(p, os.X_OK)]
                 if len(matches) != 1: raise ValueError('Archive has no unique recognized executable.')
                 executable = matches[0]
             relative = executable.relative_to(payload)
             # Publish a complete version, then atomically select it. Keep older versions.
+            check_cancel(cancel)
             payload.rename(destination)
             record = {'version': release.version, 'path': str(Path(release.version) / relative)}
             pending = stage / 'current.json'

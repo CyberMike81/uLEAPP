@@ -111,6 +111,68 @@ class CoreTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, 'Another uLEAPP'):
                     store.install(tool, Release('1.2.3','test.AppImage','','',1))
 
+    def test_stop_interrupts_a_blocked_reader_without_writing_later(self):
+        import threading
+        import time
+        from core import Cancelled, stream_bytes
+        blocked = threading.Event()
+        class Stalled(io.BytesIO):
+            def read1(self, size):
+                blocked.wait(2)
+                return b''
+        cancel = threading.Event()
+        timer = threading.Timer(0.03, cancel.set)
+        with patch('core.request', return_value=Stalled()):
+            timer.start()
+            start = time.monotonic()
+            try:
+                with self.assertRaises(Cancelled): list(stream_bytes('unused', cancel))
+                self.assertLess(time.monotonic() - start, 1)
+            finally: blocked.set(); timer.join()
+
+    def test_successful_download_throttles_progress_and_verifies_bytes(self):
+        import time
+        payload = b'x' * (2 * 1024**2)
+        release = Release('1.2.3', 'test', 'unused', hashlib.sha256(payload).hexdigest(), len(payload))
+        updates = []
+        with tempfile.TemporaryDirectory() as temp:
+            destination = Path(temp)/'download'
+            with patch('core.request', return_value=io.BytesIO(payload)):
+                start = time.monotonic()
+                download(release, destination, updates.append)
+                elapsed = time.monotonic() - start
+            self.assertEqual(destination.read_bytes(), payload)
+        self.assertEqual(updates[-1], 1)
+        self.assertLessEqual(len(updates), int(elapsed * 10) + 2)
+
+    def test_stalled_reader_times_out(self):
+        import threading
+        from core import stream_bytes
+        blocked = threading.Event()
+        class Stalled(io.BytesIO):
+            def read1(self, size): blocked.wait(2); return b''
+        with patch('core.request', return_value=Stalled()):
+            try:
+                with self.assertRaises(TimeoutError): list(stream_bytes('unused', idle_timeout=0.03))
+            finally: blocked.set()
+
+    def test_cancelled_install_keeps_previous_selection_and_cleans_staging(self):
+        import threading
+        from core import Cancelled
+        with tempfile.TemporaryDirectory() as temp:
+            store = Store(Path(temp).resolve()); tool = TOOLS[1]
+            cancel = threading.Event()
+            def fetch(_release, destination, _progress, cancellation=None):
+                destination.write_bytes(b'downloaded')
+                if cancellation is not None: cancellation.set()
+            with patch('core.download', side_effect=fetch):
+                first = store.install(tool, Release('1.2.3','test.AppImage','','',1))
+                with self.assertRaises(Cancelled):
+                    store.install(tool, Release('1.2.4','test.AppImage','','',1), cancel=cancel)
+            self.assertEqual(store.installed(tool), first)
+            self.assertFalse(list(store.tool_root(tool).glob('.staging-*')))
+            self.assertFalse((store.tool_root(tool)/'1.2.4').exists())
+
     def test_tar_install_finds_nested_executable(self):
         with tempfile.TemporaryDirectory() as temp:
             def fetch(_release, destination, _progress):

@@ -50,3 +50,7 @@ This build is for macOS. The separate Windows source is in `../Windows/`, with o
 
 Versions and update decisions follow Homebrew’s cask records. A manually replaced
 app bundle may report a different version from the one recorded by Homebrew.
+
+Installed-app discovery can be stopped and has a 60-second deadline. Homebrew
+installation Stop still waits for the current operation to finish safely. Icons
+and app paths are cached between refreshes; progress logs are coalesced.

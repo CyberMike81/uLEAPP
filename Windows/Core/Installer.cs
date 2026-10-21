@@ -35,7 +35,7 @@ public sealed class Installer(ReleaseClient releases, InstallationStore store)
         {
             string package = Path.Combine(temporary, release.Asset.Name);
             status($"Downloading {tool.Name}" + (release.Asset.Architecture != Catalog.Architecture ? " · x64 emulation" : ""));
-            await releases.DownloadAsync(release.Asset, package, progress, cancellation);
+            await releases.DownloadAsync(release.Asset, package, progress, cancellation).ConfigureAwait(false);
             status("Checksum verified");
             cancellation.ThrowIfCancellationRequested();
             Installation result;
@@ -44,7 +44,7 @@ public sealed class Installer(ReleaseClient releases, InstallationStore store)
                 status($"Complete {tool.Name} setup to continue");
                 using var setup = Process.Start(new ProcessStartInfo(package) { UseShellExecute = true }) ?? throw new IOException("The official installer did not start.");
                 // Do not cancel or kill an installer mid-operation. The next app waits.
-                await setup.WaitForExitAsync();
+                await setup.WaitForExitAsync().ConfigureAwait(false);
                 if (setup.ExitCode is not (0 or 3010)) throw new IOException($"{tool.Name} setup ended with code {setup.ExitCode}.");
                 result = InstallationStore.FindRegistered(tool) ?? throw new IOException($"Setup finished, but {tool.Name}.exe was not found in its registered location. The installation is incomplete. Review the publisher's installer result, then try again.");
                 if (!IsCurrent(result.Version, release.Version)) throw new IOException("The installer did not register the expected new version. Refresh after completing setup.");
@@ -62,7 +62,7 @@ public sealed class Installer(ReleaseClient releases, InstallationStore store)
                 string staging = Path.Combine(toolRoot, ".uleapp-staging-" + Guid.NewGuid().ToString("N"));
                 try
                 {
-                    await Task.Run(() => PortablePackage.Extract(package, staging), cancellation);
+                    await Task.Run(() => PortablePackage.Extract(package, staging), cancellation).ConfigureAwait(false);
                     string executable = PortablePackage.FindExecutable(staging, tool) ?? throw new InvalidDataException("The official archive has no recognized app executable.");
                     string finalExecutable = Path.Combine(destination, Path.GetRelativePath(staging, executable));
                     result = new(tool.Id, release.Version, finalExecutable, release.Asset.Architecture);

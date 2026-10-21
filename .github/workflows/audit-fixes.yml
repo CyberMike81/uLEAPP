@@ -1,0 +1,33 @@
+name: Audit regression checks
+on:
+  push:
+    branches: ['codex/audit-responsiveness']
+  pull_request:
+    paths: ['Windows/**', 'macOS/Sources/**', '.github/workflows/audit-fixes.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build and run packaged regression checks
+        shell: pwsh
+        run: ./Windows/tools/Build.ps1 -RuntimeIdentifiers win-x64
+      - name: Compile ARM64
+        shell: pwsh
+        run: dotnet publish Windows/uLEAPP.csproj -c Release -r win-arm64 --self-contained true -o Windows-ARM64 -p:DebugType=None
+  mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and run model regressions
+        run: |
+          xcrun swiftc -swift-version 5 -framework SwiftUI -framework AppKit macOS/Sources/*.swift -o /tmp/uleapp-selftest
+          /tmp/uleapp-selftest --self-test
+      - name: Homebrew worker contract
+        run: bash macOS/tests/test_updater.sh

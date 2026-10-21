@@ -7,7 +7,7 @@ import queue
 import sys
 import threading
 import webbrowser
-from core import TOOLS, VERSION, Store, architecture, latest, needs_update
+from core import TOOLS, VERSION, Store, architecture, latest, needs_update, Cancelled, check_cancel
 
 
 def main():
@@ -37,6 +37,7 @@ def main():
     events = queue.Queue()
     releases, records, row_status, actions, launches = {}, {}, {}, {}, {}
     busy = False
+    cancellation = threading.Event()
     title = tk.StringVar(value='One place. Every LEAPP up to date.')
     subtitle = tk.StringVar(value='Check for releases to install or update your tools.')
     frame = ttk.Frame(root, padding=24)
@@ -64,6 +65,7 @@ def main():
                                       state='normal' if available and not busy else 'disabled')
             launches[tool.id].configure(state='normal' if record and not busy else 'disabled')
         check.configure(state='disabled' if busy else 'normal')
+        stop.configure(state='normal' if busy and not cancellation.is_set() else 'disabled')
         update.configure(state='normal' if not busy and any(
             t.id in releases and t.id in records and needs_update(records[t.id]['version'], releases[t.id].version)
             for t in TOOLS) else 'disabled')
@@ -72,9 +74,11 @@ def main():
         nonlocal busy
         if busy: return
         busy = True
+        cancellation.clear()
         refresh_buttons()
         def worker():
             try: work()
+            except Cancelled: events.put(('stopped', None))
             except Exception as error: events.put(('error', str(error)))
             finally: events.put(('done', None))
         threading.Thread(target=worker, daemon=True).start()
@@ -82,13 +86,15 @@ def main():
     def check_releases():
         def work():
             for tool in TOOLS:
+                check_cancel(cancellation)
                 events.put(('status', (tool.id, 'Checking…')))
                 try:
                     if args.demo:
                         events.put(('status', (tool.id, 'Demo · no changes')))
                         continue
-                    release = latest(tool, arch)
+                    release = latest(tool, arch, cancellation)
                     events.put(('release', (tool.id, release)))
+                except Cancelled: raise
                 except Exception as error:
                     events.put(('unavailable', (tool.id, str(error))))
         run(work)
@@ -101,11 +107,15 @@ def main():
                 'Have you reviewed and accepted those terms?', parent=root): return
         def work():
             for tool in selected:
+                check_cancel(cancellation)
                 try:
                     events.put(('status', (tool.id, 'Downloading…')))
                     record = store.install(tool, releases[tool.id],
-                        lambda fraction, tid=tool.id: events.put(('status', (tid, f'Downloading {fraction:.0%}'))))
+                        lambda fraction, tid=tool.id: events.put(('status', (tid, f'Downloading {fraction:.0%}'))), cancellation)
                     events.put(('installed', (tool.id, record)))
+                except Cancelled:
+                    events.put(('status', (tool.id, 'Stopped')))
+                    raise
                 except Exception as error:
                     events.put(('status', (tool.id, 'Needs attention')))
                     events.put(('error', tool.name + ': ' + str(error)))
@@ -139,6 +149,12 @@ def main():
         actions[tool.id].grid(row=index, column=3, padx=4)
     controls = ttk.Frame(frame)
     controls.pack(fill='x', pady=18)
+    def request_stop():
+        cancellation.set()
+        subtitle.set('Stopping downloads; completed installations are kept.')
+        refresh_buttons()
+    stop = ttk.Button(controls, text='Stop', command=request_stop)
+    stop.pack(side='right', padx=4)
     check = ttk.Button(controls, text='Check for updates', command=check_releases)
     check.pack(side='right')
     update = ttk.Button(controls, text='Update installed apps', command=lambda: install_tools(
@@ -158,7 +174,8 @@ def main():
             except queue.Empty: break
             if kind == 'done':
                 busy = False
-                subtitle.set('Finished. Review the app statuses and details below.')
+                subtitle.set('Stopped. Completed installations have been kept.' if cancellation.is_set() else 'Finished. Review the app statuses and details below.')
+            elif kind == 'stopped': append('Stopped at your request.')
             elif kind == 'error': append(value)
             elif kind in ('status', 'unavailable'):
                 tid, text = value
