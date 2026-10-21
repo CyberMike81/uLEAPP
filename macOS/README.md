@@ -54,3 +54,12 @@ app bundle may report a different version from the one recorded by Homebrew.
 Installed-app discovery can be stopped and has a 60-second deadline. Homebrew
 installation Stop still waits for the current operation to finish safely. Icons
 and app paths are cached between refreshes; progress logs are coalesced.
+
+## uLEAPP update notifications
+
+uLEAPP checks its own official GitHub releases at startup and once every 24 hours
+while open. A newer published release shows **Download update** for your platform
+and a **Release notes** link. Downloads open in your browser only when clicked;
+no automatic installation or replacement occurs. This is separate from LEAPP
+tool checks. Offline/rate-limit failures stay quiet and do not block normal use.
+Demo and automated smoke-test modes do not contact GitHub.

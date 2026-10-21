@@ -90,3 +90,12 @@ Original uLEAPP source, scripts, tests and original artwork use the supplied
 apps and publisher icons keep their own terms. LAVA is separately licensed freeware.
 See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md), `licenses/`,
 `assets/tool-icons/` and the Windows runtime notices for the inventory and provenance.
+
+## uLEAPP update notifications
+
+uLEAPP checks its own official GitHub releases at startup and once every 24 hours
+while open. A newer published release shows **Download update** for your platform
+and a **Release notes** link. Downloads open in your browser only when clicked;
+no automatic installation or replacement occurs. This is separate from LEAPP
+tool checks. Offline/rate-limit failures stay quiet and do not block normal use.
+Demo and automated smoke-test modes do not contact GitHub.

@@ -7,6 +7,7 @@ import queue
 import sys
 import threading
 import webbrowser
+from self_update import check_update
 from core import TOOLS, VERSION, Store, architecture, latest, needs_update, Cancelled, check_cancel
 
 
@@ -45,6 +46,12 @@ def main():
     ttk.Label(frame, text='uLEAPP FOR LINUX · ' + VERSION, foreground='#8ee563').pack(anchor='w')
     ttk.Label(frame, textvariable=title, style='Heading.TLabel').pack(anchor='w', pady=(8, 4))
     ttk.Label(frame, textvariable=subtitle, wraplength=850).pack(anchor='w', pady=(0, 18))
+    app_update = {}
+    update_banner = ttk.Frame(frame)
+    app_update_text = tk.StringVar()
+    ttk.Label(update_banner, textvariable=app_update_text, foreground='#8ee563').pack(side='left')
+    ttk.Button(update_banner, text='Download update', command=lambda: webbrowser.open(app_update['url'])).pack(side='right')
+    ttk.Button(update_banner, text='Release notes', command=lambda: webbrowser.open(app_update['page'])).pack(side='right', padx=8)
     rows = ttk.Frame(frame)
     rows.pack(fill='x')
     rows.columnconfigure(0, weight=1)
@@ -176,6 +183,11 @@ def main():
                 busy = False
                 subtitle.set('Stopped. Completed installations have been kept.' if cancellation.is_set() else 'Finished. Review the app statuses and details below.')
             elif kind == 'stopped': append('Stopped at your request.')
+            elif kind == 'app_update':
+                if value:
+                    app_update.update(value)
+                    app_update_text.set('uLEAPP ' + value['version'] + ' is available')
+                    update_banner.pack(fill='x', pady=(0, 10), before=rows)
             elif kind == 'error': append(value)
             elif kind in ('status', 'unavailable'):
                 tid, text = value
@@ -202,6 +214,14 @@ def main():
         if busy:
             messagebox.showinfo('Operation in progress', 'Wait for the current downloads and installations to finish before closing.', parent=root)
         else: root.destroy()
+    def check_self_update():
+        if args.demo or args.smoke_test: return
+        def work():
+            try: events.put(('app_update', check_update()))
+            except Exception: pass  # Optional check must never interrupt LEAPP work.
+        threading.Thread(target=work, daemon=True).start()
+        root.after(24 * 60 * 60 * 1000, check_self_update)
+    root.after(500, check_self_update)
     root.protocol('WM_DELETE_WINDOW', close)
     refresh_buttons()
     root.after(100, poll)

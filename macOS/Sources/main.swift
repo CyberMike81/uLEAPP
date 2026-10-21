@@ -116,6 +116,14 @@ struct UpdaterView: View {
                     .foregroundStyle(Palette.green).padding(.horizontal, 11).padding(.vertical, 7)
                     .overlay(Capsule().stroke(Palette.green.opacity(0.25)))
             }
+            if let update = model.appUpdate {
+                HStack {
+                    Text("uLEAPP \(update.version) is available").font(.system(size: 12)).foregroundStyle(Palette.green)
+                    Spacer()
+                    Link("Release notes", destination: update.page)
+                    Link("Download update", destination: update.download)
+                }.font(.system(size: 12))
+            }
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .top, spacing: 13) {
                     Image(systemName: model.busy ? "arrow.triangle.2.circlepath" : (model.failedCount > 0 ? "exclamationmark.circle" : (model.lastChecked.isEmpty ? "sparkle" : "checkmark.circle")))
@@ -229,7 +237,7 @@ struct UpdaterView: View {
         .padding(.horizontal, 26).padding(.top, 38).padding(.bottom, 23)
         .frame(minWidth: 790, minHeight: 690)
         .background(Palette.background).preferredColorScheme(.dark)
-        .onAppear { model.loadInstalled() }
+        .onAppear { model.loadInstalled(); model.startSelfUpdateChecks() }
         .onChange(of: model.busy) { running in
             if !running && model.failedCount > 0 { model.detailsExpanded = true }
         }
@@ -361,6 +369,18 @@ if CommandLine.arguments.contains("--self-test") || CommandLine.arguments.contai
     model.receive(Data(unicode.suffix(2)))
     model.flushLog()
     precondition(model.log == "final line\ncafé\n", "CR progress and split UTF-8 must not inflate or corrupt logs")
+    let selfAsset = "uLEAPP-0.3.2-macOS.zip"
+    var selfMetadata: [String: Any] = ["tag_name": "v0.3.2", "draft": false, "prerelease": false,
+        "html_url": "https://github.com/CyberMike81/uLEAPP/releases/tag/v0.3.2",
+        "assets": [["name": selfAsset, "browser_download_url": "https://github.com/CyberMike81/uLEAPP/releases/download/v0.3.2/\(selfAsset)"]]]
+    precondition(SelfUpdate.select(selfMetadata, current: "0.3.1")?.version == "0.3.2")
+    precondition(SelfUpdate.select(selfMetadata, current: "0.3.2") == nil)
+    precondition(SelfUpdate.select(selfMetadata, current: "0.4.0") == nil)
+    selfMetadata["prerelease"] = true
+    precondition(SelfUpdate.select(selfMetadata, current: "0.3.1") == nil)
+    selfMetadata["prerelease"] = false
+    selfMetadata["assets"] = [["name": selfAsset, "browser_download_url": "https://example.org/untrusted.zip"]]
+    precondition(SelfUpdate.select(selfMetadata, current: "0.3.1") == nil)
     print("uLEAPP self-check passed: installed-app detection and GUI status events.")
     exit(0)
 }
