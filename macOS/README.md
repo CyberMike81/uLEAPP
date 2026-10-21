@@ -34,7 +34,7 @@ open uLEAPP.app --args --demo
 open uLEAPP.app --args --demo-missing
 ```
 
-The shell tests use a fake Homebrew and change no installed apps. Demo mode simulates status changes without running Homebrew. The normal app reads your actual installed casks on launch.
+The shell tests use a fake Homebrew and change no installed apps. Demo mode simulates status changes without running Homebrew. The normal app reads your actual installed casks and checks uLEAPP release metadata on launch; no app packages are downloaded.
 
 ## Icon and distribution
 

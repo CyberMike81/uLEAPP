@@ -14,7 +14,7 @@ Open `uLEAPP.exe` from the platform folder:
 
 Keep the complete folder together, including `LICENSE`, `licenses/` and
 `runtime-notices/`. The .NET runtime is included; no separate runtime install
-is needed. The app makes no downloads or application changes on launch.
+is needed. On launch, only uLEAPP release metadata is checked; no app packages are downloaded or installed.
 The actual seven LEAPP icons are embedded, so they appear before the apps are
 installed. Publisher artwork keeps its own terms; see `artwork-notices/`.
 
@@ -85,3 +85,12 @@ artwork permission grant is asserted.
 Stop cancels release checks and active downloads. Downloads fail after 60 seconds
 without data. An official setup already running finishes safely; the next app
 will not start. Download progress is throttled to keep the interface responsive.
+
+## uLEAPP update notifications
+
+uLEAPP checks its own official GitHub releases at startup and once every 24 hours
+while open. A newer published release shows **Download update** for your platform
+and a **Release notes** link. Downloads open in your browser only when clicked;
+no automatic installation or replacement occurs. This is separate from LEAPP
+tool checks. Offline/rate-limit failures stay quiet and do not block normal use.
+Demo and automated smoke-test modes do not contact GitHub.

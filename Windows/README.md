@@ -14,7 +14,7 @@ Open `uLEAPP.exe` from the platform folder:
 
 Keep the complete folder together, including `LICENSE`, `licenses/` and
 `runtime-notices/`. The .NET runtime is included; no separate runtime install
-is needed. The app makes no downloads or application changes on launch.
+is needed. On launch, only uLEAPP release metadata is checked; no app packages are downloaded or installed.
 The actual seven LEAPP icons are embedded, so they appear before the apps are
 installed. Publisher artwork keeps its own terms; see `artwork-notices/`.
 

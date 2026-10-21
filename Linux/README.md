@@ -16,7 +16,7 @@ run `./Linux/uleapp` from the repository root. Use `--demo` to preview without c
 
 Choose **Check for updates**, then **Install** or **Update** beside a tool. **Launch**
 opens an installed tool. **Update installed apps** updates the managed group.
-Startup does not contact GitHub. **Stop** cancels checks, downloads and preparation; completed installations are kept. LAVA asks you to review and accept its separate
+Startup checks only uLEAPP release metadata on GitHub; no app packages are downloaded. **Stop** cancels checks, downloads and preparation; completed installations are kept. LAVA asks you to review and accept its separate
 license before installation. Other publishers' terms remain applicable; the
 archive includes uLEAPP's license and third-party notices.
 

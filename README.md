@@ -17,7 +17,7 @@ for the LEAPP maintainers. No upstream pull request is required to try these bui
 - Installs a missing tool individually, or installs missing tools together.
 - Checks official releases and updates installed tools together.
 - Shows progress, per-app results and readable logs. Current apps have no Update button.
-- Starts installation/update actions when you choose them; launch performs no downloads.
+- Starts installation/update actions when you choose them; launch checks only uLEAPP release metadata, without downloading app packages.
 - Uses the official Homebrew tap on Mac and official GitHub releases on Windows.
 - Verifies Windows download size and SHA-256 before installation; portable updates
   keep older versions and their files. Mac and Windows also provide Launch buttons.

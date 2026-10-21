@@ -1,4 +1,4 @@
-uLEAPP 0.3.1 self-check
+uLEAPP 0.3.2 self-check
 ok - seven supported tools; no extra applications
 ok - LAVA actual catalog icon is embedded and decodes without an installed app
 ok - ALEAPP actual catalog icon is embedded and decodes without an installed app
@@ -47,6 +47,16 @@ ok - GLEAPP official asset for arm64
 ok - GLEAPP official setup for existing installer-managed copies
 ok - GLEAPP official asset for x64
 ok - GLEAPP official setup for existing installer-managed copies
+ok - self-update chooses the official x64 package
+ok - self-update hides the installed version
+ok - self-update never offers a downgrade
+ok - self-update rejects an unofficial package URL
+ok - self-update skips preview-flagged releases
+ok - self-update chooses the official arm64 package
+ok - self-update hides the installed version
+ok - self-update never offers a downgrade
+ok - self-update rejects an unofficial package URL
+ok - self-update skips preview-flagged releases
 ok - native Windows ARM package selection
 ok - GLEAPP explicitly uses its published x64 fallback
 ok - LAVA uses its official interactive installer
@@ -117,5 +127,5 @@ ok - verified portable installation is recorded and discoverable
 ok - installation preserves previous versions and case files
 ok - installed app retains upstream license files
 ok - failed replacement keeps the working app and state
-uLEAPP self-check passed: 118 checks. No installed apps were changed.
+uLEAPP self-check passed: 128 checks. No installed apps were changed.
 
