@@ -40,3 +40,12 @@ root. Build the distributable with `python3 Linux/package.py`; it is a portable
 source archive, not a bundled Python executable. Python and Tk must be installed
 on the destination computer. GitHub Actions runs core tests and a GUI smoke check
 under a virtual Linux display, then saves the archive as a workflow artifact.
+
+## uLEAPP update notifications
+
+uLEAPP checks its own official GitHub releases at startup and once every 24 hours
+while open. A newer published release shows **Download update** for your platform
+and a **Release notes** link. Downloads open in your browser only when clicked;
+no automatic installation or replacement occurs. This is separate from LEAPP
+tool checks. Offline/rate-limit failures stay quiet and do not block normal use.
+Demo and automated smoke-test modes do not contact GitHub.

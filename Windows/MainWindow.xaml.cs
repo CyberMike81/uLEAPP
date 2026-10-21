@@ -17,6 +17,30 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private readonly InstallationStore store;
     private readonly ReleaseClient releases = new();
     private readonly bool demo;
+    private AppUpdate? appUpdate;
+    private System.Windows.Threading.DispatcherTimer? selfUpdateTimer;
+    public string AppUpdateLabel => appUpdate == null ? "" : "uLEAPP " + appUpdate.Version + " is available";
+    public Visibility AppUpdateVisibility => appUpdate == null ? Visibility.Collapsed : Visibility.Visible;
+    private async Task CheckSelfUpdateAsync()
+    {
+        try {
+            var update = await SelfUpdate.CheckAsync();
+            if (update != null) { appUpdate = update; Changed(nameof(AppUpdateLabel)); Changed(nameof(AppUpdateVisibility)); }
+        } catch { /* Optional checks must never interrupt LEAPP work. */ }
+    }
+    private void DownloadSelfUpdate(object sender, RoutedEventArgs e)
+    {
+        if (appUpdate != null) OpenUpdateLink(appUpdate.Download);
+    }
+    private void SelfUpdateNotes(object sender, RoutedEventArgs e)
+    {
+        if (appUpdate != null) OpenUpdateLink(appUpdate.Page);
+    }
+    private void OpenUpdateLink(Uri url)
+    {
+        try { Process.Start(new ProcessStartInfo(url.AbsoluteUri) { UseShellExecute = true }); }
+        catch (Exception error) { MessageBox.Show(this, error.Message, "Could not open your browser"); }
+    }
     private bool busy, stopping;
     private CancellationTokenSource? operationCancellation;
     private string title = "Your first LEAPP starts here", detail = "Install an app below, or install your missing apps together.", phase = "", log = "";
@@ -52,9 +76,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         this.demo = demo;
         store = new InstallationStore(demo ? Path.Combine(Path.GetTempPath(), "uLEAPP-demo-" + Guid.NewGuid().ToString("N")) : null);
         InitializeComponent(); DataContext = this;
+        Closed += (_, _) => selfUpdateTimer?.Stop();
         Height = Math.Min(900, SystemParameters.WorkArea.Height - 30);
         Loaded += async (_, _) =>
         {
+            if (!demo && selfUpdateTimer == null) {
+                _ = CheckSelfUpdateAsync();
+                selfUpdateTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromDays(1) };
+                selfUpdateTimer.Tick += async (_, _) => await CheckSelfUpdateAsync();
+                selfUpdateTimer.Start();
+            }
             if (demo)
             {
                 if (demoInstalled) foreach (var row in Rows) { row.Version = row.Tool.Id == "lava" ? "0.15.0" : "2026.4.3"; row.Status = "Installed"; }

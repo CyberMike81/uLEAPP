@@ -98,6 +98,13 @@
     <Grid Grid.Row="5">
       <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
       <StackPanel VerticalAlignment="Center">
+        <StackPanel Visibility="{Binding AppUpdateVisibility}" Margin="0,0,0,6">
+          <TextBlock Text="{Binding AppUpdateLabel}" Foreground="#8EE563" FontSize="11" />
+          <StackPanel Orientation="Horizontal">
+            <Button Content="Download update" Click="DownloadSelfUpdate" Padding="7,4" FontSize="10" />
+            <Button Content="Release notes" Click="SelfUpdateNotes" Padding="7,4" FontSize="10" Margin="5,0,0,0" />
+          </StackPanel>
+        </StackPanel>
         <Button Content="{Binding MissingLabel}" Click="InstallMissingClicked" IsEnabled="{Binding InstallMissingEnabled}" Background="Transparent" Foreground="#8EE563" FontSize="11" Padding="0,5" HorizontalAlignment="Left" Visibility="{Binding MissingVisibility}" />
         <Button Content="{Binding StopLabel}" Click="StopClicked" IsEnabled="{Binding StopEnabled}" Background="Transparent" Foreground="{StaticResource Muted}" FontSize="11" Padding="0,5" HorizontalAlignment="Left" Visibility="{Binding ProgressVisibility}" />
       </StackPanel>

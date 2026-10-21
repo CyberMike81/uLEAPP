@@ -53,6 +53,20 @@ struct LEAPPTool: Identifiable {
 enum UpdateMode: String { case check, update, install }
 
 final class UpdaterModel: ObservableObject {
+    @Published var appUpdate: AppUpdate?
+    private var selfUpdateTimer: Timer?
+    private var selfUpdateStarted = false
+    func startSelfUpdateChecks() {
+        guard !demo, !selfUpdateStarted else { return }
+        selfUpdateStarted = true
+        checkSelfUpdate()
+        selfUpdateTimer = Timer.scheduledTimer(withTimeInterval: 24 * 60 * 60, repeats: true) { [weak self] _ in self?.checkSelfUpdate() }
+    }
+    private func checkSelfUpdate() {
+        SelfUpdate.check { [weak self] update in
+            DispatchQueue.main.async { if let update = update { self?.appUpdate = update } }
+        }
+    }
     @Published var tools = LEAPPTool.all
     @Published var busy = false
     @Published var loading = false

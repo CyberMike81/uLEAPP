@@ -11,7 +11,7 @@ out.mkdir(exist_ok=True)
 name = f'uLEAPP-{VERSION}-Linux'
 archive = out / (name + '.tar.gz')
 with tarfile.open(archive, 'w:gz') as tar:
-    for filename in ['Linux/uleapp', 'Linux/uleapp.py', 'Linux/core.py', 'Linux/README.md']:
+    for filename in ['Linux/uleapp', 'Linux/uleapp.py', 'Linux/core.py', 'Linux/self_update.py', 'Linux/README.md']:
         tar.add(root/filename, arcname=name + '/' + Path(filename).name)
     for filename in ['LICENSE', 'THIRD-PARTY-NOTICES.md', 'licenses']:
         tar.add(root/filename, arcname=name + '/' + filename)

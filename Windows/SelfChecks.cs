@@ -59,6 +59,22 @@ public static class SelfChecks
             }
         }
 
+        foreach (string arch in new[] { "x64", "arm64" })
+        {
+            string package = $"uLEAPP-0.3.2-Windows-{(arch == "arm64" ? "ARM64" : "x64")}.zip";
+            string url = "https://github.com/CyberMike81/uLEAPP/releases/download/v0.3.2/" + package;
+            string json = JsonSerializer.Serialize(new { tag_name="v0.3.2", draft=false, prerelease=false,
+                html_url="https://github.com/CyberMike81/uLEAPP/releases/tag/v0.3.2",
+                assets=new[] { new { name=package, browser_download_url=url } } });
+            using var selfMetadata = JsonDocument.Parse(json);
+            Check(SelfUpdate.Select(selfMetadata.RootElement,"0.3.1",arch)?.Download.AbsoluteUri == url,"self-update chooses the official " + arch + " package");
+            Check(SelfUpdate.Select(selfMetadata.RootElement,"0.3.2",arch) == null,"self-update hides the installed version");
+            Check(SelfUpdate.Select(selfMetadata.RootElement,"0.4.0",arch) == null,"self-update never offers a downgrade");
+            using var unsafeMetadata = JsonDocument.Parse(json.Replace(url,"https://example.org/update.zip"));
+            Check(SelfUpdate.Select(unsafeMetadata.RootElement,"0.3.1",arch) == null,"self-update rejects an unofficial package URL");
+            using var previewMetadata = JsonDocument.Parse(json.Replace("\"prerelease\":false","\"prerelease\":true"));
+            Check(SelfUpdate.Select(previewMetadata.RootElement,"0.3.1",arch) == null,"self-update skips preview-flagged releases");
+        }
         var ileapp = Catalog.All.Single(t => t.Id == "ileapp");
         var gleapp = Catalog.All.Single(t => t.Id == "gleapp");
         var lava = Catalog.All.Single(t => t.Id == "lava");
