@@ -1,49 +1,59 @@
 {
-  "version": "0.2.2",
+  "version": "0.3.1",
   "publication": "community preview",
   "artifacts": {
     "macOS": {
-      "version": "0.2.2",
+      "version": "0.3.1",
       "executable": "macOS/uLEAPP.app/Contents/MacOS/uLEAPP",
-      "sha256": "01d13f5ee224d4025924b31971802ec34ad7904c4ab2ce9b5b5308da380bad4e",
+      "sha256": "7bc03509e0a2308bb678d8b445345b64a74fe2d824eb8318fe0be2fc6b5d0af3",
       "architectures": [
         "arm64",
         "x86_64"
       ]
     },
     "Windows-ARM64": {
-      "version": "0.2.2",
+      "version": "0.3.1",
       "executable": "Windows-ARM64/uLEAPP.exe",
-      "sha256": "423c82f5025a6463da932dcaed8d2cb0ef6bce197b363ca52db19cd75f66857d",
+      "sha256": "cc78d20bab7503170c4c5dae3df88b0bcf17df83ebb501f999c8525796bbcd1a",
       "build": {
-        "AppVersion": "0.2.2",
-        "Architecture": "win-arm64",
         "Sdk": "10.0.402",
+        "Architecture": "win-arm64",
         "RuntimePacks": [
           "runtimepack.Microsoft.NETCore.App.Runtime.win-arm64/10.0.13",
           "runtimepack.Microsoft.WindowsDesktop.App.Runtime.win-arm64/10.0.13"
-        ]
+        ],
+        "AppVersion": "0.3.1"
       },
-      "self_checks": 115,
-      "test_environment": "Windows 11 ARM64; x64 uses emulation"
+      "self_checks": 118,
+      "test_environment": "Native GitHub-hosted Windows 11 ARM64"
     },
     "Windows-x64": {
-      "version": "0.2.2",
+      "version": "0.3.1",
       "executable": "Windows-x64/uLEAPP.exe",
-      "sha256": "1a1561f92575048b41ce34369e93e1c32d40e6225208f407d94345ca0cceefd9",
+      "sha256": "7c24db214e1d3f9d6c83a99b8cbea0abfad90d8c3249af293860cdf0f7d82290",
       "build": {
-        "AppVersion": "0.2.2",
         "Architecture": "win-x64",
-        "Sdk": "10.0.402",
         "RuntimePacks": [
           "runtimepack.Microsoft.NETCore.App.Runtime.win-x64/10.0.13",
           "runtimepack.Microsoft.WindowsDesktop.App.Runtime.win-x64/10.0.13"
-        ]
+        ],
+        "AppVersion": "0.3.1",
+        "Sdk": "10.0.402"
       },
-      "self_checks": 115,
-      "test_environment": "Windows 11 ARM64; x64 uses emulation"
+      "self_checks": 118,
+      "test_environment": "Native GitHub-hosted Windows x64"
+    },
+    "Linux": {
+      "version": "0.3.1",
+      "distribution": "portable Python/Tk source",
+      "architectures": [
+        "x64",
+        "arm64"
+      ],
+      "core_tests": 15,
+      "archive_sha256": "16101f2b76dcdb4659bb76fa3862da341bcb2b653514f5e131dc58d4a1c5623b"
     }
   },
   "audited_updater_source_unchanged": false,
-  "macOS_launch_refresh": "2026-10-19; Homebrew worker unchanged; GUI Launch added"
+  "release_build_run": "https://github.com/CyberMike81/uLEAPP/actions/runs/39620846490"
 }

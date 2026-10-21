@@ -1,4 +1,4 @@
-uLEAPP 0.2.2 self-check
+uLEAPP 0.3.1 self-check
 ok - seven supported tools; no extra applications
 ok - LAVA actual catalog icon is embedded and decodes without an installed app
 ok - ALEAPP actual catalog icon is embedded and decodes without an installed app
@@ -108,11 +108,14 @@ ok - upstream license and notice files are preserved
 ok - official portable executable is found
 ok - extraction stays inside its new app folder
 ok - downloaded bytes are checked against size and SHA-256
+ok - large downloads throttle progress to ten reports per second plus completion
+ok - a stalled response body times out after headers
+ok - Stop cancels a response body already being read
 ok - a checksum mismatch blocks installation
 ok - download redirects outside GitHub are refused
 ok - verified portable installation is recorded and discoverable
 ok - installation preserves previous versions and case files
 ok - installed app retains upstream license files
 ok - failed replacement keeps the working app and state
-uLEAPP self-check passed: 115 checks. No installed apps were changed.
+uLEAPP self-check passed: 118 checks. No installed apps were changed.
 

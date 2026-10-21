@@ -72,14 +72,13 @@ Windows ARM64, with installation and update controls:
 - `macOS/` contains Swift source, the standalone updater, build tools and tests.
 - `Windows/` contains shared C#/WPF source, build tools and packaged self-checks.
 - The three platform folders contain the actual apps at their roots.
-- [VALIDATION.md](VALIDATION.md) records 79 Mac worker checks and 115 packaged
-  Windows checks per architecture, plus real Homebrew integration and limitations.
+- [VALIDATION.md](VALIDATION.md) records 79 Mac worker checks and 118 packaged
+  Windows checks per architecture on native GitHub runners, plus Homebrew integration and limitations.
 - [AUDIT-RESPONSE.md](AUDIT-RESPONSE.md) explains the fixes verified by review.
 
 Remaining work includes physical Intel Mac testing, the real Mac password-helper
 flow, the full final Windows GUI test matrix, a stalled-download timeout and more
-selective recovery of partially damaged settings. The x64 packaged tests ran under
-Windows ARM emulation; they do not replace an Intel/AMD hardware test.
+selective recovery of partially damaged settings. The automated package checks run on native x64 and ARM64 GitHub runners; full manual GUI coverage remains to be completed.
 
 Please use [Issues](https://github.com/CyberMike81/uLEAPP/issues) for bugs, usability
 feedback, suggestions or packaging questions. Maintainer feedback is welcome before

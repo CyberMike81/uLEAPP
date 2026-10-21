@@ -29,7 +29,7 @@ For a manually installed app, the **Add** action asks Homebrew to adopt a matchi
 
 ```sh
 bash tests/test_updater.sh
-uLEAPP.app/Contents/MacOS/uLEAPP --self-test
+uLEAPP.app/Contents/MacOS/uLEAPP --selfcheck
 open uLEAPP.app --args --demo
 open uLEAPP.app --args --demo-missing
 ```
@@ -42,11 +42,11 @@ The shell tests use a fake Homebrew and change no installed apps. Demo mode simu
 
 uLEAPP source and artwork are MIT licensed. See the repository's `LICENSE`, `THIRD-PARTY-NOTICES.md` and `licenses/`. The Mac package includes these notices; About links to them. Apple system frameworks and tools remain under Apple's platform terms.
 
-The local build uses an ad hoc signature. Public distribution still needs a release process, including Developer ID signing and notarization. No upstream PR, release or maintainer notification has been made.
+The local build uses an ad hoc signature. Public distribution still needs a release process, including Developer ID signing and notarization. Community Preview downloads are published on GitHub.
 
 ## Windows
 
-This build is for macOS. The separate Windows source is in `../Windows/`, with outputs in `../Windows-x64/` and `../Windows-ARM64/`. Windows uses verified official release downloads and preserves previous portable versions. The native ARM build needs user installation/UI testing before publication.
+This build is for macOS. The separate Windows source is in `../Windows/`, with outputs in `../Windows-x64/` and `../Windows-ARM64/`. Windows uses verified official release downloads and preserves previous portable versions. Windows x64 and ARM64 package checks run on native GitHub runners; manual installation/UI coverage remains in VALIDATION.md.
 
 Versions and update decisions follow Homebrew’s cask records. A manually replaced
 app bundle may report a different version from the one recorded by Homebrew.
