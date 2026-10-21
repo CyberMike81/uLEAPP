@@ -81,3 +81,7 @@ This diagnostic reads registration only and makes no settings or app changes.
 Both Windows preview builds are unsigned. Maintainer testing and feedback are welcome.
 The LAVA identifying icon retains its separate EULA and provenance; no standalone
 artwork permission grant is asserted.
+
+Stop cancels release checks and active downloads. Downloads fail after 60 seconds
+without data. An official setup already running finishes safely; the next app
+will not start. Download progress is throttled to keep the interface responsive.

@@ -33,23 +33,21 @@ struct LEAPPTool: Identifiable {
         default: return "Not checked"
         }
     }
-    var existingBundlePath: String? {
+    private(set) var existingBundlePath: String?
+    private(set) var icon: NSImage?
+    mutating func refreshPresentation() {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
-        return ["/Applications/\(bundle).app", "\(home)/Applications/\(bundle).app"]
+        existingBundlePath = ["/Applications/\(bundle).app", "\(home)/Applications/\(bundle).app"]
             .first { FileManager.default.fileExists(atPath: $0) }
-    }
-    var icon: NSImage? {
-        let home = FileManager.default.homeDirectoryForCurrentUser.path
-        for base in ["/Applications", "\(home)/Applications"] {
-            let path = "\(base)/\(bundle).app"
-            if FileManager.default.fileExists(atPath: path) {
-                return NSWorkspace.shared.icon(forFile: path)
-            }
+        if let path = existingBundlePath {
+            icon = NSWorkspace.shared.icon(forFile: path)
+        } else {
+            let iconName = id.replacingOccurrences(of: "-gui", with: "")
+            icon = Bundle.main.url(forResource: iconName, withExtension: "png", subdirectory: "tool-icons")
+                .flatMap { NSImage(contentsOf: $0) }
         }
-        let iconName = id.replacingOccurrences(of: "-gui", with: "")
-        return Bundle.main.url(forResource: iconName, withExtension: "png", subdirectory: "tool-icons")
-            .flatMap { NSImage(contentsOf: $0) }
     }
+
 }
 
 enum UpdateMode: String { case check, update, install }
@@ -69,7 +67,11 @@ final class UpdaterModel: ObservableObject {
     @Published var activeIDs = Set(LEAPPTool.all.map { $0.id })
     let demo: Bool
     let demoMissing: Bool
-    private var buffer = ""
+    private var buffer = Data()
+    private var pendingCarriageReturn = false
+    private var pendingLog = ""
+    private var logFlush: DispatchWorkItem?
+    private let discovery = DiscoveryProcess()
     private var currentMode: UpdateMode = .check
     private var cancelURL: URL?
     private var logHandle: FileHandle?
@@ -83,7 +85,13 @@ final class UpdaterModel: ObservableObject {
     var completedCount: Int { tools.filter { activeIDs.contains($0.id) && ["installed", "current", "available", "failed", "skipped", "notInstalled", "unmanaged"].contains($0.status) }.count }
     var progress: Double { Double(completedCount) / Double(max(1, progressTotal)) }
 
-    init(demo: Bool = false, demoMissing: Bool = false) { self.demo = demo; self.demoMissing = demoMissing }
+    init(demo: Bool = false, demoMissing: Bool = false) {
+        self.demo = demo; self.demoMissing = demoMissing
+        refreshPresentation()
+    }
+    func refreshPresentation() {
+        for index in tools.indices { tools[index].refreshPresentation() }
+    }
     static func brewPath() -> String? {
         let paths = ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"]
             + (ProcessInfo.processInfo.environment["PATH"] ?? "").split(separator: ":").map { "\($0)/brew" }
@@ -114,6 +122,7 @@ final class UpdaterModel: ObservableObject {
     }
     func loadInstalled() {
         guard !busy, !loading else { return }
+        refreshPresentation()
         if demo {
             for index in tools.indices {
                 tools[index].version = demoMissing ? "" : (index == 0 ? "0.15.0" : "2026.4.3")
@@ -129,6 +138,9 @@ final class UpdaterModel: ObservableObject {
             return
         }
         loading = true
+        stopRequested = false
+        discovery.reset()
+        let discovery = self.discovery
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let process = Process()
             let pipe = Pipe()
@@ -141,7 +153,7 @@ final class UpdaterModel: ObservableObject {
             process.standardError = pipe
             process.standardInput = FileHandle.nullDevice
             do {
-                try process.run()
+                try discovery.run(process)
                 let data = pipe.fileHandleForReading.readDataToEndOfFile()
                 process.waitUntilExit()
                 let output = String(decoding: data, as: UTF8.self)
@@ -149,6 +161,11 @@ final class UpdaterModel: ObservableObject {
                 DispatchQueue.main.async {
                     guard let self = self else { return }
                     self.loading = false
+                    if self.stopRequested {
+                        self.title = "Stopped safely"
+                        self.subtitle = "Installed-app discovery was cancelled."
+                        return
+                    }
                     if succeeded { self.applyInstalled(output) }
                     else {
                         self.title = "Could not read your installed apps"
@@ -166,6 +183,7 @@ final class UpdaterModel: ObservableObject {
         }
     }
     func applyInstalled(_ output: String) {
+        refreshPresentation()
         var versions: [String: String] = [:]
         for line in output.split(separator: "\n") {
             let parts = line.split(whereSeparator: { $0.isWhitespace })
@@ -206,8 +224,10 @@ final class UpdaterModel: ObservableObject {
         title = mode == .check ? "Looking for the latest LEAPPs" : (mode == .install ? "Making room for your next LEAPP" : "Keeping your LEAPPs current")
         subtitle = mode == .check ? "Checking all seven tools for new releases." : (mode == .install ? "Installing the requested apps through the official Homebrew tap." : "Please keep your LEAPP apps closed while updating.")
         phase = "Preparing Homebrew"
+        flushLog()
         log = ""
-        buffer = ""
+        buffer.removeAll(keepingCapacity: true)
+        pendingCarriageReturn = false
         for index in tools.indices where activeIDs.contains(tools[index].id) { tools[index].status = "waiting" }
         if demo { runDemo(mode); return }
         guard let worker = Bundle.main.path(forResource: "LEAPP Updater", ofType: "command"),
@@ -261,19 +281,39 @@ final class UpdaterModel: ObservableObject {
         }
     }
     func receive(_ data: Data) {
-        buffer += String(decoding: data, as: UTF8.self).replacingOccurrences(of: "\r", with: "\n")
-        while let newline = buffer.firstIndex(of: "\n") {
-            let line = String(buffer[..<newline])
-            buffer.removeSubrange(...newline)
-            handleLine(line)
+        // Preserve partial UTF-8 and CRLF across reads. A bare CR replaces the
+        // current progress line instead of adding thousands of log entries.
+        for byte in data {
+            if pendingCarriageReturn {
+                pendingCarriageReturn = false
+                if byte != 10 { buffer.removeAll(keepingCapacity: true) }
+            }
+            if byte == 13 { pendingCarriageReturn = true }
+            else if byte == 10 {
+                handleLine(String(decoding: buffer, as: UTF8.self))
+                buffer.removeAll(keepingCapacity: true)
+            } else {
+                buffer.append(byte)
+                if buffer.count > 100_000 { buffer.removeFirst(buffer.count - 100_000) }
+            }
         }
+    }
+    func flushLog() {
+        logFlush?.cancel()
+        logFlush = nil
+        guard !pendingLog.isEmpty else { return }
+        log = String((log + pendingLog).suffix(100_000))
+        pendingLog = ""
     }
     func handleLine(_ line: String) {
         let fields = line.components(separatedBy: "\t")
         if fields.count >= 5 && fields[0] == "ULEAPP" {
             if fields[1] == "phase" { phase = fields[4] }
             if let index = tools.firstIndex(where: { $0.id == fields[2] }) {
-                if fields[1] == "version" { tools[index].version = fields[4] }
+                if fields[1] == "version" {
+                    tools[index].version = fields[4]
+                    tools[index].refreshPresentation()
+                }
                 if fields[1] == "app" {
                     tools[index].status = fields[3]
                     if fields[3] == "skipped" && tools[index].version.isEmpty {
@@ -286,13 +326,24 @@ final class UpdaterModel: ObservableObject {
             }
         } else {
             let entry = line + "\n"
-            log += entry
-            if log.count > 100_000 { log = String(log.suffix(100_000)) }
+            pendingLog += entry
+            if pendingLog.count > 100_000 { pendingLog = String(pendingLog.suffix(100_000)) }
+            if logFlush == nil {
+                let work = DispatchWorkItem { [weak self] in self?.flushLog() }
+                logFlush = work
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: work)
+            }
             if let bytes = entry.data(using: .utf8) { try? logHandle?.write(contentsOf: bytes) }
         }
     }
     func requestStop() {
-        guard busy, !stopRequested else { return }
+        guard (busy || loading), !stopRequested else { return }
+        if loading {
+            stopRequested = true
+            discovery.cancel()
+            subtitle = "Stopping installed-app discovery."
+            return
+        }
         if demo { stopRequested = true; subtitle = "Will stop after the current app finishes."; return }
         guard let url = cancelURL else { return }
         do {
@@ -302,7 +353,13 @@ final class UpdaterModel: ObservableObject {
         } catch { log += "Could not request a stop: \(error.localizedDescription)\n" }
     }
     func finish(_ status: Int32, launchError: String? = nil) {
-        if !buffer.isEmpty { handleLine(buffer); buffer = "" }
+        if !buffer.isEmpty {
+            handleLine(String(decoding: buffer, as: UTF8.self))
+            buffer.removeAll(keepingCapacity: true)
+        }
+        pendingCarriageReturn = false
+        flushLog()
+        refreshPresentation()
         try? logHandle?.close()
         logHandle = nil
         busy = false
@@ -344,5 +401,37 @@ final class UpdaterModel: ObservableObject {
             self.log += "\(self.tools[index].name): \(self.tools[index].statusLabel) (demo)\n"
             self.runDemo(mode, index: index + 1)
         }
+    }
+}
+
+// Cancellation is restricted to read-only discovery. Homebrew installations
+// continue to a safe boundary through the worker's cancellation file.
+final class DiscoveryProcess {
+    private let lock = NSLock()
+    private var process: Process?
+    private var cancelled = false
+    private var deadline: DispatchWorkItem?
+    func reset() {
+        lock.lock(); defer { lock.unlock() }
+        deadline?.cancel(); deadline = nil
+        cancelled = false; process = nil
+    }
+    func run(_ value: Process) throws {
+        lock.lock(); defer { lock.unlock() }
+        if cancelled { throw CocoaError(.userCancelled) }
+        try value.run()
+        process = value
+        let timeout = DispatchWorkItem { [weak self, weak value] in
+            guard let self = self, let value = value else { return }
+            self.lock.lock(); defer { self.lock.unlock() }
+            if self.process === value, value.isRunning { value.terminate() }
+        }
+        deadline = timeout
+        DispatchQueue.global().asyncAfter(deadline: .now() + 60, execute: timeout)
+    }
+    func cancel() {
+        lock.lock(); defer { lock.unlock() }
+        cancelled = true
+        if let process = process, process.isRunning { process.terminate() }
     }
 }

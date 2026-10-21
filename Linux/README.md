@@ -16,7 +16,7 @@ run `./Linux/uleapp` from the repository root. Use `--demo` to preview without c
 
 Choose **Check for updates**, then **Install** or **Update** beside a tool. **Launch**
 opens an installed tool. **Update installed apps** updates the managed group.
-Startup does not contact GitHub. LAVA asks you to review and accept its separate
+Startup does not contact GitHub. **Stop** cancels checks, downloads and preparation; completed installations are kept. LAVA asks you to review and accept its separate
 license before installation. Other publishers' terms remain applicable; the
 archive includes uLEAPP's license and third-party notices.
 
@@ -31,7 +31,7 @@ no package for that architecture. GLEAPP currently publishes only x64 Linux,
 requires glibc 2.39+ (Ubuntu 24.04+), and uses a tar archive. The other six tools use
 AppImages. AppImages generally need FUSE installed by your distribution; uLEAPP
 reports early launch failures and points to the app's log. No x64 emulation is
-attempted on ARM64. GitHub rate limits and network errors appear in Details.
+attempted on ARM64. GitHub rate limits and network errors appear in Details. Downloads abort after 60 seconds without data (socket errors may occur sooner).
 The interface needs a Linux graphical desktop. The preview has automated tests;
 real LEAPP launches on Linux hardware remain to be verified.
 

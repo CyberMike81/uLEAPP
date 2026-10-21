@@ -200,8 +200,8 @@ struct UpdaterView: View {
                 }
             }
             HStack(spacing: 10) {
-                if model.busy {
-                    Button(model.stopRequested ? "Stopping after this operation…" : "Stop after this operation") { model.requestStop() }
+                if model.busy || model.loading {
+                    Button(model.stopRequested ? "Stopping…" : (model.loading ? "Stop" : "Stop after this operation")) { model.requestStop() }
                         .buttonStyle(.plain).font(.system(size: 11)).foregroundStyle(Palette.muted)
                         .disabled(model.stopRequested)
                 } else if model.missingCount > 0 && !model.loading {
@@ -336,6 +336,7 @@ if CommandLine.arguments.contains("--self-test") || CommandLine.arguments.contai
     model.handleLine("ULEAPP\tversion\tlava\t\t0.16.0")
     precondition(model.tools[0].version == "0.16.0")
     model.handleLine("A useful Homebrew error")
+    model.flushLog()
     precondition(model.log.contains("A useful Homebrew error"))
     precondition(!model.log.contains("ULEAPP\t"))
     model.handleLine("ULEAPP\tapp\taleapp-gui\tinstalling\tInstalling")
@@ -351,6 +352,15 @@ if CommandLine.arguments.contains("--self-test") || CommandLine.arguments.contai
     precondition(model.allInstalledCurrent)
     model.handleLine("ULEAPP\tapp\tileapp-gui\tavailable\tUpdate available")
     precondition(!model.allInstalledCurrent)
+    model.log = ""
+    model.receive(Data("old progress\rnew progress\r".utf8))
+    model.receive(Data("final line\r".utf8))
+    model.receive(Data("\n".utf8))
+    let unicode = Array("café\n".utf8)
+    model.receive(Data(unicode.dropLast(2)))
+    model.receive(Data(unicode.suffix(2)))
+    model.flushLog()
+    precondition(model.log == "final line\ncafé\n", "CR progress and split UTF-8 must not inflate or corrupt logs")
     print("uLEAPP self-check passed: installed-app detection and GUI status events.")
     exit(0)
 }

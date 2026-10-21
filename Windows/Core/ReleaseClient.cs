@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -10,6 +11,7 @@ namespace uLEAPP;
 public sealed class ReleaseClient : IDisposable
 {
     private readonly HttpClient client;
+    public TimeSpan ReadIdleTimeout { get; init; } = TimeSpan.FromSeconds(60);
     public ReleaseClient(HttpMessageHandler? handler = null)
     {
         client = new HttpClient(handler ?? new HttpClientHandler { AllowAutoRedirect = false }) { Timeout = TimeSpan.FromMinutes(15) };
@@ -19,11 +21,11 @@ public sealed class ReleaseClient : IDisposable
 
     public async Task<Release> LatestAsync(Tool tool, string architecture, bool installerManaged, CancellationToken cancellation)
     {
-        using var response = await client.GetAsync($"https://api.github.com/repos/{tool.Repository}/releases/latest", cancellation);
+        using var response = await client.GetAsync($"https://api.github.com/repos/{tool.Repository}/releases/latest", cancellation).ConfigureAwait(false);
         if (response.StatusCode == HttpStatusCode.Forbidden || (int)response.StatusCode == 429)
             throw new IOException("GitHub's download limit was reached. Please try again later.");
         response.EnsureSuccessStatusCode();
-        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellation));
+        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellation).ConfigureAwait(false));
         return Select(tool, json.RootElement, architecture, installerManaged);
     }
 
@@ -92,7 +94,7 @@ public sealed class ReleaseClient : IDisposable
         {
             for (int hop = 0; hop < 6; hop++)
             {
-                response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellation);
+                response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellation).ConfigureAwait(false);
                 if ((int)response.StatusCode is >= 300 and <= 399)
                 {
                     var location = response.Headers.Location ?? throw new IOException("The download redirect is missing.");
@@ -108,19 +110,30 @@ public sealed class ReleaseClient : IDisposable
             if (response == null || !response.IsSuccessStatusCode) throw new IOException("Too many download redirects.");
             if (response.Content.Headers.ContentLength is long expected && expected != asset.Size)
                 throw new InvalidDataException("The package size differs from the publisher's metadata.");
-            await using var input = await response.Content.ReadAsStreamAsync(cancellation);
+            await using var input = await response.Content.ReadAsStreamAsync(cancellation).ConfigureAwait(false);
             await using var output = new FileStream(destination, FileMode.CreateNew, FileAccess.Write, FileShare.None, 131072, true);
             byte[] buffer = new byte[131072];
             long total = 0;
             using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+            var progressClock = Stopwatch.StartNew();
             int count;
-            while ((count = await input.ReadAsync(buffer, cancellation)) > 0)
+            while (true)
             {
+                using var idle = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
+                idle.CancelAfter(ReadIdleTimeout);
+                try { count = await input.ReadAsync(buffer.AsMemory(), idle.Token).ConfigureAwait(false); }
+                catch (OperationCanceledException) when (!cancellation.IsCancellationRequested)
+                { throw new IOException("No download data arrived for 60 seconds. Please try again."); }
+                if (count == 0) break;
                 total += count;
                 if (total > asset.Size) throw new InvalidDataException("The downloaded package is larger than expected.");
                 hash.AppendData(buffer, 0, count);
-                await output.WriteAsync(buffer.AsMemory(0, count), cancellation);
-                progress((double)total / asset.Size);
+                await output.WriteAsync(buffer.AsMemory(0, count), cancellation).ConfigureAwait(false);
+                if (progressClock.ElapsedMilliseconds >= 100 || total == asset.Size)
+                {
+                    progress((double)total / asset.Size);
+                    progressClock.Restart();
+                }
             }
             if (total != asset.Size || !Convert.ToHexString(hash.GetHashAndReset()).Equals(asset.Sha256, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidDataException("The package checksum did not match. Nothing will be installed.");

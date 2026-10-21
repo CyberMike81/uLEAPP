@@ -118,6 +118,22 @@ public static class SelfChecks
             using var client = new ReleaseClient(new FakeHandler(data));
             await client.DownloadAsync(asset,Path.Combine(scratch,"download.zip"), _ => { },CancellationToken.None);
             Check(File.ReadAllBytes(Path.Combine(scratch,"download.zip")).SequenceEqual(data),"downloaded bytes are checked against size and SHA-256");
+            using (var stalled = new ReleaseClient(new StalledHandler()) { ReadIdleTimeout = TimeSpan.FromMilliseconds(30) })
+            {
+                try {
+                    await stalled.DownloadAsync(asset, Path.Combine(scratch,"stalled.zip"), _ => { }, CancellationToken.None);
+                    throw new Exception("A stalled body was accepted");
+                } catch (IOException) { Check(true,"a stalled response body times out after headers"); }
+            }
+            using (var stalled = new ReleaseClient(new StalledHandler()))
+            using (var stop = new CancellationTokenSource(TimeSpan.FromMilliseconds(30)))
+            {
+                try {
+                    await stalled.DownloadAsync(asset, Path.Combine(scratch,"stopped.zip"), _ => { }, stop.Token);
+                    throw new Exception("A stopped body was accepted");
+                } catch (OperationCanceledException) { Check(true,"Stop cancels a response body already being read"); }
+            }
+
             try
             {
                 await client.DownloadAsync(asset with { Sha256 = new string('0',64) },Path.Combine(scratch,"bad.zip"), _ => { },CancellationToken.None);
@@ -210,6 +226,29 @@ public static class SelfChecks
     {
         using var zip=ZipFile.Open(path,ZipArchiveMode.Create);
         foreach (string name in names) { using var writer=new StreamWriter(zip.CreateEntry(name).Open()); writer.Write("test content"); }
+    }
+    private sealed class StalledHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(new StalledStream()) });
+    }
+    private sealed class StalledStream : Stream
+    {
+        public override bool CanRead => true;
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
+        public override long Length => throw new NotSupportedException();
+        public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
+            return 0;
+        }
+        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+        public override void Flush() => throw new NotSupportedException();
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
     }
     private sealed class FakeHandler(byte[] data, bool redirect = false) : HttpMessageHandler
     {
