@@ -1,4 +1,4 @@
-# uLEAPP for Linux · 0.3.1 preview
+# uLEAPP for Linux · 0.3.2 preview
 
 Install, update and launch the seven LEAPP apps from their official GitHub releases.
 This Linux preview uses Python 3.10+ and Tk; no Python packages from pip are needed.

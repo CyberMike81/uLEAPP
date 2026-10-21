@@ -19,7 +19,7 @@ import tempfile
 from urllib.parse import quote, urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
-VERSION = '0.3.1'
+VERSION = '0.3.2'
 MAX_BYTES = 2 * 1024**3
 
 @dataclass(frozen=True)

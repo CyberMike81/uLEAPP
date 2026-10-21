@@ -1,21 +1,16 @@
-# uLEAPP 0.3.1 — Community Preview
+# uLEAPP 0.3.2 — Community Preview
 
-Bug fixes across macOS, Windows and Linux:
+- Automatically checks for new uLEAPP releases at startup and once every 24 hours while open.
+- Shows **Download update** for your platform and a **Release notes** link when a newer version is available.
+- Checks run separately from LEAPP tool updates. Offline and rate-limit errors stay quiet; no automatic installation occurs.
+- Includes the download responsiveness, Stop, timeout and Mac performance fixes from 0.3.1.
 
-- Keeps the Windows interface responsive during large downloads and reduces excessive progress updates.
-- Stop now cancels active downloads and release checks on Windows and Linux. Stalled downloads time out.
-- Improves Mac responsiveness by caching app icons and batching progress logs. Installed-app discovery can now be stopped.
-- Includes Launch controls for installed apps on all three platforms.
+Download and extract the complete platform package. Windows includes the .NET
+runtime. macOS supports Apple silicon and Intel, requires macOS 13+ and Homebrew,
+and is ad hoc signed without notarization. Windows builds are unsigned. Linux
+requires Python 3.10+ and Tk; AppImages require FUSE, and GLEAPP is currently x64-only
+with glibc 2.39+. Real WSL compatibility remains unverified.
 
-Download the matching platform package and extract the complete folder. Windows
-packages include the .NET runtime. The macOS package supports Apple silicon and
-Intel and needs macOS 13+ and Homebrew. Linux needs Python 3.10+ and Tk; GLEAPP is
-currently x64-only and requires glibc 2.39+. AppImages require FUSE support.
-The full preview bundle includes all platform packages and source.
-SHA256SUMS-0.3.1.txt verifies the release downloads.
-
-An official installer or Homebrew installation already running finishes at a safe
-boundary when Stop is requested. Windows builds are unsigned; the Mac app is ad
-hoc signed and is not notarized. Linux/WSL real-app graphical launches remain
-manual validation. Managed LEAPP apps and publisher icons retain their own terms;
-LAVA is separately licensed freeware. No publisher endorsement is implied.
+SHA256SUMS-0.3.2.txt covers all downloads. The full preview bundle contains all
+platform builds and source. Existing 0.3.1 installations need this one manual
+update to gain the new automatic check and Download update button.
