@@ -1,27 +1,21 @@
-# uLEAPP 0.2.2 community preview
+# uLEAPP 0.3.1 — Community Preview
 
-Desktop installer/updater for LAVA, ALEAPP, iLEAPP, RLEAPP, VLEAPP, DLEAPP and
-GLEAPP, with Mac, Windows ARM64 and Windows x64 builds. It began as a Homebrew
-script and now provides a native GUI for checking versions, installing missing
-apps and updating installed tools with visible status and logs.
+Bug fixes across macOS, Windows and Linux:
 
-The 0.2.0 audit's five confirmed defects are fixed. The independent 0.2.2
-re-audit confirmed those fixes and found no new confirmed defects. The Homebrew worker is unchanged from the audited 0.2.2 review archive. The
-October 19 refresh adds Launch buttons to the Mac interface, matching Windows.
-Launch opens installed apps from system or personal Applications folders and is
-disabled during updates and installations. The universal Mac app was rebuilt
-and its package checks passed; launching RLEAPP was verified interactively.
+- Keeps the Windows interface responsive during large downloads and reduces excessive progress updates.
+- Stop now cancels active downloads and release checks on Windows and Linux. Stalled downloads time out.
+- Improves Mac responsiveness by caching app icons and batching progress logs. Installed-app discovery can now be stopped.
+- Includes Launch controls for installed apps on all three platforms.
 
-Validation: 79 Mac worker checks; 115 packaged checks for each Windows build on
-Windows 11 ARM (x64 uses emulation); Mac native/Rosetta package checks and real
-Homebrew command-semantics checks. See VALIDATION.md for manual coverage and
-optional improvements still pending. Windows builds are unsigned; Mac uses an
-ad hoc signature, without notarization.
+Download the matching platform package and extract the complete folder. Windows
+packages include the .NET runtime. The macOS package supports Apple silicon and
+Intel and needs macOS 13+ and Homebrew. Linux needs Python 3.10+ and Tk; GLEAPP is
+currently x64-only and requires glibc 2.39+. AppImages require FUSE support.
+The full preview bundle includes all platform packages and source.
+SHA256SUMS-0.3.1.txt verifies the release downloads.
 
-The LAVA 0.15.0 x64-on-ARM selection is version-specific and does not prevent
-new releases from being discovered automatically. Publisher icons retain their
-separate terms; full notices and provenance are included.
-
-Please try the matching ZIP and share bugs, usability suggestions or packaging
-feedback. This preview is offered for Alexis and the community to evaluate;
-LEAPP collection/website inclusion and endorsement remain the maintainers' decision.
+An official installer or Homebrew installation already running finishes at a safe
+boundary when Stop is requested. Windows builds are unsigned; the Mac app is ad
+hoc signed and is not notarized. Linux/WSL real-app graphical launches remain
+manual validation. Managed LEAPP apps and publisher icons retain their own terms;
+LAVA is separately licensed freeware. No publisher endorsement is implied.

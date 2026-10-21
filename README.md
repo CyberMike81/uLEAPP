@@ -6,7 +6,7 @@ uLEAPP gives the LEAPP family one desktop interface for installing missing apps,
 checking versions and updating installed apps. It started as a script to run the
 official Homebrew commands and grew into native Mac and Windows GUI apps.
 
-**Community preview 0.2.2 — available for testing and feedback.** This is a
+**Community preview 0.3.1 — available for testing and feedback.** This is a
 community project; publisher endorsement and inclusion on leapps.org are decisions
 for the LEAPP maintainers. No upstream pull request is required to try these builds.
 
@@ -20,21 +20,21 @@ for the LEAPP maintainers. No upstream pull request is required to try these bui
 - Starts installation/update actions when you choose them; launch performs no downloads.
 - Uses the official Homebrew tap on Mac and official GitHub releases on Windows.
 - Verifies Windows download size and SHA-256 before installation; portable updates
-  keep older versions and their files. Windows also provides a Launch button.
+  keep older versions and their files. Mac and Windows also provide Launch buttons.
 
 Batch LEAPP and GLEAPP Map Downloader are not included. No LEAPP application
 executables or installers are bundled with uLEAPP.
 
 ## Download and run
 
-Download the matching ZIP from the [0.2.2 preview release](https://github.com/CyberMike81/uLEAPP/releases/tag/v0.2.2),
+Download the matching ZIP from the [0.3.1 preview release](https://github.com/CyberMike81/uLEAPP/releases/tag/v0.3.1),
 extract the complete folder, and open its app. Keep the included license/notices files.
 
 | Platform | Download / repository folder | Requirements |
 | --- | --- | --- |
-| macOS | `uLEAPP-0.2.2-macOS.zip` / `macOS/uLEAPP.app` | macOS 13+; Homebrew installed; universal Apple silicon/Intel build |
-| Windows ARM64 | `uLEAPP-0.2.2-Windows-ARM64.zip` / `Windows-ARM64/uLEAPP.exe` | Windows 11 ARM; .NET runtime included |
-| Windows x64 | `uLEAPP-0.2.2-Windows-x64.zip` / `Windows-x64/uLEAPP.exe` | Intel/AMD Windows; .NET runtime included |
+| macOS | `uLEAPP-0.3.1-macOS.zip` / `macOS/uLEAPP.app` | macOS 13+; Homebrew installed; universal Apple silicon/Intel build |
+| Windows ARM64 | `uLEAPP-0.3.1-Windows-ARM64.zip` / `Windows-ARM64/uLEAPP.exe` | Windows 11 ARM; .NET runtime included |
+| Windows x64 | `uLEAPP-0.3.1-Windows-x64.zip` / `Windows-x64/uLEAPP.exe` | Intel/AMD Windows; .NET runtime included |
 
 Close LEAPP tools before updating. Mac can adopt matching manually installed apps
 into Homebrew without forcing replacement. Windows setup-installed tools keep
@@ -55,17 +55,17 @@ logs and build instructions.
 A Linux desktop preview is available in [`Linux/`](Linux/README.md), with Install,
 Update and Launch controls. It uses Python 3.10+ and Tk and manages official Linux
 packages in your user folder. GLEAPP is currently x64-only on Linux.
-Build the portable archive with `python3 Linux/package.py`.
+Download `uLEAPP-0.3.1-Linux.tar.gz` from the [Community Preview release](https://github.com/CyberMike81/uLEAPP/releases/tag/v0.3.1). Requires Python 3.10+ and Tk.
 
 ## Screenshots
 
 macOS with all seven tools detected:
 
-![uLEAPP on macOS](docs/screenshots/macOS-0.2.2.png)
+![uLEAPP on macOS](docs/screenshots/macOS-0.3.1.png)
 
 Windows ARM64, with installation and update controls:
 
-![uLEAPP on Windows ARM64](docs/screenshots/Windows-ARM64-0.2.2.png)
+![uLEAPP on Windows ARM64](docs/screenshots/Windows-ARM64-0.3.1.png)
 
 ## Source, testing and feedback
 

@@ -1,0 +1,36 @@
+name: Community preview builds
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+            folder: Windows-x64
+          - os: windows-11-arm
+            rid: win-arm64
+            folder: Windows-ARM64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build and check fresh package
+        shell: pwsh
+        run: |
+          Remove-Item '${{ matrix.folder }}' -Recurse -Force
+          ./Windows/tools/Build.ps1 -RuntimeIdentifiers '${{ matrix.rid }}'
+      - name: Archive complete package
+        shell: pwsh
+        run: |
+          New-Item release -ItemType Directory -Force
+          Compress-Archive -Path '${{ matrix.folder }}' -DestinationPath 'release/uLEAPP-0.3.1-${{ matrix.folder }}.zip'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uLEAPP-${{ matrix.folder }}
+          path: release/*

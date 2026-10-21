@@ -19,7 +19,7 @@ public static class Catalog
         new("gleapp", "GLEAPP", "Image & video triage", "abrignoni/GLEAPP")
     ];
     public static string Architecture => RuntimeInformation.OSArchitecture == System.Runtime.InteropServices.Architecture.Arm64 ? "arm64" : "x64";
-    public static string Version => "0.2.2";
+    public static string Version => "0.3.1";
 }
 
 public sealed class ToolRow(Tool tool) : INotifyPropertyChanged
