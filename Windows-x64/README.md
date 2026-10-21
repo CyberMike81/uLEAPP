@@ -41,7 +41,7 @@ Portable updates use a new version folder and keep older versions and files.
 Use **Launch** beside an app to open the selected version. Setup-installed
 copies update through the publisher's interactive setup. A failed download
 or checksum blocks installation; other requested apps can still finish.
-**Stop after this app** waits for the current operation to finish.
+**Stop** cancels checks and active downloads. An official installer already running finishes safely.
 
 Logs are under `%LOCALAPPDATA%\uLEAPP\Logs`; state is in that app's
 `settings.json`. No account credentials or telemetry SDK are used by uLEAPP.

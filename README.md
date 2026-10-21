@@ -77,8 +77,7 @@ Windows ARM64, with installation and update controls:
 - [AUDIT-RESPONSE.md](AUDIT-RESPONSE.md) explains the fixes verified by review.
 
 Remaining work includes physical Intel Mac testing, the real Mac password-helper
-flow, the full final Windows GUI test matrix, a stalled-download timeout and more
-selective recovery of partially damaged settings. The automated package checks run on native x64 and ARM64 GitHub runners; full manual GUI coverage remains to be completed.
+flow, the full final Windows GUI test matrix, and more selective recovery of partially damaged settings. The automated package checks run on native x64 and ARM64 GitHub runners; full manual GUI coverage remains to be completed.
 
 Please use [Issues](https://github.com/CyberMike81/uLEAPP/issues) for bugs, usability
 feedback, suggestions or packaging questions. Maintainer feedback is welcome before
