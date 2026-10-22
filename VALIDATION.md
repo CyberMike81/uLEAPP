@@ -1,15 +1,15 @@
-# uLEAPP 0.3.2 validation
+# uLEAPP 0.3.3 validation
 
-Prepared October 21, 2026 for the Community Preview bug-fix release.
+Prepared October 22, 2026 for the Community Preview bug-fix release.
 
 | Platform | Completed checks | Remaining manual coverage |
 | --- | --- | --- |
 | macOS 13+ | Universal Apple silicon/Intel build; native and Rosetta self-checks; archive extraction, resources, version and ad hoc signature verified; 79 Homebrew worker tests | Physical Intel Mac on macOS 13; clean installation; real password-helper flow and cancellation |
 | Windows x64 | Fresh build and 128 packaged self-checks on a native GitHub x64 runner | Full manual installer/portable GUI flow on a user computer |
 | Windows ARM64 | Fresh build and 128 packaged self-checks on a native Windows 11 ARM GitHub runner | Full manual installer/portable GUI flow on a user computer |
-| Linux x64/ARM64 | 19 core tests; interface and extracted-package smoke checks on Ubuntu 24.04 runners; official GLEAPP archive checksum and layout checked | Actual LEAPP graphical launches on Linux hardware; WSL compatibility |
+| Linux x64/ARM64 | 23 core tests; interface and extracted-package smoke checks on Ubuntu 24.04 runners; official GLEAPP archive checksum and layout checked | Actual LEAPP graphical launches on Linux hardware; WSL compatibility |
 
-Windows release builds: https://github.com/CyberMike81/uLEAPP/actions/runs/39640182767
+Windows release builds: https://github.com/CyberMike81/uLEAPP/actions/runs/39794195777
 
 The October 21 bug fixes move Windows installation work off the UI thread,
 throttle progress, add Windows/Linux download cancellation and stalled-transfer
@@ -35,3 +35,9 @@ Automatic uLEAPP checks run at startup and once per day while open. Selector tes
 cover equal/older releases, numeric ordering, architecture-specific package names,
 preview-flagged releases and unofficial links. The user opens downloads and release
 notes in their browser; no self-installation or background package download occurs.
+
+Linux launch-error coverage uses a real failing process to confirm captured stderr
+and exit status, private per-launch logs and isolation from old errors. Empty,
+missing, non-UTF-8 and oversized logs have explicit, bounded diagnostics. Successful
+and still-running processes do not produce failure dialogs. The interface keeps
+watching after the old one-shot startup window to catch later failures.
