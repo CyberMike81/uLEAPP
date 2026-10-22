@@ -128,17 +128,48 @@ def main():
                     events.put(('error', tool.name + ': ' + str(error)))
         if not args.demo: run(work)
 
+    def show_launch_error(tool, message):
+        dialog = tk.Toplevel(root)
+        dialog.title('Could not start ' + tool.name)
+        dialog.transient(root)
+        dialog.geometry('760x430')
+        dialog.minsize(480, 280)
+        content = ttk.Frame(dialog, padding=16)
+        content.pack(fill='both', expand=True)
+        ttk.Label(content, text=tool.name + ' exited with an error', font=('Sans', 13, 'bold')).pack(anchor='w', pady=(0, 10))
+        details = ttk.Frame(content)
+        details.pack(fill='both', expand=True)
+        text = tk.Text(details, wrap='word', background='#101712', foreground='#edf5ef', relief='flat')
+        scrollbar = ttk.Scrollbar(details, command=text.yview)
+        text.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side='right', fill='y')
+        text.pack(fill='both', expand=True)
+        text.insert('1.0', message)
+        text.configure(state='disabled')
+        buttons = ttk.Frame(content)
+        buttons.pack(fill='x', pady=(12, 0))
+        def copy_error():
+            root.clipboard_clear()
+            root.clipboard_append(message)
+        ttk.Button(buttons, text='Copy error', command=copy_error).pack(side='left')
+        ttk.Button(buttons, text='Close', command=dialog.destroy).pack(side='right')
+        dialog.grab_set()
+        text.focus_set()
+
     def launch(tool):
         if busy or args.demo: return
         try:
-            process = store.launch(tool)
-            append('Opening ' + tool.name)
+            launch = store.launch(tool)
+            append('Opening ' + tool.name + '. Log: ' + str(launch.log_path))
             def check_exit():
-                if process.poll() not in (None, 0):
-                    messagebox.showerror('Could not start ' + tool.name,
-                        'The app exited with an error. See ' + str(store.root / 'logs' / (tool.id + '.log')) +
-                        '. AppImages need FUSE. GLEAPP needs glibc 2.39 or newer.', parent=root)
-            root.after(2500, check_exit)
+                code = launch.poll()
+                if code is None:
+                    root.after(500, check_exit)
+                elif code != 0:
+                    message = launch.failure_message()
+                    append(tool.name + ': ' + message)
+                    show_launch_error(tool, message)
+            root.after(500, check_exit)
         except Exception as error: messagebox.showerror('Could not launch ' + tool.name, str(error), parent=root)
 
     for index, tool in enumerate(TOOLS):

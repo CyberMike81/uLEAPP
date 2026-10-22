@@ -6,7 +6,7 @@ uLEAPP gives the LEAPP family one desktop interface for installing missing apps,
 checking versions and updating installed apps. It started as a script to run the
 official Homebrew commands and grew into native Mac and Windows GUI apps.
 
-**Community preview 0.3.2 — available for testing and feedback.** This is a
+**Community preview 0.3.3 — available for testing and feedback.** This is a
 community project; publisher endorsement and inclusion on leapps.org are decisions
 for the LEAPP maintainers. No upstream pull request is required to try these builds.
 
@@ -27,14 +27,14 @@ executables or installers are bundled with uLEAPP.
 
 ## Download and run
 
-Download the matching ZIP from the [0.3.2 preview release](https://github.com/CyberMike81/uLEAPP/releases/tag/v0.3.2),
+Download the matching ZIP from the [0.3.3 preview release](https://github.com/CyberMike81/uLEAPP/releases/tag/v0.3.3),
 extract the complete folder, and open its app. Keep the included license/notices files.
 
 | Platform | Download / repository folder | Requirements |
 | --- | --- | --- |
-| macOS | `uLEAPP-0.3.2-macOS.zip` / `macOS/uLEAPP.app` | macOS 13+; Homebrew installed; universal Apple silicon/Intel build |
-| Windows ARM64 | `uLEAPP-0.3.2-Windows-ARM64.zip` / `Windows-ARM64/uLEAPP.exe` | Windows 11 ARM; .NET runtime included |
-| Windows x64 | `uLEAPP-0.3.2-Windows-x64.zip` / `Windows-x64/uLEAPP.exe` | Intel/AMD Windows; .NET runtime included |
+| macOS | `uLEAPP-0.3.3-macOS.zip` / `macOS/uLEAPP.app` | macOS 13+; Homebrew installed; universal Apple silicon/Intel build |
+| Windows ARM64 | `uLEAPP-0.3.3-Windows-ARM64.zip` / `Windows-ARM64/uLEAPP.exe` | Windows 11 ARM; .NET runtime included |
+| Windows x64 | `uLEAPP-0.3.3-Windows-x64.zip` / `Windows-x64/uLEAPP.exe` | Intel/AMD Windows; .NET runtime included |
 
 Close LEAPP tools before updating. Mac can adopt matching manually installed apps
 into Homebrew without forcing replacement. Windows setup-installed tools keep
@@ -55,7 +55,7 @@ logs and build instructions.
 A Linux desktop preview is available in [`Linux/`](Linux/README.md), with Install,
 Update and Launch controls. It uses Python 3.10+ and Tk and manages official Linux
 packages in your user folder. GLEAPP is currently x64-only on Linux.
-Download `uLEAPP-0.3.2-Linux.tar.gz` from the [Community Preview release](https://github.com/CyberMike81/uLEAPP/releases/tag/v0.3.2). Requires Python 3.10+ and Tk.
+Download `uLEAPP-0.3.3-Linux.tar.gz` from the [Community Preview release](https://github.com/CyberMike81/uLEAPP/releases/tag/v0.3.3). Requires Python 3.10+ and Tk.
 
 ## Screenshots
 

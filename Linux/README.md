@@ -1,4 +1,4 @@
-# uLEAPP for Linux · 0.3.2 preview
+# uLEAPP for Linux · 0.3.3 preview
 
 Install, update and launch the seven LEAPP apps from their official GitHub releases.
 This Linux preview uses Python 3.10+ and Tk; no Python packages from pip are needed.
@@ -49,3 +49,9 @@ and a **Release notes** link. Downloads open in your browser only when clicked;
 no automatic installation or replacement occurs. This is separate from LEAPP
 tool checks. Offline/rate-limit failures stay quiet and do not block normal use.
 Demo and automated smoke-test modes do not contact GitHub.
+
+Failed launches show their captured output and exit code in a scrollable dialog
+with **Copy error**. Each launch gets a separate private log under `logs`, named
+for the tool (for example `gleapp-....log`); the dialog shows the exact path.
+Empty or unreadable logs are reported explicitly. The launcher does not infer
+missing dependencies from an exit code. Earlier `gleapp.log` files are preserved.

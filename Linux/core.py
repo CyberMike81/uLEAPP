@@ -16,10 +16,11 @@ import shutil
 import subprocess
 import tarfile
 import tempfile
+from launch_errors import Launch
 from urllib.parse import quote, urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
-VERSION = '0.3.2'
+VERSION = '0.3.3'
 MAX_BYTES = 2 * 1024**3
 
 @dataclass(frozen=True)
@@ -272,8 +273,10 @@ class Store:
         executable = self.tool_root(tool) / record['path']
         logs = self.root / 'logs'
         logs.mkdir(parents=True, exist_ok=True)
-        with (logs / (tool.id + '.log')).open('ab') as output:
+        descriptor, filename = tempfile.mkstemp(prefix=tool.id + '-', suffix='.log', dir=logs)
+        log_path = Path(filename)
+        with os.fdopen(descriptor, 'wb') as output:
             process = subprocess.Popen([str(executable)], cwd=executable.parent,
                                        stdin=subprocess.DEVNULL, stdout=output, stderr=output,
                                        start_new_session=True)
-        return process
+        return Launch(process, log_path)
