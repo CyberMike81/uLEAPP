@@ -258,6 +258,19 @@ def main():
     root.after(100, poll)
     if args.smoke_test:
         assert len(actions) == 7 and len(launches) == 7
+        root.update_idletasks()
+        sample = 'The app exited with exit code 7.\n\nUnable to load libexample.so\n\nLaunch log: /tmp/example.log'
+        show_launch_error(TOOLS[-1], sample)
+        def descendants(widget):
+            for child in widget.winfo_children():
+                yield child
+                yield from descendants(child)
+        widgets = list(descendants(root))
+        error_texts = [widget for widget in widgets if isinstance(widget, tk.Text) and sample in widget.get('1.0', 'end')]
+        assert len(error_texts) == 1
+        copy = next(widget for widget in widgets if isinstance(widget, ttk.Button) and widget.cget('text') == 'Copy error')
+        copy.invoke()
+        assert root.clipboard_get() == sample
         root.after(300, root.destroy)
     root.mainloop()
 
