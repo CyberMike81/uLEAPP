@@ -141,7 +141,7 @@ final class UpdaterModel: ObservableObject {
     var pendingCount: Int { tools.filter { $0.status == "pending" }.count }
     var availableCount: Int { tools.filter { $0.status == "available" }.count }
     var installedCount: Int { tools.filter { !$0.version.isEmpty }.count }
-    var missingCount: Int { tools.filter { $0.version.isEmpty }.count }
+    var missingCount: Int { tools.filter { $0.version.isEmpty && !$0.manualDownload }.count }
     var allInstalledCurrent: Bool { installedCount > 0 && tools.filter { !$0.version.isEmpty }.allSatisfy { $0.status == "current" } }
     var failedCount: Int { tools.filter { $0.status == "failed" }.count }
     var progressTotal: Int { activeIDs.count }
