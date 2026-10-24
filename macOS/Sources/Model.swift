@@ -40,9 +40,9 @@ struct LEAPPTool: Identifiable {
     }
     private(set) var existingBundlePath: String?
     private(set) var icon: NSImage?
-    mutating func refreshPresentation(store: DirectMacStore? = DirectMacStore()) {
+    mutating func refreshPresentation(store: DirectMacStore? = DirectMacStore(), discoverManual: Bool = false, applicationPaths: [String]? = nil) {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
-        existingBundlePath = ["/Applications/\(bundle).app", "\(home)/Applications/\(bundle).app"]
+        existingBundlePath = (applicationPaths ?? ["/Applications/\(bundle).app", "\(home)/Applications/\(bundle).app"])
             .first { FileManager.default.fileExists(atPath: $0) }
         applicationVersion = ""
         if store != nil, let path = existingBundlePath,
@@ -50,7 +50,7 @@ struct LEAPPTool: Identifiable {
            let info = (try? PropertyListSerialization.propertyList(from: data, format: nil)) as? [String: Any],
            let found = info["CFBundleShortVersionString"] as? String {
             applicationVersion = found
-            if version.isEmpty { version = found }
+            if discoverManual && version.isEmpty { version = found }
         }
         directVersion = ""
         if let store = store, let direct = try? store.current(self) {
@@ -153,7 +153,7 @@ final class UpdaterModel: ObservableObject {
         refreshPresentation()
     }
     func refreshPresentation() {
-        for index in tools.indices { tools[index].refreshPresentation(store: directStore) }
+        for index in tools.indices { tools[index].refreshPresentation(store: directStore, discoverManual: !usesHomebrew) }
     }
     static func brewPath() -> String? {
         let paths = ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"]
@@ -417,7 +417,7 @@ final class UpdaterModel: ObservableObject {
             if let index = tools.firstIndex(where: { $0.id == fields[2] }) {
                 if fields[1] == "version" {
                     tools[index].version = fields[4]
-                    tools[index].refreshPresentation(store: directStore)
+                    tools[index].refreshPresentation(store: directStore, discoverManual: !usesHomebrew)
                 }
                 if fields[1] == "homebrew" { tools[index].homebrewVersion = fields[4] }
                 if fields[1] == "upstream" { tools[index].upstreamVersion = fields[4] }
@@ -656,7 +656,7 @@ final class UpdaterModel: ObservableObject {
                     DispatchQueue.main.async {
                         guard let self = self, let index = self.tools.firstIndex(where: { $0.id == tool.id }) else { return }
                         self.tools[index].version = installed.version
-                        self.tools[index].refreshPresentation(store: self.directStore)
+                        self.tools[index].refreshPresentation(store: self.directStore, discoverManual: !self.usesHomebrew)
                         self.tools[index].status = "current"; self.directProgress = 0
                         self.handleLine("\(tool.name) \(installed.version): installed in ~/Applications/uLEAPP. Previous copies preserved.")
                     }

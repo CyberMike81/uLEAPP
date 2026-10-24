@@ -91,3 +91,7 @@ Quarantine tests verify that an existing value is preserved. Native direct
 installation still validates publisher identity, Gatekeeper and quarantine.
 App Management messaging covers EPERM/EACCES; macOS permission grants remain a
 user action in System Settings.
+
+Compact layouts use shorter tool rows and screen-bounded initial windows on all
+three platforms. Windows and Mac retain scrolling for smaller screens and enlarged
+text; Linux sizes to its requested content within the available screen height.

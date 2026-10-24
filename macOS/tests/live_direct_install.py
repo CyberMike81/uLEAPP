@@ -38,6 +38,12 @@ do {
     precondition(try! store.current(tool) == nil)
     precondition(FileManager.default.fileExists(atPath: selected.1.path))
     print("PASS: return to a verified current Homebrew copy clears only the direct selection; downgrade is refused.")
+    var manual = LEAPPTool.all.first { $0.id == "aleapp-gui" }!
+    manual.refreshPresentation(store: store, discoverManual: false, applicationPaths: [brewApp.path])
+    precondition(manual.version.isEmpty && manual.applicationVersion == result.version)
+    manual.refreshPresentation(store: store, discoverManual: true, applicationPaths: [brewApp.path])
+    precondition(manual.version == result.version)
+    print("PASS: Homebrew-free mode discovers a standalone app; Homebrew mode keeps it unmanaged.")
     print("PASS: official download, checksum, disk-image mount, app version, architecture, signature, copy and selected-install record verified in a temporary home.")
 } catch {
     FileHandle.standardError.write(Data((error.localizedDescription + "\\n").utf8))

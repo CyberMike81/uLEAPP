@@ -48,84 +48,61 @@ struct ToolRow: View {
         }
     }
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 12) {
             if let icon = tool.icon {
-                Image(nsImage: icon).resizable().interpolation(.high)
-                    .frame(width: 44, height: 44).accessibilityHidden(true)
+                Image(nsImage: icon).resizable().interpolation(.high).frame(width: 36, height: 36).accessibilityHidden(true)
             } else {
-                Image(systemName: "app.dashed").font(.system(size: 28))
-                    .foregroundStyle(Palette.muted).frame(width: 44, height: 44)
-                    .accessibilityHidden(true)
+                Image(systemName: "app.dashed").font(.system(size: 24)).foregroundStyle(Palette.muted).frame(width: 36, height: 36).accessibilityHidden(true)
             }
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 8) {
-                    Text(tool.name).font(.system(size: 15, weight: .semibold)).foregroundStyle(.white)
-                    if !tool.version.isEmpty {
-                        Text(tool.version).font(.system(size: 11, design: .monospaced)).foregroundStyle(Palette.muted)
-                    }
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 7) {
+                    Text(tool.name).font(.system(size: 13, weight: .semibold)).foregroundStyle(.white)
+                    if !tool.version.isEmpty { Text(tool.version).font(.system(size: 10, design: .monospaced)).foregroundStyle(Palette.muted) }
                 }
                 if !tool.directVersion.isEmpty {
-                    Text("Applications \(tool.applicationVersion.isEmpty ? "none" : tool.applicationVersion) · Direct \(tool.directVersion)")
-                        .font(.system(size: 10)).foregroundStyle(Palette.orange)
-                    Text("Launch uses Direct; Finder/Dock may open the Applications copy.")
-                        .font(.system(size: 10)).foregroundStyle(Palette.muted)
-                    if usesHomebrew { Button("Return to Homebrew") { returnHomebrew() }
-                        .buttonStyle(.plain).font(.system(size: 11)).foregroundStyle(Palette.green).disabled(actionsDisabled)
-                        .help("Switch only after Homebrew and its app in Applications are at least as new as the direct copy") }
-                }
-                Text(tool.description).font(.system(size: 12)).foregroundStyle(Palette.muted)
+                    Text("Direct \(tool.directVersion) · Applications \(tool.applicationVersion.isEmpty ? "none" : tool.applicationVersion)")
+                        .font(.system(size: 10)).foregroundStyle(Palette.orange).lineLimit(1)
+                        .help("Launch uses the direct copy. Finder/Dock may open the Applications copy. " + tool.description)
+                } else { Text(tool.description).font(.system(size: 11)).foregroundStyle(Palette.muted).lineLimit(1) }
             }
-            Spacer(minLength: 12)
-            HStack(spacing: 6) {
-                if ["checking", "updating", "installing"].contains(tool.status) {
-                    ProgressView().controlSize(.small).scaleEffect(0.7).frame(width: 14, height: 14)
-                } else if tool.status == "current" {
-                    Image(systemName: "checkmark.circle.fill").font(.system(size: 12))
-                } else if tool.status == "available" {
-                    Image(systemName: "arrow.down.circle.fill").font(.system(size: 12))
-                } else if tool.status == "failed" {
-                    Image(systemName: "exclamationmark.circle.fill").font(.system(size: 12))
-                }
-                Text(tool.statusLabel).font(.system(size: 11, weight: .medium))
+            Spacer(minLength: 8)
+            HStack(spacing: 5) {
+                if ["checking", "updating", "installing"].contains(tool.status) { ProgressView().controlSize(.mini).frame(width: 12, height: 12) }
+                Text(tool.statusLabel).font(.system(size: 10, weight: .medium))
+            }.foregroundStyle(stateColor).padding(.horizontal, 8).padding(.vertical, 5)
+                .background(stateColor.opacity(0.09)).clipShape(Capsule())
+            if !tool.directVersion.isEmpty && usesHomebrew {
+                Button("Return to Homebrew") { returnHomebrew() }.controlSize(.small).font(.system(size: 11))
+                    .disabled(actionsDisabled).help("Switch only after Homebrew catches up; direct copies are retained")
             }
-            .foregroundStyle(stateColor)
-            .padding(.horizontal, 10).padding(.vertical, 7)
-            .background(stateColor.opacity(0.09)).clipShape(Capsule())
             if tool.status == "pending" || (!usesHomebrew && tool.status == "available" && !tool.version.isEmpty) {
-                Button("Update") { directUpdate() }
-                    .controlSize(.small).tint(Palette.green).disabled(actionsDisabled)
-                    .help("Download, verify and install \(tool.name) \(tool.upstreamVersion)")
+                Button("Update") { directUpdate() }.controlSize(.small).tint(Palette.green).disabled(actionsDisabled)
             }
             if tool.existingBundlePath != nil {
-                Button("Launch") { launch() }
-                    .controlSize(.small).tint(Palette.green)
-                    .disabled(launchDisabled)
-                    .help("Open \(tool.name)")
-                    .accessibilityLabel("Launch \(tool.name)")
+                Button("Launch") { launch() }.controlSize(.small).tint(Palette.green).disabled(launchDisabled)
+                    .help("Open \(tool.name)").accessibilityLabel("Launch \(tool.name)")
             }
             if tool.version.isEmpty {
                 Button(tool.existingBundlePath == nil || !usesHomebrew ? "Install" : "Add") { install() }
-                    .controlSize(.small).tint(Palette.green)
-                    .disabled(actionsDisabled)
-                    .help(usesHomebrew ? "Install or register \(tool.name) through Homebrew" : "Download and install the official Mac build")
+                    .controlSize(.small).tint(Palette.green).disabled(actionsDisabled)
+                    .help(usesHomebrew ? "Install or register through Homebrew" : "Download and install the official Mac build")
             }
-        }
-        .padding(.horizontal, 18).padding(.vertical, 13)
-        .accessibilityElement(children: .contain)
+        }.padding(.horizontal, 12).padding(.vertical, 7).accessibilityElement(children: .contain)
     }
+
 }
 
 struct UpdaterView: View {
     @ObservedObject var model: UpdaterModel
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 15) {
                 Image(nsImage: NSImage(contentsOf: Bundle.main.url(forResource: "AppIcon", withExtension: "icns")!) ?? NSApplication.shared.applicationIconImage)
-                    .resizable().interpolation(.high).frame(width: 72, height: 72)
+                    .resizable().interpolation(.high).frame(width: 52, height: 52)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 5) {
-                    Text("uLEAPP").font(.system(size: 33, weight: .bold, design: .rounded)).foregroundStyle(.white)
-                    Text("One place. Every LEAPP up to date.").font(.system(size: 14)).foregroundStyle(Palette.muted)
+                    Text("uLEAPP").font(.system(size: 28, weight: .bold, design: .rounded)).foregroundStyle(.white)
+                    Text("One place. Every LEAPP up to date.").font(.system(size: 12)).foregroundStyle(Palette.muted)
                 }
                 Spacer()
                 Text(model.demo ? "DEMO · 0.3.8" : "FOR macOS · 0.3.8")
@@ -148,7 +125,7 @@ struct UpdaterView: View {
                         .foregroundStyle(model.failedCount > 0 ? Palette.pink : Palette.green).frame(width: 30)
                     VStack(alignment: .leading, spacing: 5) {
                         Text(model.loading ? "Finding your LEAPP apps" : model.title)
-                            .font(.system(size: 17, weight: .semibold)).foregroundStyle(.white)
+                            .font(.system(size: 15, weight: .semibold)).foregroundStyle(.white)
                         Text(model.loading ? "Reading your installed apps." : model.subtitle)
                             .font(.system(size: 12)).foregroundStyle(Palette.muted).fixedSize(horizontal: false, vertical: true)
                     }
@@ -163,7 +140,7 @@ struct UpdaterView: View {
                     }
                 }
             }
-            .padding(18).frame(maxWidth: .infinity, alignment: .leading)
+            .padding(12).frame(maxWidth: .infinity, alignment: .leading)
             .background(Palette.card).clipShape(RoundedRectangle(cornerRadius: 14))
             .overlay(RoundedRectangle(cornerRadius: 14).stroke(Palette.border))
 
@@ -226,7 +203,7 @@ struct UpdaterView: View {
                                 .padding(12)
                             Color.clear.frame(height: 1).id("log-bottom")
                         }
-                        .frame(height: 135).background(Color.black.opacity(0.25)).cornerRadius(9)
+                        .frame(height: 100).background(Color.black.opacity(0.25)).cornerRadius(9)
                         .onChange(of: model.log.count) { _ in proxy.scrollTo("log-bottom", anchor: .bottom) }
                     }
                 }
@@ -262,8 +239,8 @@ struct UpdaterView: View {
                 Link("Homebrew is optional — learn more", destination: URL(string: "https://brew.sh")!).foregroundStyle(Palette.green)
             }
         }
-        .padding(.horizontal, 26).padding(.top, 38).padding(.bottom, 23)
-        .frame(minWidth: 790, minHeight: 690)
+        .padding(.horizontal, 18).padding(.top, 30).padding(.bottom, 14)
+        .frame(minWidth: 790, minHeight: 640)
         .background(Palette.background).preferredColorScheme(.dark)
         .onAppear { model.loadInstalled(); model.startSelfUpdateChecks() }
         .onChange(of: model.busy) { running in
@@ -305,14 +282,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         appItem.submenu = appMenu
         NSApplication.shared.mainMenu = menu
         let available = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 1000)
-        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 850, height: min(900, available.height - 40)),
+        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: min(1040, available.width - 24), height: min(840, available.height - 16)),
                           styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                           backing: .buffered, defer: false)
         window.title = "uLEAPP"
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true
         window.backgroundColor = NSColor(srgbRed: 17/255, green: 23/255, blue: 18/255, alpha: 1)
-        window.minSize = NSSize(width: 790, height: 690)
+        window.minSize = NSSize(width: min(790, available.width - 24), height: min(640, available.height - 16))
         window.appearance = NSAppearance(named: .darkAqua)
         window.contentView = NSHostingView(rootView: UpdaterView(model: model))
         window.delegate = self

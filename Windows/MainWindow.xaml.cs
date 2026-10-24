@@ -90,7 +90,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         store = new InstallationStore(demo ? Path.Combine(Path.GetTempPath(), "uLEAPP-demo-" + Guid.NewGuid().ToString("N")) : null);
         InitializeComponent(); DataContext = this;
         Closed += (_, _) => selfUpdateTimer?.Stop();
-        Height = Math.Min(900, SystemParameters.WorkArea.Height - 30);
+        Width = Math.Min(1040, SystemParameters.WorkArea.Width - 24);
+        Height = Math.Min(820, SystemParameters.WorkArea.Height - 24);
+        MinWidth = Math.Min(820, SystemParameters.WorkArea.Width - 24);
+        MinHeight = Math.Min(640, SystemParameters.WorkArea.Height - 24);
         Loaded += async (_, _) =>
         {
             if (!demo && selfUpdateTimer == null) {

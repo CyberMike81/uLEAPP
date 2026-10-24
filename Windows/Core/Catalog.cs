@@ -28,12 +28,13 @@ public sealed class ToolRow(Tool tool) : INotifyPropertyChanged
     public string Name => Tool.Name;
     public System.Windows.Media.ImageSource Icon { get; } = ToolIcons.Load(tool.Id);
     public string Description => Tool.Description;
+    public string Detail => string.IsNullOrWhiteSpace(Latest) ? Description : Latest;
     private string version = "", status = "Not installed", latest = "";
     private bool working;
     public string Version { get => version; set { version = value; Changed(); Changed(nameof(ActionLabel)); Changed(nameof(IsInstalled)); Changed(nameof(ActionVisibility)); } }
     public string Status { get => status; set { status = value; Changed(); Changed(nameof(StatusColor)); Changed(nameof(ActionVisibility)); } }
     public string StatusColor => Status == "Needs attention" ? "#FA3B6A" : Status == "Update available" ? "#FF9C38" : Status == "Not installed" ? "#A7B4AB" : "#8EE563";
-    public string Latest { get => latest; set { latest = value; Changed(); } }
+    public string Latest { get => latest; set { latest = value; Changed(); Changed(nameof(Detail)); } }
     public bool Working { get => working; set { working = value; Changed(); Changed(nameof(ActionEnabled)); } }
     public bool ActionEnabled => !Working;
     public bool IsInstalled => !string.IsNullOrWhiteSpace(Version);

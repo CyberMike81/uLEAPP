@@ -31,9 +31,9 @@ def main():
     style = ttk.Style(root)
     style.theme_use('clam')
     style.configure('.', background='#18211c', foreground='#edf5ef', font=('Sans', 11))
-    style.configure('TButton', padding=(12, 7), background='#2c4031')
+    style.configure('TButton', padding=(10, 5), background='#2c4031')
     style.map('TButton', background=[('active', '#405c44')], foreground=[('disabled', '#89938b')])
-    style.configure('Heading.TLabel', font=('Sans', 24, 'bold'))
+    style.configure('Heading.TLabel', font=('Sans', 22, 'bold'))
     root.configure(background='#18211c')
     store = Store()
     from preferences import load_automatic, save_automatic
@@ -45,7 +45,7 @@ def main():
     cancellation = threading.Event()
     title = tk.StringVar(value='One place. Every LEAPP up to date.')
     subtitle = tk.StringVar(value='Check for releases to install or update your tools.')
-    frame = ttk.Frame(root, padding=24)
+    frame = ttk.Frame(root, padding=16)
     frame.pack(fill='both', expand=True)
     ttk.Label(frame, text='uLEAPP FOR LINUX · ' + VERSION, foreground='#8ee563').pack(anchor='w')
     ttk.Label(frame, textvariable=title, style='Heading.TLabel').pack(anchor='w', pady=(8, 4))
@@ -68,7 +68,7 @@ def main():
     rows = ttk.Frame(frame)
     rows.pack(fill='x')
     rows.columnconfigure(0, weight=1)
-    log = tk.Text(frame, height=7, background='#101712', foreground='#d6e6d9',
+    log = tk.Text(frame, height=4, background='#101712', foreground='#d6e6d9',
                   relief='flat', wrap='word', state='disabled')
 
     def append(text):
@@ -213,7 +213,7 @@ def main():
             if record: records[tool.id] = record
             status = record['version'] + ' · Installed' if record else 'Not installed'
         except Exception as error: status = 'Needs attention: ' + str(error)
-        ttk.Label(rows, text=tool.name, font=('Sans', 13, 'bold')).grid(row=index, column=0, sticky='w', pady=12)
+        ttk.Label(rows, text=tool.name, font=('Sans', 13, 'bold')).grid(row=index, column=0, sticky='w', pady=7)
         row_status[tool.id] = tk.StringVar(value=status)
         ttk.Label(rows, textvariable=row_status[tool.id], wraplength=380).grid(row=index, column=1, padx=12)
         launches[tool.id] = ttk.Button(rows, text='Launch', command=lambda t=tool: launch(t))
@@ -221,7 +221,7 @@ def main():
         actions[tool.id] = ttk.Button(rows, text='Install', command=lambda t=tool: install_tools([t]))
         actions[tool.id].grid(row=index, column=3, padx=4)
     controls = ttk.Frame(frame)
-    controls.pack(fill='x', pady=18)
+    controls.pack(fill='x', pady=10)
     def request_stop():
         cancellation.set()
         subtitle.set('Stopping downloads; completed installations are kept.')
@@ -292,6 +292,11 @@ def main():
             except Exception as error: events.put(('error', 'uLEAPP update check: ' + str(error)))
         threading.Thread(target=work, daemon=True).start()
     root.after(500, check_self_update)
+    root.update_idletasks()
+    available_width = max(720, root.winfo_screenwidth() - 48)
+    available_height = max(520, root.winfo_screenheight() - 80)
+    root.minsize(min(840, available_width), min(620, available_height))
+    root.geometry(f'{min(1000, available_width)}x{min(max(root.winfo_reqheight(), 660), available_height)}')
     root.protocol('WM_DELETE_WINDOW', close)
     refresh_buttons()
     root.after(100, poll)
