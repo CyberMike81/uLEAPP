@@ -17,7 +17,7 @@ archives are bundled. Publisher identification icons are described below.
 | Component | License | How used | Distribution handling |
 | --- | --- | --- | --- |
 | Swift compiler and standard library | Apache-2.0 with Runtime Library Exception | Mac compiler; system runtime and compiler-generated compatibility code | `licenses/Swift.txt`; exception applies to compiler-embedded runtime portions |
-| Homebrew 7.0.9 | BSD-2-Clause | Existing user's external package manager, invoked by the Mac worker | Not bundled; reference notice in `licenses/Homebrew.txt` |
+| Homebrew 7.0.9 | BSD-2-Clause | Retired source-only implementation; not invoked or bundled by the current app | Not bundled; reference notice in `licenses/Homebrew.txt` |
 | .NET runtime and WPF 10.0.13 | MIT, with separately licensed third-party portions | Windows GUI and self-contained runtime | Exact runtime-pack licenses and notices included under `runtime-notices/`; WPF's matching source-tag third-party notice is included separately |
 | .NET SDK | MIT with third-party notices | Build only, downloaded from Microsoft with SHA-512 verification | Not bundled; SDK's notices retained in task-local SDK installation |
 | Apple AppKit, SwiftUI, Foundation, Combine, macOS SDK and Apple build utilities | Apple platform/SDK terms, not open source as a whole | Mac system frameworks and development tools | System-provided; no Apple SDK, system framework, font or SF Symbol artwork redistributed |
@@ -62,10 +62,9 @@ is included in the community preview build as described below. First-time instal
 license separately; the Windows installer remains interactive. No unattended
 acceptance of a third-party EULA is implemented.
 
-The official [Homebrew tap](https://github.com/leapps-org/homebrew-leapps) has no
-top-level license declared at this review. uLEAPP invokes its documented Homebrew
-commands; it does not vendor or redistribute the tap's code, casks, scripts or
-artwork. Any future copying of that repository's code needs a license clarification.
+The retired package-manager implementation is archived in `macOS/legacy/` for
+source history and earlier audit evidence. It is not included in or invoked by
+the current application. Current installs use official publisher releases.
 
 ## Artwork and names
 

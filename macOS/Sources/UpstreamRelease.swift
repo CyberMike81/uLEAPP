@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 import Foundation
 
-// Used by the Homebrew worker in a separate CLI process, before it can claim
-// that an installed app is current. Network failure is never a current result.
+// Compare installed apps with the publisher’s official release.
+// Network failure is never a current result.
 enum UpstreamRelease {
     static let repositories = [
         "lava": "leapps-org/LAVA-releases", "aleapp-gui": "abrignoni/ALEAPP",

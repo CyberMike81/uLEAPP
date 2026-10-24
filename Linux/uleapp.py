@@ -119,7 +119,7 @@ def main():
 
     def refresh_buttons():
         available_count = sum(1 for t in TOOLS if t.id in records and t.id in releases and needs_update(records[t.id]['version'], releases[t.id].version))
-        tool_summary.set(f'{len(records)} of {len(TOOLS)} installed' + (f' · {available_count} update(s) available' if available_count else ''))
+        tool_summary.set(f'{len(records)} of {len(TOOLS)} installed' + (f' · {available_count} ' + ('update available' if available_count == 1 else 'updates available') if available_count else ''))
         for tool in TOOLS:
             record, release = records.get(tool.id), releases.get(tool.id)
             available = release and (not record or needs_update(record['version'], release.version))

@@ -36,8 +36,6 @@ struct ToolRow: View {
     let launch: () -> Void
     let install: () -> Void
     let directUpdate: () -> Void
-    let returnHomebrew: () -> Void
-    let usesHomebrew: Bool
     var stateColor: Color {
         switch tool.status {
         case "current": return Palette.green
@@ -56,9 +54,9 @@ struct ToolRow: View {
             }
             VStack(alignment: .leading, spacing: 3) {
                 Text(tool.name).font(.system(size: 13, weight: .semibold)).foregroundStyle(.white)
-                Text(tool.sourceLine(usesHomebrew: usesHomebrew))
+                Text(tool.sourceLine)
                     .font(.system(size: 10)).foregroundStyle(Palette.muted).lineLimit(1)
-                    .help(tool.sourceLine(usesHomebrew: usesHomebrew))
+                    .help(tool.sourceLine)
             }
             Spacer(minLength: 8)
             HStack(spacing: 5) {
@@ -66,15 +64,15 @@ struct ToolRow: View {
                 Text(tool.pillLabel).font(.system(size: 10, weight: .medium))
             }.foregroundStyle(stateColor).padding(.horizontal, 8).padding(.vertical, 5)
                 .background(stateColor.opacity(0.09)).clipShape(Capsule()).help(tool.statusHelp)
-            if tool.status == "pending" || ((!usesHomebrew || tool.directOnly) && !tool.manualDownload && tool.status == "available" && !tool.version.isEmpty) {
+            if !tool.manualDownload && ["pending", "available"].contains(tool.status) && !tool.version.isEmpty {
                 Button("Update") { directUpdate() }.controlSize(.small).tint(Palette.green).disabled(actionsDisabled)
             }
             if tool.manualDownload {
                 Button("Get latest") { install() }.controlSize(.small).disabled(actionsDisabled)
             } else if tool.version.isEmpty {
-                Button(tool.existingBundlePath == nil || !usesHomebrew || tool.directOnly ? "Install" : "Add") { install() }
+                Button("Install") { install() }
                     .controlSize(.small).tint(Palette.green).disabled(actionsDisabled)
-                    .help(usesHomebrew && !tool.directOnly ? "Install or register through Homebrew" : "Download and install the official Mac build")
+                    .help("Download and install the official Mac release")
             }
             if tool.existingBundlePath != nil {
                 Button("Launch") { launch() }.controlSize(.small).tint(Palette.green).disabled(launchDisabled)
@@ -83,10 +81,6 @@ struct ToolRow: View {
             Menu {
                 if let path = tool.existingBundlePath {
                     Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)]) }
-                }
-                if !tool.directVersion.isEmpty && usesHomebrew && !tool.directOnly {
-                    Button("Return to Homebrew…") { returnHomebrew() }.disabled(!tool.canReturnToHomebrew).help(tool.returnHomebrewHelp)
-                    if !tool.canReturnToHomebrew { Text(tool.returnHomebrewHelp) }
                 }
                 if let repository = UpstreamRelease.repositories[tool.id] {
                     Link("Release notes", destination: URL(string: "https://github.com/" + repository + "/releases/latest")!)
@@ -165,9 +159,7 @@ struct UpdaterView: View {
                                 launchDisabled: model.busy || model.loading,
                                 launch: { model.launch(tool) },
                                 install: { if tool.manualDownload { model.downloadCompanion(tool) } else { model.start(.install, cask: tool.id) } },
-                                directUpdate: { model.updateDirect([tool]) },
-                                returnHomebrew: { model.start(.returnHomebrew, cask: tool.id) },
-                                usesHomebrew: model.usesHomebrew)
+                                directUpdate: { model.start(.update, cask: tool.id) })
                         if tool.id != model.tools.last?.id {
                             Rectangle().fill(Palette.border).frame(height: 1).padding(.leading, 76)
                         }
@@ -202,11 +194,9 @@ struct UpdaterView: View {
                 }
                 if model.settingsExpanded {
                     VStack(alignment: .leading, spacing: 7) {
-            Toggle("Use Homebrew when available", isOn: Binding(get: { model.usesHomebrew }, set: { model.setUseHomebrew($0) }))
-                .font(.system(size: 11)).foregroundStyle(Palette.muted).disabled(!model.brewFound || model.busy || model.loading || model.demo || !model.homebrewPreferenceEnabled)
             Toggle("Check for uLEAPP updates automatically", isOn: Binding(get: { model.automaticUpdates }, set: { model.setAutomaticUpdates($0) }))
                 .font(.system(size: 11)).foregroundStyle(Palette.muted).disabled(!model.updatePreferenceEnabled || model.demo)
-                        Text("Automatic checks look for uLEAPP updates at startup and once a day. Downloads start only when you choose them.").font(.system(size: 10)).foregroundStyle(Palette.muted)
+                        Text("Updates come from each tool’s official release. Launch opens the latest successfully installed copy. Automatic uLEAPP checks run at startup and once a day; downloads start only when you choose them.").font(.system(size: 10)).foregroundStyle(Palette.muted)
                     }.padding(.vertical, 4)
                 }
                 if model.detailsExpanded {
@@ -253,9 +243,7 @@ struct UpdaterView: View {
                         .disabled(model.busy || model.loading)
                 }
             }
-            if !model.brewFound {
-                Link("Homebrew is optional — learn more", destination: URL(string: "https://brew.sh")!).foregroundStyle(Palette.green)
-            }
+
         }
         .padding(.horizontal, 18).padding(.top, 30).padding(.bottom, 14)
         .frame(minWidth: 790, minHeight: 640)
@@ -330,22 +318,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 }
 
-if CommandLine.arguments.contains("--homebrew-candidate") || CommandLine.arguments.contains("--complete-homebrew-return") {
-    do {
-        guard CommandLine.arguments.count == 4, let tool = LEAPPTool.all.first(where: { $0.id == CommandLine.arguments[2] }) else { exit(1) }
-        if CommandLine.arguments[1] == "--homebrew-candidate" {
-            let data = FileHandle.standardInput.readDataToEndOfFile()
-            guard data.count <= 2 * 1024 * 1024,
-                  let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let casks = json["casks"] as? [[String: Any]],
-                  let cask = casks.first(where: { $0["token"] as? String == tool.id }),
-                  let version = cask["version"] as? String else { exit(1) }
-            let fixture: [String: Any] = ["tag_name": CommandLine.arguments[3], "draft": false, "prerelease": false]
-            guard !(try UpstreamRelease.assess(fixture, installed: version)).1 else { throw UpstreamRelease.Failure(message: "Homebrew has not caught up. The direct copy remains selected.") }
-            print(version)
-        } else { try DirectMacStore().returnToHomebrew(tool, installed: CommandLine.arguments[3]) }
-        exit(0)
-    } catch { FileHandle.standardError.write(Data((error.localizedDescription + "\n").utf8)); exit(1) }
+if CommandLine.arguments.contains(where: { ["--homebrew-candidate", "--complete-homebrew-return", "--askpass"].contains($0) }) {
+    FileHandle.standardError.write(Data("This legacy helper has been retired. uLEAPP installs official releases.\n".utf8)); exit(2)
 }
 if CommandLine.arguments.contains("--direct-tool-version") {
     do {
@@ -355,16 +329,15 @@ if CommandLine.arguments.contains("--direct-tool-version") {
     } catch { FileHandle.standardError.write(Data((error.localizedDescription + "\n").utf8)); exit(1) }
 }
 if CommandLine.arguments.contains("--check-tool-release") { exit(UpstreamRelease.run(CommandLine.arguments)) }
-if CommandLine.arguments.contains("--askpass") { runAskpass() }
 if CommandLine.arguments.contains("--version") { print("uLEAPP 0.3.12"); exit(0) }
 if CommandLine.arguments.contains("--help") {
-    print("uLEAPP for Mac\n--no-homebrew  Use direct Mac downloads for this run\n--no-update-check Disable automatic update requests for this run\n--version     Report the app version\n--selfcheck   Check the packaged app without changing installed tools\n--demo        Preview the interface with simulated updates")
+    print("uLEAPP for Mac\n--no-update-check Disable automatic update requests for this run\n--version     Report the app version\n--selfcheck   Check the packaged app without changing installed tools\n--demo        Preview the interface with simulated updates")
     exit(0)
 }
 if CommandLine.arguments.contains("--self-test") || CommandLine.arguments.contains("--selfcheck") {
     if CommandLine.arguments.contains("--selfcheck") {
         precondition(Bundle.main.bundleIdentifier == "org.uleapp.updater", "App metadata is missing")
-        for name in ["LEAPP Updater.command", "askpass.sh", "AppIcon.icns", "LICENSE", "THIRD-PARTY-NOTICES.md", "licenses/Swift.txt"] {
+        for name in ["AppIcon.icns", "LICENSE", "THIRD-PARTY-NOTICES.md", "licenses/Swift.txt"] {
             guard let resource = Bundle.main.resourceURL?.appendingPathComponent(name) else {
                 fatalError("Missing resource: \(name)")
             }
@@ -386,14 +359,6 @@ if CommandLine.arguments.contains("--self-test") || CommandLine.arguments.contai
     DirectMacInstaller.selfCheck()
     var presentation = LEAPPTool.all.first { $0.id == "aleapp-gui" }!
     presentation.version = "2026.4.4"; presentation.directVersion = "2026.4.4"
-    presentation.homebrewVersion = "2026.4.3"; presentation.applicationVersion = "2026.4.3"
-    precondition(!presentation.canReturnToHomebrew, "An older Homebrew copy cannot be selected")
-    presentation.homebrewVersion = "2026.4.4"
-    precondition(!presentation.canReturnToHomebrew, "A caught-up receipt cannot hide an older app")
-    presentation.applicationVersion = "2026.4.4"
-    precondition(presentation.canReturnToHomebrew)
-    presentation.homebrewVersion = "unknown"
-    precondition(!presentation.canReturnToHomebrew, "An unreadable Homebrew version must keep switching disabled")
     presentation.status = "installed"
     precondition(presentation.pillLabel == "Installed · 2026.4.4" && presentation.checkedAt == nil)
     presentation.status = "current"; presentation.checkedAt = Date()
@@ -402,7 +367,7 @@ if CommandLine.arguments.contains("--self-test") || CommandLine.arguments.contai
     precondition(presentation.pillLabel == "Update 2026.4.4 → 2026.4.5")
     var companion = LEAPPTool.all.first { $0.id == "mapdownloader" }!
     companion.directVersion = "0.2.0"
-    precondition(!companion.canReturnToHomebrew && !companion.sourceLine(usesHomebrew: true).contains("none"))
+    precondition(companion.sourceLine == "Offline maps for GLEAPP · Installed by uLEAPP")
     let manualFolder = FileManager.default.temporaryDirectory.appendingPathComponent("uleapp-manual-presentation-" + UUID().uuidString + ".app")
     try! FileManager.default.createDirectory(at: manualFolder, withIntermediateDirectories: true)
     var manual = LEAPPTool(id: "batch-leapp", name: "Batch LEAPP", description: "", bundle: "Batch LEAPP")
@@ -412,7 +377,7 @@ if CommandLine.arguments.contains("--self-test") || CommandLine.arguments.contai
     precondition(manualModel.displayedInstalledCount == 1 && manualModel.installedCount == 0 && manualModel.missingCount == 0)
     precondition(manual.pillLabel == "Installed by you", "A real manual copy is installed, but its unknown version is not called current")
     try! FileManager.default.removeItem(at: manualFolder)
-    let directOnly = UpdaterModel(directStore: nil, brewResolver: { nil }, fetchRelease: { cask in
+    let directOnly = UpdaterModel(directStore: nil, fetchRelease: { cask in
         let tool = LEAPPTool.all.first { $0.id == cask }!
         let arch = DirectMacInstaller.architecture
         let name = cask == "batch-leapp" ? "Batch-LEAPP-macos-\(arch).zip" : cask == "mapdownloader" ? "GLEAPP-MapDownloader-v1.2.3-macos-\(arch).dmg" : cask == "lava" ? "LAVA-1.2.3-macOS-\(arch == "arm64" ? "Apple_Silicon" : "Mac_Intel").dmg" : "\(tool.bundle)-1.2.3-macos-\(arch).dmg"
@@ -420,13 +385,14 @@ if CommandLine.arguments.contains("--self-test") || CommandLine.arguments.contai
                 "assets": [["name": name, "browser_download_url": "https://github.com/\(UpstreamRelease.repositories[cask]!)/releases/download/v1.2.3/\(name)", "size": Int64(4), "digest": "sha256:" + String(repeating: "a", count: 64)]]]
     })
     directOnly.loadInstalled()
-    precondition(!directOnly.brewFound && !directOnly.usesHomebrew && !directOnly.loading)
+    precondition(!directOnly.loading)
     directOnly.start(.check)
     let deadline = Date().addingTimeInterval(10)
     while directOnly.busy && Date() < deadline { _ = RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.02)) }
-    precondition(!directOnly.busy && directOnly.tools.filter { $0.status == "available" || $0.status == "download" }.count == LEAPPTool.all.count && directOnly.failedCount == 0, "Homebrew-free checks must cover all tools")
+    precondition(!directOnly.busy && directOnly.tools.filter { $0.status == "available" || $0.status == "download" }.count == LEAPPTool.all.count && directOnly.failedCount == 0, "Official-release checks must cover all tools")
     let model = UpdaterModel(directStore: nil)
-    model.applyInstalled("lava 0.15.0\nleapps-org/leapps/ileapp-gui 2026.4.4\nopenscad 2021.01\n")
+    model.tools[0].version = "0.15.0"
+    model.tools.firstIndex(where: { $0.id == "ileapp-gui" }).map { model.tools[$0].version = "2026.4.4" }
     precondition(model.installedCount == 2)
     precondition(model.tools.first(where: { $0.id == "ileapp-gui" })?.version == "2026.4.4")
     model.handleLine("ULEAPP\tapp\tlava\tchecking\tChecking for updates")
@@ -435,9 +401,9 @@ if CommandLine.arguments.contains("--self-test") || CommandLine.arguments.contai
     precondition(model.availableCount == 1)
     model.handleLine("ULEAPP\tversion\tlava\t\t0.16.0")
     precondition(model.tools[0].version == "0.16.0")
-    model.handleLine("A useful Homebrew error")
+    model.handleLine("A useful download error")
     model.flushLog()
-    precondition(model.log.contains("A useful Homebrew error"))
+    precondition(model.log.contains("A useful download error"))
     precondition(!model.log.contains("ULEAPP\t"))
     model.handleLine("ULEAPP\tapp\taleapp-gui\tinstalling\tInstalling")
     precondition(model.tools[1].status == "installing")
@@ -451,7 +417,7 @@ if CommandLine.arguments.contains("--self-test") || CommandLine.arguments.contai
     }
     precondition(model.allInstalledCurrent)
     model.handleLine("ULEAPP\tupstream\tlava\t\t0.16.0")
-    model.handleLine("ULEAPP\tapp\tlava\tpending\tHomebrew update pending")
+    model.handleLine("ULEAPP\tapp\tlava\tpending\tUpdate available")
     precondition(model.pendingCount == 1 && !model.allInstalledCurrent)
     precondition(model.tools[0].upstreamVersion == "0.16.0")
     model.finish(0)

@@ -16,8 +16,8 @@ struct DirectMacApp: Codable {
     let relativePath: String
 }
 
-// Direct copies have their own versioned folders and records. Homebrew's app
-// bundle and receipts remain intact; Launch uses the selected direct copy.
+// Official releases use versioned folders and an atomic selected-install record.
+// Existing Applications copies remain intact; Launch uses the selected release.
 struct DirectMacStore {
     let apps: URL
     let records: URL
@@ -56,19 +56,6 @@ struct DirectMacStore {
             try JSONEncoder().encode(record).write(to: records.appendingPathComponent(tool.id + ".json"), options: .atomic)
         } catch { try? fm.removeItem(at: folder); throw error }
         return folder.appendingPathComponent(tool.bundle + ".app")
-    }
-    func returnToHomebrew(_ tool: LEAPPTool, installed: String, home: URL = FileManager.default.homeDirectoryForCurrentUser, applicationPaths: [URL]? = nil) throws {
-        guard let selected = try current(tool) else { return }
-        let json: [String: Any] = ["tag_name": selected.0.version, "draft": false, "prerelease": false]
-        guard !(try UpstreamRelease.assess(json, installed: installed)).1 else { throw UpstreamRelease.Failure(message: "Homebrew is still older. The direct copy remains selected.") }
-        let candidates = applicationPaths ?? [URL(fileURLWithPath: "/Applications/" + tool.bundle + ".app"), home.appendingPathComponent("Applications/" + tool.bundle + ".app")]
-        guard let app = candidates.first(where: { FileManager.default.fileExists(atPath: $0.path) }),
-              let data = try? Data(contentsOf: app.appendingPathComponent("Contents/Info.plist")),
-              let info = try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any],
-              let version = info["CFBundleShortVersionString"] as? String,
-              !(try UpstreamRelease.assess(json, installed: version)).1 else { throw UpstreamRelease.Failure(message: "The Homebrew app in Applications has not caught up. The direct copy remains selected.") }
-        try DirectMacInstaller.assessPublisher(app)
-        try FileManager.default.removeItem(at: records.appendingPathComponent(tool.id + ".json"))
     }
     struct OldInstall {
         let label: String
@@ -378,6 +365,9 @@ final class DirectMacInstaller: NSObject, URLSessionDownloadDelegate {
         precondition(try! store.current(tool)!.0.version == "2026.4.4")
         precondition(try! Data(contentsOf: evidence) == bytes)
         _ = try! store.publish(staging("three"), tool: tool, version: "2026.4.5")
+        let launchModel = UpdaterModel(directStore: store)
+        let currentLaunch = try! launchModel.selectionForLaunch(tool)
+        precondition(currentLaunch.version == "2026.4.5" && currentLaunch.existingBundlePath?.contains("2026.4.5/") == true, "Launch follows the latest successful selection")
         // The old copy with an extra case file must never become eligible.
         let extra = old.deletingLastPathComponent().appendingPathComponent("case-notes.txt")
         try! bytes.write(to: extra)
@@ -396,9 +386,11 @@ final class DirectMacInstaller: NSObject, URLSessionDownloadDelegate {
 
         reject { _ = try store.publish(staging("duplicate"), tool: tool, version: "2026.4.4") }
         precondition(try! store.current(tool)!.0.version == "2026.4.5")
+        precondition(try! launchModel.selectionForLaunch(tool).version == "2026.4.5", "A failed publication keeps Launch on the working selection")
         let record = store.records.appendingPathComponent(tool.id + ".json")
         try! JSONEncoder().encode(DirectMacApp(version: "2026.4.4", relativePath: "../../bad.app")).write(to: record)
         reject { _ = try store.current(tool) }
+        reject { _ = try launchModel.selectionForLaunch(tool) }
         let cancellation = DirectMacCancellation(); cancellation.cancel()
         reject { try cancellation.check() }
     }

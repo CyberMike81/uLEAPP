@@ -13,7 +13,7 @@ import shutil
 import subprocess
 import tempfile
 
-root = Path(__file__).resolve().parents[1]
+root = Path(__file__).resolve().parents[2]
 brew = shutil.which("brew") or next((p for p in ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"] if Path(p).is_file()), None)
 if brew is None:
     raise SystemExit("Homebrew is required for this optional integration check.")
@@ -42,7 +42,7 @@ esac
         environment = dict(os.environ, PATH=temporary + ":" + os.environ["PATH"],
                            ULEAPP_EVENTS="1", HOMEBREW_NO_AUTO_UPDATE="1",
                            ULEAPP_TEST_MINIMUM="1" if minimum else "0", ULEAPP_TEST_TARGET=target or "")
-        result = subprocess.run(["/bin/bash", str(root / "scripts/LEAPP Updater.command"), "--check"],
+        result = subprocess.run(["/bin/bash", str(root / "legacy/scripts/LEAPP Updater.command"), "--check"],
                                 env=environment, stdin=subprocess.DEVNULL,
                                 capture_output=True, text=True, timeout=120)
         output = label + "\n" + result.stdout + result.stderr

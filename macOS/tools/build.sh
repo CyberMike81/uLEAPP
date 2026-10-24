@@ -30,13 +30,11 @@ for pixels in 16 32 128 256 512; do
         --out "$iconset_dir/icon_${pixels}x${pixels}@2x.png" >/dev/null
 done
 /usr/bin/iconutil -c icns "$iconset_dir" -o "$app_dir/Contents/Resources/AppIcon.icns"
-cp "$project_dir/scripts/LEAPP Updater.command" "$app_dir/Contents/Resources/"
-cp "$project_dir/scripts/askpass.sh" "$app_dir/Contents/Resources/"
+rm -f "$app_dir/Contents/Resources/LEAPP Updater.command" "$app_dir/Contents/Resources/askpass.sh"
 cp "$repository_dir/LICENSE" "$repository_dir/THIRD-PARTY-NOTICES.md" "$app_dir/Contents/Resources/"
 /usr/bin/ditto --norsrc "$repository_dir/licenses" "$app_dir/Contents/Resources/licenses"
 /usr/bin/ditto --norsrc "$repository_dir/assets/tool-icons" "$app_dir/Contents/Resources/tool-icons"
-chmod 755 "$app_dir/Contents/MacOS/uLEAPP" "$app_dir/Contents/Resources/askpass.sh" \
-    "$app_dir/Contents/Resources/LEAPP Updater.command"
+chmod 755 "$app_dir/Contents/MacOS/uLEAPP"
 cat > "$app_dir/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

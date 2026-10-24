@@ -2,142 +2,72 @@
 
 Idea by [@CyberMike81](https://github.com/CyberMike81).
 
-uLEAPP gives the LEAPP family one desktop interface for installing missing apps,
-checking versions and updating installed apps. It started as a script to run the
-official Homebrew commands and grew into native Mac and Windows GUI apps.
+One place to install, update and launch the LEAPP tools on Mac, Windows and Linux.
+Every platform checks the tools’ official GitHub releases and chooses the matching
+published package. There is no package-manager setup or update-method choice.
 
-**Community preview 0.3.12 — available for testing and feedback.** This is a
-community project; publisher endorsement and inclusion on leapps.org are decisions
-for the LEAPP maintainers. No upstream pull request is required to try these builds.
+**Community Preview 0.3.12** is available for testing and feedback.
 
-## What it does
+## Download
 
-- Supports LAVA, ALEAPP, iLEAPP, RLEAPP, VLEAPP, DLEAPP and GLEAPP.
-- Detects installed tools and shows their versions and update status.
-- Installs a missing tool individually, or installs missing tools together.
-- Checks official releases and updates installed tools together.
-- Shows progress, per-app results and readable logs. Current apps have no Update button.
-- Starts installation/update actions when you choose them; launch checks only uLEAPP release metadata, without downloading app packages.
-- Uses the official Homebrew tap on Mac and official GitHub releases on Windows.
-- Verifies Windows download size and SHA-256 before installation; portable updates
-  keep older versions and their files. Mac and Windows also provide Launch buttons.
+Get the matching package from the [Community Preview release](https://github.com/CyberMike81/uLEAPP/releases/tag/v0.3.12), extract it, and open uLEAPP. Keep its included notices.
 
-Batch LEAPP and GLEAPP Map Downloader are not included. No LEAPP application
-executables or installers are bundled with uLEAPP.
-
-## Download and run
-
-Download the matching ZIP from the [0.3.12 preview release](https://github.com/CyberMike81/uLEAPP/releases/tag/v0.3.12),
-extract the complete folder, and open its app. Keep the included license/notices files.
-
-| Platform | Download / repository folder | Requirements |
+| Platform | Download | Requirements |
 | --- | --- | --- |
-| macOS | `uLEAPP-0.3.12-macOS.zip` / `macOS/uLEAPP.app` | macOS 13+; Homebrew installed; universal Apple silicon/Intel build |
-| Windows ARM64 | `uLEAPP-0.3.12-Windows-ARM64.zip` / `Windows-ARM64/uLEAPP.exe` | Windows 11 ARM; .NET runtime included |
-| Windows x64 | `uLEAPP-0.3.12-Windows-x64.zip` / `Windows-x64/uLEAPP.exe` | Intel/AMD Windows; .NET runtime included |
+| Mac | `uLEAPP-0.3.12-macOS.zip` | macOS 13+; Apple silicon or Intel |
+| Windows x64 | `uLEAPP-0.3.12-Windows-x64.zip` | 64-bit Intel/AMD Windows; runtime included |
+| Windows ARM64 | `uLEAPP-0.3.12-Windows-ARM64.zip` | Windows 11 ARM; runtime included |
+| Linux | `uLEAPP-0.3.12-Linux.tar.gz` | Python 3.10+ and Tk; x64 or ARM64 |
 
-Close LEAPP tools before updating. Mac can adopt matching manually installed apps
-into Homebrew without forcing replacement. Windows setup-installed tools keep
-using their publisher's interactive setup; other tools use portable version folders.
-LAVA exposes its separate freeware terms before first installation.
+uLEAPP is ad hoc signed on Mac and unsigned on Windows. This preview is not
+notarized. Publisher tools retain their own signing and platform requirements.
 
-LAVA 0.15.0 uses its official x64 setup on Windows ARM after the native ARM setup
-left missing files in the test VM. This affects package selection only for 0.15.0;
-new releases are discovered automatically and prefer native ARM when available.
-GLEAPP currently uses an explicitly identified x64 fallback on Windows ARM.
+## Use it
 
-These preview builds are unsigned on Windows and locally ad hoc signed on Mac;
-they have no Developer ID notarization. See the platform READMEs for operation,
-logs and build instructions.
+- **Check for updates** compares installed versions with the publishers’ official releases.
+- **Install** adds a missing tool; **Install missing apps** adds the available missing tools together.
+- **Update apps** downloads and installs newer releases after you choose it. Close LEAPP apps first.
+- **Launch** opens the latest successfully installed, selected copy. A failed update keeps the previous selection working.
+- **Remove old installs** reviews eligible old managed copies before moving them to Trash or Recycle Bin. The current and one previous version are kept; unknown or changed folders and case data are preserved.
 
-## Linux preview
+A row’s pill shows its status and version. Hover for check evidence. The row’s
+**⋯** menu reveals the selected app or opens release notes. **Details** shows logs;
+**Settings** contains the automatic uLEAPP update-check preference.
 
-A Linux desktop preview is available in [`Linux/`](Linux/README.md), with Install,
-Update and Launch controls. It uses Python 3.10+ and Tk and manages official Linux
-packages in your user folder. GLEAPP is currently x64-only on Linux.
-Download `uLEAPP-0.3.12-Linux.tar.gz` from the [Community Preview release](https://github.com/CyberMike81/uLEAPP/releases/tag/v0.3.12). Requires Python 3.10+ and Tk.
+Existing apps are detected where supported. Installing an update leaves existing
+Applications copies and external installer records alone; Launch in uLEAPP follows
+its selected install. Tools are downloaded on demand, not bundled in uLEAPP.
 
-## Screenshots
+uLEAPP can also notify you about a newer uLEAPP release. Its Download button opens
+the matching download; replace uLEAPP yourself. Tool installation and uLEAPP’s own
+update notification are separate operations.
 
-macOS with all seven tools detected:
+## Tools
 
-![uLEAPP on macOS](docs/screenshots/macOS-0.2.2.png)
+LAVA, ALEAPP, iLEAPP, RLEAPP, VLEAPP, DLEAPP, GLEAPP, GLEAPP Map Downloader and
+Batch LEAPP are supported where the publisher provides a compatible binary.
 
-Windows ARM64, with installation and update controls:
+- Map Downloader has Mac, Windows and Linux builds for both architectures.
+- Batch LEAPP has a Windows x64 GUI, used through emulation on Windows ARM. Apple silicon Macs get **Get latest** for the official GUI ZIP and manual installation. Its current Mac build is not notarized and reports version 0.0.0, so uLEAPP cannot verify that copy as current. No Batch binary is published for Intel Mac or Linux.
+- GLEAPP uses its published x64 compatibility build on Windows ARM. Linux GLEAPP is currently x64-only.
+- LAVA has separate freeware terms, shown before first installation. Its official 0.15.0 x64 Windows installer is selected on ARM because the native installer had missing files in testing; newer releases prefer native ARM.
 
-![uLEAPP on Windows ARM64](docs/screenshots/Windows-ARM64-0.2.2.png)
+Linux AppImages may require FUSE; publisher dependencies still apply. Launch
+failures show the actual error and a log path.
 
-## Source, testing and feedback
+## Mac permissions
 
-- `macOS/` contains Swift source, the standalone updater, build tools and tests.
-- `Windows/` contains shared C#/WPF source, build tools and packaged self-checks.
-- The three platform folders contain the actual apps at their roots.
-- [VALIDATION.md](VALIDATION.md) records 79 Mac worker checks and 128 packaged
-  Windows checks per architecture on native GitHub runners, plus Homebrew integration and limitations.
-- [AUDIT-RESPONSE.md](AUDIT-RESPONSE.md) explains the fixes verified by review.
+Mac release installation verifies the published checksum, architecture, version,
+Developer ID publisher team and Gatekeeper assessment, then applies quarantine.
+If macOS blocks a required attribute, uLEAPP explains how to enable **App Management**
+in System Settings. Permission is granted by you, not automatically by uLEAPP.
 
-Remaining work includes physical Intel Mac testing, the real Mac password-helper
-flow, the full final Windows GUI test matrix, and more selective recovery of partially damaged settings. The automated package checks run on native x64 and ARM64 GitHub runners; full manual GUI coverage remains to be completed.
+## Source and validation
 
-Please use [Issues](https://github.com/CyberMike81/uLEAPP/issues) for bugs, usability
-feedback, suggestions or packaging questions. Maintainer feedback is welcome before
-any wider rollout through leapps.org.
+- Mac: `macOS/Sources`; build with `bash macOS/tools/build.sh`.
+- Windows: `Windows`; build with `Windows/tools/Build.ps1` and .NET 10 on Windows.
+- Linux: `Linux`; run `python3 Linux/uleapp.py` or build its archive with `python3 Linux/package.py`.
 
-## Licenses
-
-Original uLEAPP source, scripts, tests and original artwork use the supplied
-[MIT license](LICENSE). The idea credit is not a code ownership claim. Managed
-apps and publisher icons keep their own terms. LAVA is separately licensed freeware.
-See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md), `licenses/`,
-`assets/tool-icons/` and the Windows runtime notices for the inventory and provenance.
-
-## uLEAPP update notifications
-
-uLEAPP checks its own official GitHub releases at startup and once every 24 hours
-while open. A newer published release shows **Download update** for your platform
-and a **Release notes** link. Downloads open in your browser only when clicked;
-no automatic installation or replacement occurs. This is separate from LEAPP
-tool checks. Offline/rate-limit failures stay quiet and do not block normal use.
-Demo and automated smoke-test modes do not contact GitHub.
-
-## Automatic checks and network use
-
-The saved **Check for uLEAPP updates automatically** setting controls the startup
-and daily uLEAPP metadata request. Uncheck it to stop those requests, or launch
-with `--no-update-check` to disable them for that run. Explicit tool checks and
-installation requests still contact the publishers when requested. No case data
-is included in these requests; the User-Agent identifies the uLEAPP version.
-
-Metadata requests send cached ETags and use cached content only when GitHub
-confirms it with HTTP 304. Network failures never become a cached “up to date”
-result. GitHub’s unauthenticated limit is shared by source IP (typically 60/hour);
-conditional requests are not exempt without authentication. Details show the
-remaining quota and reset timestamp on HTTP 403/429. No GitHub token is stored.
-
-Mac supports direct downloads without Homebrew. The saved **Use Homebrew when
-available** preference selects Homebrew management when installed; turn it off
-(or launch with `--no-homebrew`) to check and install directly. Existing app
-copies are preserved. App Management permission errors offer an explanation
-and an Open Settings button. Publisher/Gatekeeper checks are not bypassed.
-
-## Companion tools (0.3.12)
-
-GLEAPP Map Downloader can be checked, installed, updated and launched on Mac,
-Windows and Linux, with native x64 and ARM64 packages where published. It downloads
-map data when you use it; GLEAPP itself remains offline.
-
-Batch LEAPP is supported on Windows x64 (including Windows ARM through x64
-emulation). Its current Mac GUI is Apple silicon only and requires manual download
-and installation: the publisher's v1.2.0 app is ad hoc signed, not notarized, and
-reports bundle version 0.0.0. uLEAPP offers the exact official Mac download and
-can launch an existing Applications copy; it does not disable Gatekeeper or claim
-that copy is up to date. No Linux or Intel Mac Batch package is currently published,
-so those platforms do not offer it. Companions use direct downloads, not Homebrew.
-
-Managed companion installs retain the current and previous versions and participate
-in **Remove old installs**. Manually installed Batch copies are outside that cleanup.
-
-0.3.12 groups preferences under Settings and logs under Details. Tool status
-pills include versions; hover for check evidence. Row menus reveal installed
-copies and open release notes. Mac Homebrew switching stays disabled until
-both the installed Homebrew version and its Applications copy have caught up.
+See [VALIDATION.md](VALIDATION.md) for completed checks and hardware gaps.
+uLEAPP is MIT licensed. Publisher software and artwork keep their own rights;
+see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md), the platform READMEs and `licenses/`.

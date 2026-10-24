@@ -6,9 +6,7 @@ struct LEAPPTool: Identifiable {
     let name: String
     let description: String
     let bundle: String
-    var directOnly: Bool { id == "batch-leapp" || id == "mapdownloader" }
     var manualDownload: Bool { id == "batch-leapp" }
-    var homebrewVersion = ""
     var applicationVersion = ""
     var directVersion = ""
     var upstreamVersion = ""
@@ -35,28 +33,10 @@ struct LEAPPTool: Identifiable {
         let evidence = checkedAt.map { "Checked against GitHub " + Self.friendlyTime($0) + "." } ?? "Not checked against GitHub in this session."
         return status == "failed" ? "Open Details for the error. Last successful check: " + evidence : evidence
     }
-    private func atLeastDirect(_ version: String) -> Bool {
-        guard !directVersion.isEmpty, !version.isEmpty else { return false }
-        return (try? !UpstreamRelease.assess(["tag_name": directVersion, "draft": false, "prerelease": false], installed: version).1) ?? false
-    }
-    var canReturnToHomebrew: Bool { !directOnly && atLeastDirect(homebrewVersion) && atLeastDirect(applicationVersion) }
-    var returnHomebrewHelp: String {
-        if canReturnToHomebrew { return "Use the verified Homebrew copy in Applications; uLEAPP copies are kept." }
-        if !atLeastDirect(homebrewVersion) { return "Homebrew’s installed version must reach " + directVersion + " before switching." }
-        return "The Homebrew app in Applications must reach " + directVersion + " before switching."
-    }
-    func sourceLine(usesHomebrew: Bool) -> String {
-        if manualDownload { return description + " · Publisher offers a manual download only; macOS may ask before first launch." }
-        if !directVersion.isEmpty {
-            var text = description + " · Launch opens uLEAPP’s copy " + directVersion
-            if !homebrewVersion.isEmpty && !applicationVersion.isEmpty {
-                let sameVersion = (try? UpstreamRelease.parts(applicationVersion) == UpstreamRelease.parts(homebrewVersion)) ?? false
-                text += sameVersion ? " (Homebrew copy " + applicationVersion + " in Applications)" : " (Applications copy " + applicationVersion + "; Homebrew installed " + homebrewVersion + ")"
-            }
-            return text
-        }
-        if !homebrewVersion.isEmpty && usesHomebrew { return description + " · Managed by Homebrew" }
-        if existingBundlePath != nil { return description + " · Installed by you" }
+    var sourceLine: String {
+        if manualDownload { return description + " · Manual download" }
+        if !directVersion.isEmpty { return description + " · Installed by uLEAPP" }
+        if existingBundlePath != nil { return description + " · Installed in Applications" }
         return description
     }
     static let all: [LEAPPTool] = [
@@ -81,9 +61,9 @@ struct LEAPPTool: Identifiable {
         case "installing": return "Installing"
         case "current": return "Up to date"
         case "available": return "Update available"
-        case "pending": return "Homebrew update pending"
+        case "pending": return "Update available"
         case "failed": return "Needs attention"
-        case "skipped": return "Not managed by Homebrew"
+        case "skipped": return "Not checked"
         default: return "Not checked"
         }
     }
@@ -99,7 +79,7 @@ struct LEAPPTool: Identifiable {
            let info = (try? PropertyListSerialization.propertyList(from: data, format: nil)) as? [String: Any],
            let found = info["CFBundleShortVersionString"] as? String {
             applicationVersion = found
-            if (discoverManual || directOnly) && version.isEmpty && !(manualDownload && found == "0.0.0") { version = found }
+            if discoverManual && version.isEmpty && !(manualDownload && found == "0.0.0") { version = found }
         }
         directVersion = ""
         if let store = store, let direct = try? store.current(self) {
@@ -118,7 +98,7 @@ struct LEAPPTool: Identifiable {
 
 }
 
-enum UpdateMode: String { case check, update, install, returnHomebrew }
+enum UpdateMode: String { case check, update, install }
 
 final class UpdaterModel: ObservableObject {
     @Published var appUpdate: AppUpdate?
@@ -156,32 +136,19 @@ final class UpdaterModel: ObservableObject {
     @Published var log = ""
     @Published var settingsExpanded = false
     @Published var lastChecked: Date?
-    @Published var brewFound = true
-    @Published var useHomebrew = UserDefaults.standard.object(forKey: "UseHomebrew") == nil || UserDefaults.standard.bool(forKey: "UseHomebrew")
-    let homebrewPreferenceEnabled = !CommandLine.arguments.contains("--no-homebrew")
-    private let brewResolver: () -> String?
-    private let fetchRelease: (String) throws -> [String: Any]
-    var usesHomebrew: Bool { brewFound && useHomebrew && homebrewPreferenceEnabled }
-    func setUseHomebrew(_ enabled: Bool) {
-        guard !busy, !loading else { return }
-        useHomebrew = enabled
-        UserDefaults.standard.set(enabled, forKey: "UseHomebrew")
-        loadInstalled()
-    }
     @Published var detailsExpanded = false
     @Published var activeIDs = Set(LEAPPTool.all.map { $0.id })
     let demo: Bool
     let demoMissing: Bool
+    private let fetchRelease: (String) throws -> [String: Any]
     private let directStore: DirectMacStore?
     private var buffer = Data()
     private var pendingCarriageReturn = false
     private var pendingLog = ""
     private var logFlush: DispatchWorkItem?
-    private let discovery = DiscoveryProcess()
     private var currentMode: UpdateMode = .check
     private var directCancellation: DirectMacCancellation?
     @Published var directProgress = 0.0
-    private var cancelURL: URL?
     private var logHandle: FileHandle?
     private(set) var logURL: URL?
     var pendingCount: Int { tools.filter { $0.status == "pending" }.count }
@@ -195,36 +162,43 @@ final class UpdaterModel: ObservableObject {
     var completedCount: Int { tools.filter { activeIDs.contains($0.id) && ["installed", "current", "available", "download", "pending", "failed", "skipped", "notInstalled", "unmanaged"].contains($0.status) }.count }
     var progress: Double { (Double(completedCount) + (directCancellation == nil ? 0 : directProgress)) / Double(max(1, progressTotal)) }
 
-    init(demo: Bool = false, demoMissing: Bool = false, directStore: DirectMacStore? = DirectMacStore(), brewResolver: @escaping () -> String? = UpdaterModel.brewPath, fetchRelease: @escaping (String) throws -> [String: Any] = UpstreamRelease.fetch) {
+    init(demo: Bool = false, demoMissing: Bool = false, directStore: DirectMacStore? = DirectMacStore(), fetchRelease: @escaping (String) throws -> [String: Any] = UpstreamRelease.fetch) {
         self.fetchRelease = fetchRelease
-        self.brewResolver = brewResolver
         self.demo = demo; self.demoMissing = demoMissing
         self.directStore = demo ? nil : directStore
-        self.brewFound = brewResolver() != nil
         refreshPresentation()
     }
     func refreshPresentation() {
-        for index in tools.indices { tools[index].refreshPresentation(store: directStore, discoverManual: !usesHomebrew) }
+        for index in tools.indices { tools[index].refreshPresentation(store: directStore, discoverManual: true) }
     }
-    static func brewPath() -> String? {
-        let paths = ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"]
-            + (ProcessInfo.processInfo.environment["PATH"] ?? "").split(separator: ":").map { "\($0)/brew" }
-        return paths.first { FileManager.default.isExecutableFile(atPath: $0) }
+    func selectionForLaunch(_ original: LEAPPTool) throws -> LEAPPTool {
+        if let store = directStore { _ = try store.current(original) }
+        var selected = original
+        selected.version = ""
+        selected.refreshPresentation(store: directStore, discoverManual: true)
+        return selected
     }
-    func launch(_ tool: LEAPPTool) {
+    func launch(_ original: LEAPPTool) {
         guard !busy, !loading, !demo else { return }
+        let tool: LEAPPTool
+        do { tool = try selectionForLaunch(original) }
+        catch { showLaunchError(original, message: error.localizedDescription); return }
+        if let index = tools.firstIndex(where: { $0.id == tool.id }) { tools[index] = tool }
         guard let path = tool.existingBundlePath else {
             showLaunchError(tool, message: "The app could not be found in Applications. Refresh your installed apps or install it again.")
             return
         }
         if !tool.directVersion.isEmpty {
-            loading = true
+            loading = true; stopRequested = false
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 do {
                     let app = URL(fileURLWithPath: path)
                     try DirectMacInstaller.assessPublisher(app)
                     try DirectMacInstaller.quarantine(app)
-                    DispatchQueue.main.async { self?.loading = false; self?.openInstalled(tool, path: path) }
+                    DispatchQueue.main.async {
+                        guard let self = self else { return }; self.loading = false
+                        if !self.stopRequested { self.openInstalled(tool, path: path) }
+                    }
                 } catch { DispatchQueue.main.async { self?.loading = false; self?.showLaunchError(tool, message: error.localizedDescription, appManagement: error is DirectMacInstaller.AppManagementRequired) } }
             }
             return
@@ -261,6 +235,7 @@ final class UpdaterModel: ObservableObject {
     }
     func loadInstalled() {
         guard !busy, !loading else { return }
+        for index in tools.indices { tools[index].version = ""; tools[index].status = "unknown" }
         refreshPresentation()
         if demo {
             for index in tools.indices {
@@ -270,83 +245,22 @@ final class UpdaterModel: ObservableObject {
             subtitle = "Demo mode — your apps will not change."
             return
         }
-        brewFound = brewResolver() != nil
-        guard usesHomebrew, let brew = brewResolver() else {
-            applyInstalled("")
-            title = "Ready for direct Mac updates"
-            subtitle = "Install and update official Mac builds directly. Homebrew is optional."
-            return
-        }
-        loading = true
-        stopRequested = false
-        discovery.reset()
-        let discovery = self.discovery
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let process = Process()
-            let pipe = Pipe()
-            process.executableURL = URL(fileURLWithPath: brew)
-            process.arguments = ["list", "--cask", "--versions"]
-            var environment = ProcessInfo.processInfo.environment
-            environment["HOMEBREW_NO_AUTO_UPDATE"] = "1"
-            process.environment = environment
-            process.standardOutput = pipe
-            process.standardError = pipe
-            process.standardInput = FileHandle.nullDevice
-            do {
-                try discovery.run(process)
-                let data = pipe.fileHandleForReading.readDataToEndOfFile()
-                process.waitUntilExit()
-                let output = String(decoding: data, as: UTF8.self)
-                let succeeded = process.terminationStatus == 0
-                DispatchQueue.main.async {
-                    guard let self = self else { return }
-                    self.loading = false
-                    if self.stopRequested {
-                        self.title = "Stopped safely"
-                        self.subtitle = "Installed-app discovery was cancelled."
-                        return
-                    }
-                    if succeeded { self.applyInstalled(output) }
-                    else {
-                        self.title = "Could not read your installed apps"
-                        self.subtitle = "Open Details to see Homebrew's message."
-                        self.log = output
-                    }
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    self?.loading = false
-                    self?.title = self?.stopRequested == true ? "Stopped safely" : "Could not start Homebrew"
-                    self?.subtitle = self?.stopRequested == true ? "Installed-app discovery was cancelled." : error.localizedDescription
-                }
-            }
-        }
-    }
-    func applyInstalled(_ output: String) {
-        refreshPresentation()
-        var versions: [String: String] = [:]
-        for line in output.split(separator: "\n") {
-            let parts = line.split(whereSeparator: { $0.isWhitespace })
-            if let first = parts.first {
-                versions[String(first).components(separatedBy: "/").last!] = parts.dropFirst().joined(separator: ", ")
-            }
-        }
         for index in tools.indices {
-            tools[index].homebrewVersion = versions[tools[index].id] ?? ""
-            tools[index].version = versions[tools[index].id] ?? ""
-            tools[index].status = versions[tools[index].id] == nil ? (tools[index].existingBundlePath == nil ? "notInstalled" : "unmanaged") : "installed"
+            do {
+                if let store = directStore { _ = try store.current(tools[index]) }
+                tools[index].status = tools[index].existingBundlePath == nil ? "notInstalled" : "installed"
+            } catch {
+                tools[index].status = "failed"
+                handleLine(tools[index].name + ": " + error.localizedDescription)
+            }
         }
-        refreshPresentation()
-        for index in tools.indices where !tools[index].version.isEmpty { tools[index].status = "installed" }
-        subtitle = "\(displayedInstalledCount) of \(tools.count) apps installed. Ready to check for updates."
-        if installedCount == 0 {
-            title = "Your first LEAPP starts here"
-            subtitle = "Install an app below, or install the missing apps together."
-        }
+        title = failedCount > 0 ? "A few things need attention" : "Ready for the next LEAPP"
+        subtitle = failedCount > 0 ? "Open Details to see what happened." : "\(displayedInstalledCount) of \(tools.count) apps installed. Updates come from the official releases."
+        if failedCount > 0 { detailsExpanded = true; flushLog() }
     }
-    private var queuedCompanions: [LEAPPTool] = []
     func start(_ mode: UpdateMode, cask: String? = nil) {
         guard !busy, !loading else { return }
+        if !demo { loadInstalled() }
         if mode == .install && !demo && tools.contains(where: { $0.id == "lava" && $0.version.isEmpty && (cask == nil || cask == "lava") }) {
             let alert = NSAlert()
             alert.messageText = "Install LAVA under its own license?"
@@ -361,82 +275,15 @@ final class UpdaterModel: ObservableObject {
             }
             guard response == .alertFirstButtonReturn else { return }
         }
-        if (!usesHomebrew || tools.contains { $0.id == cask && $0.directOnly }) && !demo {
-            if mode == .returnHomebrew {
-                title = "Homebrew is optional"
-                subtitle = "Enable Homebrew management to return a direct copy to Homebrew."
-                return
-            }
-            let selected = tools.filter { (cask == nil || $0.id == cask) && (mode != .install || $0.version.isEmpty) && (mode != .update || !$0.version.isEmpty) }
-            if mode == .check { checkDirect(selected) }
-            else { updateDirect(selected) }
-            return
-        }
-        queuedCompanions = mode == .returnHomebrew ? [] : tools.filter { $0.directOnly && (cask == nil || $0.id == cask) && (mode != .install || $0.version.isEmpty) && (mode != .update || !$0.version.isEmpty) }
         currentMode = mode
-        activeIDs = cask.map { Set([$0]) } ?? Set(tools.filter { !$0.directOnly }.map { $0.id })
-        busy = true
-        stopRequested = false
-        title = mode == .check ? "Looking for the latest LEAPPs" : (mode == .install ? "Making room for your next LEAPP" : "Keeping your LEAPPs current")
-        subtitle = mode == .check ? "Checking supported tools for new releases." : (mode == .install ? "Installing the requested apps through the official Homebrew tap." : "Please keep your LEAPP apps closed while updating.")
-        phase = "Preparing Homebrew"
-        flushLog()
-        log = ""
-        buffer.removeAll(keepingCapacity: true)
-        pendingCarriageReturn = false
-        for index in tools.indices where activeIDs.contains(tools[index].id) { tools[index].status = "waiting" }
-        if demo { runDemo(mode); return }
-        guard let worker = Bundle.main.path(forResource: "LEAPP Updater", ofType: "command"),
-              let askpass = Bundle.main.path(forResource: "askpass", ofType: "sh") else {
-            finish(1, launchError: "The bundled updater is missing. Rebuild or reinstall uLEAPP.")
-            return
+        let selected = tools.filter { (cask == nil || $0.id == cask) && (mode == .check || !$0.manualDownload) && (mode != .install || $0.version.isEmpty) && (mode != .update || !$0.version.isEmpty) }
+        if demo {
+            activeIDs = Set(selected.map { $0.id }); busy = true; stopRequested = false
+            title = mode == .check ? "Checking official releases" : "Updating your apps"
+            runDemo(mode); return
         }
-        do {
-            let runID = ISO8601DateFormatter().string(from: Date()).replacingOccurrences(of: ":", with: "-") + "-" + UUID().uuidString.prefix(6)
-            let runDirectory = FileManager.default.homeDirectoryForCurrentUser
-                .appendingPathComponent("Library/Logs/uLEAPP/\(runID)", isDirectory: true)
-            try FileManager.default.createDirectory(at: runDirectory, withIntermediateDirectories: true)
-            let outputURL = runDirectory.appendingPathComponent("updater.log")
-            FileManager.default.createFile(atPath: outputURL.path, contents: nil)
-            logURL = outputURL
-            logHandle = try FileHandle(forWritingTo: outputURL)
-            cancelURL = runDirectory.appendingPathComponent("stop-requested")
-        } catch { finish(1, launchError: error.localizedDescription); return }
-        var environment = ProcessInfo.processInfo.environment
-        environment["PATH"] = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:" + (environment["PATH"] ?? "")
-        environment["ULEAPP_EVENTS"] = "1"
-        environment["ULEAPP_RELEASE_CHECKER"] = Bundle.main.executableURL?.path
-        environment["ULEAPP_CANCEL_FILE"] = cancelURL?.path
-        environment["SUDO_ASKPASS"] = askpass
-        environment["HOMEBREW_NO_COLOR"] = "1"
-        let arguments: [String]
-        if mode == .returnHomebrew, let cask = cask { arguments = [worker, "--return-to-homebrew", cask] }
-        else if mode == .check { arguments = [worker, "--check"] }
-        else if mode == .install { arguments = cask.map { [worker, "--install", $0] } ?? [worker, "--install-missing"] }
-        else { arguments = [worker] }
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let process = Process()
-            let pipe = Pipe()
-            process.executableURL = URL(fileURLWithPath: "/bin/bash")
-            process.arguments = arguments
-            process.environment = environment
-            process.standardOutput = pipe
-            process.standardError = pipe
-            process.standardInput = FileHandle.nullDevice
-            do {
-                try process.run()
-                while true {
-                    let data = pipe.fileHandleForReading.availableData
-                    if data.isEmpty { break }
-                    DispatchQueue.main.async { self?.receive(data) }
-                }
-                process.waitUntilExit()
-                let status = process.terminationStatus
-                DispatchQueue.main.async { self?.finish(status) }
-            } catch {
-                DispatchQueue.main.async { self?.finish(1, launchError: error.localizedDescription) }
-            }
-        }
+        if mode == .check { checkDirect(selected) }
+        else { updateDirect(selected) }
     }
     func receive(_ data: Data) {
         // Preserve partial UTF-8 and CRLF across reads. A bare CR replaces the
@@ -470,9 +317,8 @@ final class UpdaterModel: ObservableObject {
             if let index = tools.firstIndex(where: { $0.id == fields[2] }) {
                 if fields[1] == "version" {
                     tools[index].version = fields[4]
-                    tools[index].refreshPresentation(store: directStore, discoverManual: !usesHomebrew)
+                    tools[index].refreshPresentation(store: directStore, discoverManual: true)
                 }
-                if fields[1] == "homebrew" { tools[index].homebrewVersion = fields[4] }
                 if fields[1] == "upstream" { tools[index].upstreamVersion = fields[4]; tools[index].checkedAt = Date() }
                 if fields[1] == "app" {
                     tools[index].status = fields[3]
@@ -498,78 +344,19 @@ final class UpdaterModel: ObservableObject {
     }
     func requestStop() {
         guard (busy || loading), !stopRequested else { return }
-        if let directCancellation = directCancellation {
-            directCancellation.cancel()
-            stopRequested = true
-            subtitle = "Stopping safely."
-            return
-        }
-        if loading {
-            stopRequested = true
-            discovery.cancel()
-            subtitle = "Stopping installed-app discovery."
-            return
-        }
-        if demo { stopRequested = true; subtitle = "Will stop after the current app finishes."; return }
-        guard let url = cancelURL else { return }
-        do {
-            try Data().write(to: url)
-            stopRequested = true
-            subtitle = "Will stop after the current operation finishes."
-        } catch { log += "Could not request a stop: \(error.localizedDescription)\n" }
+        directCancellation?.cancel()
+        stopRequested = true
+        subtitle = "Stopping safely. Completed installs will be kept."
     }
     func finish(_ status: Int32, launchError: String? = nil) {
-        if !buffer.isEmpty {
-            handleLine(String(decoding: buffer, as: UTF8.self))
-            buffer.removeAll(keepingCapacity: true)
-        }
-        pendingCarriageReturn = false
-        flushLog()
-        refreshPresentation()
-        try? logHandle?.close()
-        logHandle = nil
-        busy = false
-        phase = ""
-        if let error = launchError { log += error + "\n" }
-        let unfinished = tools.indices.filter { activeIDs.contains(tools[$0].id) && ["waiting", "checking", "updating", "installing"].contains(tools[$0].status) }
-        for index in unfinished { tools[index].status = status == 130 ? "unknown" : "failed" }
+        if !buffer.isEmpty { handleLine(String(decoding: buffer, as: UTF8.self)); buffer.removeAll(keepingCapacity: true) }
+        pendingCarriageReturn = false; flushLog(); refreshPresentation()
+        try? logHandle?.close(); logHandle = nil; busy = false; phase = ""
+        if let error = launchError { handleLine(error); flushLog() }
+        for index in tools.indices where activeIDs.contains(tools[index].id) && ["waiting", "checking", "updating", "installing"].contains(tools[index].status) { tools[index].status = status == 130 ? "unknown" : "failed" }
+        title = status == 130 ? "Stopped safely" : status != 0 || failedCount > 0 ? "A few things need attention" : availableCount + pendingCount > 0 ? "New LEAPP releases are available" : "Checked apps are up to date"
+        subtitle = status == 130 ? "Completed installs have been kept." : "Updates come from the official releases."
         if currentMode == .check && status != 130 { lastChecked = Date() }
-        let companions = queuedCompanions; queuedCompanions = []
-        if status != 130 && !demo && (currentMode == .check || currentMode == .install || currentMode == .update) {
-            let direct = (currentMode == .update ? tools.filter { $0.status == "pending" } : []) + companions
-            if !direct.isEmpty {
-                if currentMode == .check { checkDirect(direct, preserveLog: true) } else { updateDirect(direct) }
-                return
-            }
-        }
-        if status == 130 {
-            title = "Stopped safely"
-            subtitle = "Completed updates have been kept. You can continue whenever you're ready."
-        } else if status != 0 || failedCount > 0 {
-            title = "A few things need attention"
-            subtitle = "Open Details to see what happened, then try again."
-        } else if currentMode == .returnHomebrew {
-            title = "Homebrew management restored"
-            subtitle = "Launch uses the Homebrew copy in Applications. Direct app folders were retained."
-        } else if currentMode == .install {
-            title = "Your LEAPP apps are ready"
-            subtitle = "Installation finished. You can check for updates whenever you're ready."
-        } else if installedCount == 0 {
-            title = "No LEAPP apps installed"
-            subtitle = "Choose Install to add a tool."
-        } else if pendingCount > 0 {
-            title = "New LEAPP releases are available"
-            subtitle = "\(pendingCount) awaiting Homebrew. Choose Update to install the official Mac downloads. \(availableCount) other updates can be installed through Homebrew."
-            lastChecked = Date()
-        } else if currentMode == .check && availableCount > 0 {
-            title = "\(availableCount) \(availableCount == 1 ? "update is" : "updates are") ready"
-            subtitle = "Close your LEAPP apps, then choose Update apps."
-            lastChecked = Date()
-        } else {
-            title = "Checked apps are up to date"
-            subtitle = "Your installed LEAPP apps are ready for the next case."
-            lastChecked = Date()
-        }
     }
     func checkDirect(_ selected: [LEAPPTool], preserveLog: Bool = false) {
         guard !busy, !loading, !demo else { return }
@@ -578,14 +365,16 @@ final class UpdaterModel: ObservableObject {
         activeIDs = Set(selected.map { $0.id })
         busy = true; stopRequested = false
         title = "Checking official Mac releases"
-        subtitle = "Homebrew is optional; checking does not install apps."
+        subtitle = "Checking the publishers’ official releases. No apps are installed by a check."
         flushLog(); if !preserveLog { log = ""; logURL = nil }
         for index in tools.indices where activeIDs.contains(tools[index].id) { tools[index].status = "checking" }
         let fetch = fetchRelease
+        let selectedStore = directStore
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             for tool in selected {
                 if cancellation.isCancelled { break }
                 do {
+                    if let store = selectedStore { _ = try store.current(tool) }
                     let metadata = try fetch(tool.id)
                     try cancellation.check()
                     let release = try DirectMacInstaller.select(metadata, tool: tool, architecture: DirectMacInstaller.architecture)
@@ -610,7 +399,7 @@ final class UpdaterModel: ObservableObject {
                 for index in self.tools.indices where self.activeIDs.contains(self.tools[index].id) && self.tools[index].status == "checking" { self.tools[index].status = "unknown" }
                 self.directCancellation = nil; self.busy = false; self.phase = ""; self.flushLog()
                 self.title = cancellation.isCancelled ? "Stopped safely" : self.failedCount > 0 ? "A few things need attention" : self.availableCount > 0 ? "New Mac releases are available" : "Checked apps are up to date"
-                self.subtitle = "Choose Install or Update to use the official Mac download."
+                self.subtitle = "Choose Update for available releases; Launch opens the selected installed copy."
                 self.lastChecked = Date()
             }
         }
@@ -647,7 +436,7 @@ final class UpdaterModel: ObservableObject {
                     let alert = NSAlert()
                     if candidates.isEmpty {
                         alert.messageText = "No old installs to remove"
-                        alert.informativeText = "The current version and one previous version are kept. Homebrew copies, untracked folders and modified apps are left alone."
+                        alert.informativeText = "The current version and one previous version are kept. Applications copies, untracked folders and modified apps are left alone."
                         alert.addButton(withTitle: "OK"); alert.runModal(); return
                     }
                     alert.messageText = "Move \(candidates.count) old installs to Trash?"
@@ -703,6 +492,7 @@ final class UpdaterModel: ObservableObject {
             subtitle = error.localizedDescription; return
         }
         let fetch = fetchRelease
+        let selectedStore = directStore
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             var failures = 0
             for tool in selected {
@@ -718,6 +508,7 @@ final class UpdaterModel: ObservableObject {
                     self.tools[index].status = "updating"; self.directProgress = 0
                 }
                 do {
+                    if let store = selectedStore { _ = try store.current(tool) }
                     let metadata = try fetch(tool.id)
                     try cancellation.check()
                     _ = try DirectMacInstaller.select(metadata, tool: tool, architecture: DirectMacInstaller.architecture)
@@ -737,7 +528,7 @@ final class UpdaterModel: ObservableObject {
                     DispatchQueue.main.async {
                         guard let self = self, let index = self.tools.firstIndex(where: { $0.id == tool.id }) else { return }
                         self.tools[index].version = installed.version
-                        self.tools[index].refreshPresentation(store: self.directStore, discoverManual: !self.usesHomebrew)
+                        self.tools[index].refreshPresentation(store: self.directStore, discoverManual: true)
                         self.tools[index].status = "current"; self.tools[index].checkedAt = Date(); self.directProgress = 0
                         self.handleLine("\(tool.name) \(installed.version): installed in ~/Applications/uLEAPP. Previous copies preserved.")
                     }
@@ -745,7 +536,7 @@ final class UpdaterModel: ObservableObject {
                     if !(error is CancellationError) { failures += 1 }
                     DispatchQueue.main.async {
                         guard let self = self, let index = self.tools.firstIndex(where: { $0.id == tool.id }) else { return }
-                        self.tools[index].status = error is CancellationError ? (self.usesHomebrew ? "pending" : "available") : "failed"
+                        self.tools[index].status = error is CancellationError ? ("available") : "failed"
                         self.handleLine("\(tool.name): \(error is CancellationError ? "Stopped at your request." : error.localizedDescription)")
                         if error is DirectMacInstaller.AppManagementRequired { self.showLaunchError(tool, message: error.localizedDescription, appManagement: true) }
                     }
@@ -754,11 +545,11 @@ final class UpdaterModel: ObservableObject {
             }
             DispatchQueue.main.async {
                 guard let self = self else { return }
-                for index in self.tools.indices where self.activeIDs.contains(self.tools[index].id) && self.tools[index].status == "waiting" { self.tools[index].status = self.usesHomebrew ? "pending" : "available" }
+                for index in self.tools.indices where self.activeIDs.contains(self.tools[index].id) && self.tools[index].status == "waiting" { self.tools[index].status = "available" }
                 self.directCancellation = nil; self.directProgress = 0; self.busy = false; self.phase = ""
                 self.flushLog(); try? self.logHandle?.close(); self.logHandle = nil
                 self.title = cancellation.isCancelled ? "Stopped safely" : (failures > 0 || self.failedCount > 0) ? "A few things need attention" : "Your LEAPP apps are ready"
-                self.subtitle = (failures > 0 || self.failedCount > 0) ? "Open Details for the error. Existing apps were preserved." : "Direct installs use ~/Applications/uLEAPP. Launch opens the selected version."
+                self.subtitle = (failures > 0 || self.failedCount > 0) ? "Open Details for the error. Existing apps were preserved." : "Your apps are ready. Launch opens the latest successfully installed copy."
                 self.lastChecked = Date()
             }
         }
@@ -775,37 +566,5 @@ final class UpdaterModel: ObservableObject {
             self.log += "\(self.tools[index].name): \(self.tools[index].statusLabel) (demo)\n"
             self.runDemo(mode, index: index + 1)
         }
-    }
-}
-
-// Cancellation is restricted to read-only discovery. Homebrew installations
-// continue to a safe boundary through the worker's cancellation file.
-final class DiscoveryProcess {
-    private let lock = NSLock()
-    private var process: Process?
-    private var cancelled = false
-    private var deadline: DispatchWorkItem?
-    func reset() {
-        lock.lock(); defer { lock.unlock() }
-        deadline?.cancel(); deadline = nil
-        cancelled = false; process = nil
-    }
-    func run(_ value: Process) throws {
-        lock.lock(); defer { lock.unlock() }
-        if cancelled { throw CocoaError(.userCancelled) }
-        try value.run()
-        process = value
-        let timeout = DispatchWorkItem { [weak self, weak value] in
-            guard let self = self, let value = value else { return }
-            self.lock.lock(); defer { self.lock.unlock() }
-            if self.process === value, value.isRunning { value.terminate() }
-        }
-        deadline = timeout
-        DispatchQueue.global().asyncAfter(deadline: .now() + 60, execute: timeout)
-    }
-    func cancel() {
-        lock.lock(); defer { lock.unlock() }
-        cancelled = true
-        if let process = process, process.isRunning { process.terminate() }
     }
 }

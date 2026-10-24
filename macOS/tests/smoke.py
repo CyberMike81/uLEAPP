@@ -23,10 +23,10 @@ assert metadata["LSMinimumSystemVersion"] == "13.0"
 assert run(str(binary), "--version") == f"uLEAPP {metadata['CFBundleShortVersionString']}"
 print("ok - the built executable reports its packaged version")
 assert "self-check passed" in run(str(binary), "--selfcheck")
-print("ok - the packaged worker, icon and GUI status contract pass self-check")
+print("ok - official release selection, icons and interface state pass self-check")
 for name in ["LEAPP Updater.command", "askpass.sh"]:
-    run("/bin/bash", "-n", str(app / "Contents/Resources" / name))
-print("ok - bundled scripts pass shell validation")
+    assert not (app / "Contents/Resources" / name).exists()
+print("ok - retired package-manager and password helpers are absent")
 assert set(run("/usr/bin/lipo", "-archs", str(binary)).split()) == {"arm64", "x86_64"}
 print("ok - Apple silicon and Intel binaries are included")
 run("/usr/bin/codesign", "--verify", "--strict", "--deep", "--verbose=2", str(app))
