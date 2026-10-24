@@ -67,6 +67,7 @@ public sealed class Installer(ReleaseClient releases, InstallationStore store)
                     string finalExecutable = Path.Combine(destination, Path.GetRelativePath(staging, executable));
                     result = new(tool.Id, release.Version, finalExecutable, release.Asset.Architecture);
                     File.WriteAllText(Path.Combine(staging, ".uleapp-release.json"), JsonSerializer.Serialize(result));
+                    OldInstalls.RecordFiles(staging,tool,release.Version,cancellation);
                     cancellation.ThrowIfCancellationRequested();
                     Directory.Move(staging, destination);
                 }

@@ -85,6 +85,7 @@
     </Border>
     <StackPanel Grid.Row="4" Margin="0,14,0,14">
       <DockPanel>
+        <Button Content="Remove old installs" DockPanel.Dock="Right" Click="RemoveOldClicked" IsEnabled="{Binding ActionsEnabled}" Padding="8,5" FontSize="10" Background="Transparent" Foreground="{StaticResource Muted}" />
         <Button Content="Choose folder" DockPanel.Dock="Right" Click="ChooseFolderClicked" IsEnabled="{Binding ActionsEnabled}" Padding="8,5" FontSize="10" Background="Transparent" Foreground="#8EE563" />
         <TextBlock Text="{Binding InstallFolder}" TextTrimming="CharacterEllipsis" Foreground="{StaticResource Muted}" FontSize="10" VerticalAlignment="Center" ToolTip="{Binding InstallFolder}" />
       </DockPanel>

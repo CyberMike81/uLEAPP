@@ -1,4 +1,4 @@
-# uLEAPP for Linux · 0.3.5 preview
+# uLEAPP for Linux · 0.3.6 preview
 
 Install, update and launch the seven LEAPP apps from their official GitHub releases.
 This Linux preview uses Python 3.10+ and Tk; no Python packages from pip are needed.
@@ -55,3 +55,12 @@ with **Copy error**. Each launch gets a separate private log under `logs`, named
 for the tool (for example `gleapp-....log`); the dialog shows the exact path.
 Empty or unreadable logs are reported explicitly. The launcher does not infer
 missing dependencies from an exit code. Earlier `gleapp.log` files are preserved.
+
+## Remove old installs
+
+**Remove old installs** reviews eligible older uLEAPP-managed app folders before
+moving them to Recycle Bin/Trash. It keeps the current version and one previous
+version per tool. Cleanup is manual; checking or installing never removes old
+versions automatically. A file inventory saved by new installs protects added
+case/report files, changed app files and links. Older folders without this
+inventory are preserved. Eligibility is checked again after review.

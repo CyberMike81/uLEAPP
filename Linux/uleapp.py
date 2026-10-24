@@ -8,6 +8,7 @@ import sys
 import threading
 import webbrowser
 from self_update import check_update
+from cleanup import old_installs, trash_old_installs
 from core import TOOLS, VERSION, Store, architecture, latest, needs_update, Cancelled, check_cancel
 
 
@@ -72,6 +73,7 @@ def main():
                                       state='normal' if available and not busy else 'disabled')
             launches[tool.id].configure(state='normal' if record and not busy else 'disabled')
         check.configure(state='disabled' if busy else 'normal')
+        cleanup.configure(state='disabled' if busy or args.demo else 'normal')
         stop.configure(state='normal' if busy and not cancellation.is_set() else 'disabled')
         update.configure(state='normal' if not busy and any(
             t.id in releases and t.id in records and needs_update(records[t.id]['version'], releases[t.id].version)
@@ -127,6 +129,27 @@ def main():
                     events.put(('status', (tool.id, 'Needs attention')))
                     events.put(('error', tool.name + ': ' + str(error)))
         if not args.demo: run(work)
+
+    def review_cleanup(candidates):
+        if busy or args.demo: return
+        if not candidates:
+            messagebox.showinfo('Remove old installs', 'No eligible old installs. The current and previous versions, changed folders and older copies without a file inventory are kept.', parent=root)
+            return
+        detail = 'Keep the current and one previous version of each tool. Move these older installs to Trash?\n\n' + '\n'.join(item.label for item in candidates)
+        if not messagebox.askyesno('Remove old installs', detail, parent=root): return
+        def work():
+            moved = trash_old_installs(store, candidates, cancellation,
+                progress=lambda item: events.put(('cleanup_log', item.label + ': moved to Trash')))
+            events.put(('cleanup_log', f'{len(moved)} old installs moved to Trash. Current and previous versions kept.'))
+        run(work)
+
+    def scan_old_installs():
+        if args.demo: return
+        def work():
+            candidates = old_installs(store, cancel=cancellation)
+            check_cancel(cancellation)
+            events.put(('cleanup_review', candidates))
+        run(work)
 
     def show_launch_error(tool, message):
         dialog = tk.Toplevel(root)
@@ -200,6 +223,8 @@ def main():
     update.pack(side='right', padx=8)
     ttk.Button(controls, text='LAVA license', command=lambda: webbrowser.open(
         'https://github.com/leapps-org/LAVA-releases/blob/main/LICENSE')).pack(side='left')
+    cleanup = ttk.Button(frame, text='Remove old installs', command=scan_old_installs)
+    cleanup.pack(anchor='w', pady=(0, 8))
     ttk.Label(frame, text='Close LEAPP apps before updating. Older versions and case files are kept.',
               wraplength=850).pack(anchor='w', pady=(0, 8))
     log.pack(fill='both', expand=True)
@@ -213,6 +238,8 @@ def main():
             if kind == 'done':
                 busy = False
                 subtitle.set('Stopped. Completed installations have been kept.' if cancellation.is_set() else 'Finished. Review the app statuses and details below.')
+            elif kind == 'cleanup_review': root.after_idle(lambda candidates=value: review_cleanup(candidates))
+            elif kind == 'cleanup_log': append(value)
             elif kind == 'stopped': append('Stopped at your request.')
             elif kind == 'app_update':
                 if value:
@@ -258,6 +285,8 @@ def main():
     root.after(100, poll)
     if args.smoke_test:
         assert len(actions) == 7 and len(launches) == 7
+        assert cleanup.cget('text') == 'Remove old installs'
+        if args.demo: assert cleanup.instate(['disabled'])
         root.update_idletasks()
         sample = 'The app exited with exit code 7.\n\nUnable to load libexample.so\n\nLaunch log: /tmp/example.log'
         show_launch_error(TOOLS[-1], sample)

@@ -20,7 +20,7 @@ from launch_errors import Launch
 from urllib.parse import quote, urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
-VERSION = '0.3.5'
+VERSION = '0.3.6'
 MAX_BYTES = 2 * 1024**3
 
 @dataclass(frozen=True)
@@ -258,6 +258,8 @@ class Store:
                 if len(matches) != 1: raise ValueError('Archive has no unique recognized executable.')
                 executable = matches[0]
             relative = executable.relative_to(payload)
+            from cleanup import write_manifest
+            write_manifest(payload, tool, release.version, cancel)
             # Publish a complete version, then atomically select it. Keep older versions.
             check_cancel(cancel)
             payload.rename(destination)

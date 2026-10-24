@@ -1,13 +1,13 @@
-# uLEAPP 0.3.5 validation
+# uLEAPP 0.3.6 validation
 
 Prepared October 24, 2026 for the Community Preview bug-fix release.
 
 | Platform | Completed checks | Remaining manual coverage |
 | --- | --- | --- |
 | macOS 13+ | Universal Apple silicon/Intel build; native and Rosetta self-checks; archive extraction, resources, version and ad hoc signature verified; 93 Homebrew worker tests | Physical Intel Mac on macOS 13; clean installation; real password-helper flow and cancellation |
-| Windows x64 | Fresh build and 140 packaged self-checks on a native GitHub x64 runner | Full manual installer/portable GUI flow on a user computer |
-| Windows ARM64 | Fresh build and 140 packaged self-checks on a native Windows 11 ARM GitHub runner | Full manual installer/portable GUI flow on a user computer |
-| Linux x64/ARM64 | 23 core tests; interface and extracted-package smoke checks on Ubuntu 24.04 runners; official GLEAPP archive checksum and layout checked | Actual LEAPP graphical launches on Linux hardware; WSL compatibility |
+| Windows x64 | Fresh build and 150 packaged self-checks on a native GitHub x64 runner | Full manual installer/portable GUI flow on a user computer |
+| Windows ARM64 | Fresh build and 150 packaged self-checks on a native Windows 11 ARM GitHub runner | Full manual installer/portable GUI flow on a user computer |
+| Linux x64/ARM64 | 32 core tests; interface and extracted-package smoke checks on Ubuntu 24.04 runners; official GLEAPP archive checksum and layout checked | Actual LEAPP graphical launches on Linux hardware; WSL compatibility |
 
 Windows release builds: https://github.com/CyberMike81/uLEAPP/actions/runs/40123157145
 
@@ -56,3 +56,9 @@ Manual Mac cleanup tests verify that the current and previous versions remain
 ineligible, scans do not delete anything, unmarked folders and extra case files
 are preserved, and changed app signatures are excluded. Cleanup is only invoked
 by **Remove old installs**, with a review before the macOS Trash operation.
+
+Windows/Linux manual cleanup validation:
+- Three versioned fixture installs verify that scanning is read-only and keeps the current and previous versions.
+- Added case data, modified binaries, unknown/linked folders, invalid manifests and forged paths are preserved. Review-time state and contents are rechecked before a move; cancellation keeps remaining folders.
+- Windows native self-checks exercise IFileOperation recycling and verify the selected/current app and previous version remain.
+- Linux tests verify Trash restore metadata and app contents, plus safe preservation on a failed move. GUI smoke checks verify the cleanup button is present and disabled in demo mode.

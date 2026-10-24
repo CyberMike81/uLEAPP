@@ -214,6 +214,27 @@ public static class SelfChecks
                 try { await installer.InstallAsync(tool,release with { Version="1.2.4", Asset=release.Asset with { Sha256=new string('0',64) } },installed,_ => { },_ => { },CancellationToken.None); }
                 catch (InvalidDataException) { failed=true; }
                 Check(failed && store.Find(tool)?.Version == "1.2.3" && File.Exists(installed.Path),"failed replacement keeps the working app and state");
+                var second = await installer.InstallAsync(tool,release with { Version="1.2.4" },installed,_ => { },_ => { },CancellationToken.None);
+                var third = await installer.InstallAsync(tool,release with { Version="1.2.5" },second,_ => { },_ => { },CancellationToken.None);
+                var cleanup = OldInstalls.Scan(store,CancellationToken.None);
+                Check(cleanup.Count == 1 && cleanup[0].Label == "VLEAPP 1.2.3","cleanup keeps the current and previous version and reviews only older installs");
+                Check(File.Exists(installed.Path),"cleanup review does not remove anything");
+                string extraCase = Path.Combine(cleanup[0].Folder,"case-notes.txt"); File.WriteAllText(extraCase,"keep this case");
+                Check(OldInstalls.Scan(store,CancellationToken.None).Count == 0,"cleanup preserves an older app folder with added case data");
+                Check(!OldInstalls.Recycle(store,cleanup[0],CancellationToken.None) && File.Exists(extraCase),"cleanup rechecks changed contents after review");
+                File.Delete(extraCase);
+                byte[] original = File.ReadAllBytes(installed.Path); File.WriteAllText(installed.Path,"modified app");
+                Check(OldInstalls.Scan(store,CancellationToken.None).Count == 0,"cleanup preserves modified binaries");
+                File.WriteAllBytes(installed.Path,original);
+                store.Record(installed);
+                Check(!OldInstalls.Recycle(store,cleanup[0],CancellationToken.None),"cleanup rechecks the current selection before recycling");
+                store.Record(third);
+                var cancelledCleanup = new CancellationTokenSource(); cancelledCleanup.Cancel();
+                try { OldInstalls.Recycle(store,cleanup[0],cancelledCleanup.Token); throw new Exception("Cancelled cleanup ran"); }
+                catch (OperationCanceledException) { Check(File.Exists(installed.Path),"cancelled cleanup leaves app folders in place"); }
+                Check(!OldInstalls.Recycle(store,cleanup[0] with { Folder=old },CancellationToken.None) && File.Exists(evidence),"untracked folders and forged cleanup paths are preserved");
+                Check(OldInstalls.Recycle(store,cleanup[0],CancellationToken.None) && !File.Exists(installed.Path),"eligible old app moves to the Windows Recycle Bin");
+                Check(File.Exists(second.Path) && File.Exists(third.Path) && store.Find(tool)?.Version == "1.2.5" && File.Exists(evidence),"recycling keeps the current and previous app plus untracked case data");
             }
             finally { if (Directory.Exists(integrationRoot)) Directory.Delete(integrationRoot,true); }
         }

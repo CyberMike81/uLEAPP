@@ -115,6 +115,35 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (Log.Length > 100000) Log = Log[^100000..];
         try { logWriter?.WriteLine(text); } catch (IOException) { }
     }
+    private async void RemoveOldClicked(object sender, RoutedEventArgs e)
+    {
+        if (busy || demo) return;
+        operationCancellation = new CancellationTokenSource();
+        var cancellation = operationCancellation.Token;
+        busy = true; stopping = false; Progress = 0; Phase = "Finding old uLEAPP-managed installs"; RefreshControls();
+        int moved = 0;
+        try {
+            var candidates = await Task.Run(() => OldInstalls.Scan(store,cancellation),cancellation);
+            if (candidates.Count == 0) {
+                MessageBox.Show(this,"No eligible old installs. Current and previous versions, modified folders and older copies without a file inventory are kept.","Remove old installs");
+                return;
+            }
+            string review = "Keep the current and one previous version of each tool. Move these older copies to the Recycle Bin?\n\n" + string.Join(Environment.NewLine,candidates.Select(item => item.Label));
+            if (MessageBox.Show(this,review,"Remove old installs",MessageBoxButton.YesNo,MessageBoxImage.Question,MessageBoxResult.No) != MessageBoxResult.Yes) return;
+            foreach (var candidate in candidates) {
+                cancellation.ThrowIfCancellationRequested();
+                Phase = "Moving " + candidate.Label + " to Recycle Bin";
+                if (await Task.Run(() => OldInstalls.Recycle(store,candidate,cancellation),cancellation)) {
+                    moved++; WriteLog(candidate.Label + ": moved to Recycle Bin");
+                }
+            }
+            StatusTitle = "Old installs removed";
+            StatusDetail = $"{moved} older versions moved to Recycle Bin. Current and previous versions kept.";
+        }
+        catch (OperationCanceledException) { StatusTitle = "Stopped safely"; StatusDetail = $"{moved} old installs moved. Remaining folders were kept."; }
+        catch (Exception error) { StatusTitle = "Cleanup needs attention"; StatusDetail = error.Message; WriteLog(error.Message); }
+        finally { busy = false; stopping = false; Phase = ""; operationCancellation.Dispose(); operationCancellation = null; RefreshControls(); }
+    }
     private bool ConfirmLava(IEnumerable<ToolRow> targets)
     {
         if (demo || !targets.Any(r => r.Tool.Id == "lava" && !r.IsInstalled)) return true;
