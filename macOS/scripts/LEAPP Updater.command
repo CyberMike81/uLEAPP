@@ -131,7 +131,13 @@ report_version() {
 confirm_current() {
   if [[ "$preview" -eq 1 ]]; then return 0; fi
   local checker latest_version check_status
-  checker="${ULEAPP_RELEASE_CHECKER:-$(cd "$(dirname "$0")/.." && pwd)/uLEAPP.app/Contents/MacOS/uLEAPP}"
+  checker="${ULEAPP_RELEASE_CHECKER:-}"
+  if [[ -z "$checker" ]]; then
+    checker="$(cd "$(dirname "$0")/.." && pwd)/MacOS/uLEAPP"
+    if [[ ! -x "$checker" ]]; then
+      checker="$(cd "$(dirname "$0")/.." && pwd)/uLEAPP.app/Contents/MacOS/uLEAPP"
+    fi
+  fi
   if [[ ! -x "$checker" ]]; then
     printf 'Cannot verify the GitHub release. Run this worker from the complete uLEAPP app.\n'
     return 1

@@ -46,7 +46,7 @@ esac
         states = [line for line in result.stdout.splitlines() if line.startswith("ULEAPP\tapp\t") and "\tchecking\t" not in line]
         assert result.returncode == 0, output
         assert len(versions) == 7, "This check requires all seven apps managed by Homebrew.\n" + output
-        assert len(states) == 7 and all("\tcurrent\t" in line or "\tavailable\t" in line for line in states), output
+        assert len(states) == 7 and all("\tcurrent\t" in line or "\tavailable\t" in line or "\tpending\t" in line for line in states), output
         if minimum:
             assert "ULEAPP\tapp\tileapp-gui\tavailable\tUpdate available" in result.stdout, output
         output += f"Verified: {len(versions)} installed versions and {len(states)} final statuses; exit {result.returncode}.\n"

@@ -48,8 +48,13 @@ The local build uses an ad hoc signature. Public distribution still needs a rele
 
 This build is for macOS. The separate Windows source is in `../Windows/`, with outputs in `../Windows-x64/` and `../Windows-ARM64/`. Windows uses verified official release downloads and preserves previous portable versions. Windows x64 and ARM64 package checks run on native GitHub runners; manual installation/UI coverage remains in VALIDATION.md.
 
-Versions and update decisions follow Homebrew’s cask records. A manually replaced
-app bundle may report a different version from the one recorded by Homebrew.
+Installed versions follow Homebrew’s cask records. Before reporting a tool as
+current, uLEAPP also checks the publisher’s latest stable GitHub release. If GitHub
+is newer, **Homebrew update pending** and **Get latest** point to the official
+release. An unavailable GitHub check reports **Needs attention**, not success.
+A manually replaced app bundle may differ from Homebrew’s recorded version.
+The GUI casks also expose the CLI where supported; deprecated separate CLI
+formulae are not installation targets.
 
 Installed-app discovery can be stopped and has a 60-second deadline. Homebrew
 installation Stop still waits for the current operation to finish safely. Icons
