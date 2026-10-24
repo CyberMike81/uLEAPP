@@ -1,4 +1,4 @@
-uLEAPP 0.3.3 self-check
+uLEAPP 0.3.4 self-check
 ok - seven supported tools; no extra applications
 ok - LAVA actual catalog icon is embedded and decodes without an installed app
 ok - ALEAPP actual catalog icon is embedded and decodes without an installed app
@@ -25,12 +25,16 @@ ok - LAVA official asset for x64
 ok - LAVA official setup for existing installer-managed copies
 ok - ALEAPP official asset for arm64
 ok - ALEAPP official setup for existing installer-managed copies
+ok - ALEAPP October 24 portable-only release updates registered copies on arm64
 ok - ALEAPP official asset for x64
 ok - ALEAPP official setup for existing installer-managed copies
+ok - ALEAPP October 24 portable-only release updates registered copies on x64
 ok - iLEAPP official asset for arm64
 ok - iLEAPP official setup for existing installer-managed copies
+ok - iLEAPP October 24 portable-only release updates registered copies on arm64
 ok - iLEAPP official asset for x64
 ok - iLEAPP official setup for existing installer-managed copies
+ok - iLEAPP October 24 portable-only release updates registered copies on x64
 ok - RLEAPP official asset for arm64
 ok - RLEAPP official setup for existing installer-managed copies
 ok - RLEAPP official asset for x64
@@ -58,6 +62,14 @@ ok - self-update never offers a downgrade
 ok - self-update rejects an unofficial package URL
 ok - self-update skips preview-flagged releases
 ok - native Windows ARM package selection
+ok - ALEAPP installer-managed copy falls back to official x64 portable ZIP
+ok - ALEAPP still prefers setup when the publisher offers it
+ok - ALEAPP installer-managed copy falls back to official arm64 portable ZIP
+ok - ALEAPP still prefers setup when the publisher offers it
+ok - iLEAPP installer-managed copy falls back to official x64 portable ZIP
+ok - iLEAPP still prefers setup when the publisher offers it
+ok - iLEAPP installer-managed copy falls back to official arm64 portable ZIP
+ok - iLEAPP still prefers setup when the publisher offers it
 ok - GLEAPP explicitly uses its published x64 fallback
 ok - LAVA uses its official interactive installer
 ok - newer LAVA releases prefer their native ARM package
@@ -127,5 +139,5 @@ ok - verified portable installation is recorded and discoverable
 ok - installation preserves previous versions and case files
 ok - installed app retains upstream license files
 ok - failed replacement keeps the working app and state
-uLEAPP self-check passed: 128 checks. No installed apps were changed.
+uLEAPP self-check passed: 140 checks. No installed apps were changed.
 

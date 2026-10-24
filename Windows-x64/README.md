@@ -94,3 +94,9 @@ and a **Release notes** link. Downloads open in your browser only when clicked;
 no automatic installation or replacement occurs. This is separate from LEAPP
 tool checks. Offline/rate-limit failures stay quiet and do not block normal use.
 Demo and automated smoke-test modes do not contact GitHub.
+
+When a publisher stops offering setup installers, an installer-managed copy can
+be updated using its official portable ZIP for the same architecture. The new
+copy is installed in the selected portable-app folder and becomes uLEAPP’s
+launch target. The older registered copy is preserved. Setup remains preferred
+when published; LAVA continues to require its official installer.
