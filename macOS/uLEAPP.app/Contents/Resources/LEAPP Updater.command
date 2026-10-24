@@ -229,6 +229,28 @@ for target in "${targets[@]}"; do
   printf '\n--- %s ---\n' "$name"
   if [[ "$cask" == lava ]]; then repository='leapps-org/LAVA-releases'; else repository="abrignoni/$name"; fi
   result=0
+  checker="${ULEAPP_RELEASE_CHECKER:-$(cd "$(dirname "$0")/.." && pwd)/MacOS/uLEAPP}"
+  if [[ ! -x "$checker" ]]; then checker="$(cd "$(dirname "$0")/.." && pwd)/uLEAPP.app/Contents/MacOS/uLEAPP"; fi
+  direct_version=''
+  direct_status=3
+  if [[ "$preview" -eq 0 && -x "$checker" ]]; then
+    direct_version="$("$checker" --direct-tool-version "$cask")"
+    direct_status=$?
+  fi
+  if [[ "$direct_status" -eq 0 ]]; then
+    installed_version="$direct_version"
+    event version "$cask" '' "$installed_version"
+    event app "$cask" checking 'Checking official releases'
+    if confirm_current; then success_count=$((success_count + 1)); else
+      event app "$cask" failed 'See details for the release check error'
+      failed_count=$((failed_count + 1)); failed_apps="$failed_apps $name"
+    fi
+    continue
+  elif [[ "$direct_status" -ne 3 ]]; then
+    event app "$cask" failed 'Could not read the direct installation record'
+    failed_count=$((failed_count + 1)); failed_apps="$failed_apps $name"
+    continue
+  fi
   if is_managed "$cask"; then
     report_version
     if [[ "$install_missing" -eq 1 || -n "$install_target" ]]; then

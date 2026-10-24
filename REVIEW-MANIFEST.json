@@ -1,59 +1,59 @@
 {
-  "version": "0.3.4",
+  "version": "0.3.5",
   "publication": "community preview",
   "artifacts": {
     "macOS": {
-      "version": "0.3.4",
+      "version": "0.3.5",
       "executable": "macOS/uLEAPP.app/Contents/MacOS/uLEAPP",
-      "sha256": "e582ea90ca7fea90c721b8e1e5d940138f498fbf43def5b2a8f8f301eca11ba0",
+      "sha256": "c61fff33df6ede85f567cc4cd07a819962fef37331285e0d88418be9a14b4f69",
       "architectures": [
         "arm64",
         "x86_64"
       ]
     },
     "Windows-ARM64": {
-      "version": "0.3.4",
+      "version": "0.3.5",
       "executable": "Windows-ARM64/uLEAPP.exe",
-      "sha256": "a568e5268192176b0e71313250016d43da85d88f19d6c14753d33583ad4acc5e",
+      "sha256": "2421483a2c199d74bd0be8ddbeadcc828dc549503812c2e5eb9f55c1b0a5db59",
       "build": {
+        "Sdk": "10.0.402",
         "RuntimePacks": [
           "runtimepack.Microsoft.NETCore.App.Runtime.win-arm64/10.0.13",
           "runtimepack.Microsoft.WindowsDesktop.App.Runtime.win-arm64/10.0.13"
         ],
-        "AppVersion": "0.3.4",
-        "Architecture": "win-arm64",
-        "Sdk": "10.0.402"
+        "AppVersion": "0.3.5",
+        "Architecture": "win-arm64"
       },
       "self_checks": 140,
       "test_environment": "Native GitHub-hosted Windows 11 ARM64"
     },
     "Windows-x64": {
-      "version": "0.3.4",
+      "version": "0.3.5",
       "executable": "Windows-x64/uLEAPP.exe",
-      "sha256": "f2e02f163e0c79304702ecb02895696b64d20e560e75a59194ce4c6b415e9f03",
+      "sha256": "4aa11f6c8b3cca92d5cdaca71bcf21c0bbade893bf7b76efd28703ad9b417d50",
       "build": {
-        "Architecture": "win-x64",
-        "AppVersion": "0.3.4",
         "Sdk": "10.0.402",
         "RuntimePacks": [
           "runtimepack.Microsoft.NETCore.App.Runtime.win-x64/10.0.13",
           "runtimepack.Microsoft.WindowsDesktop.App.Runtime.win-x64/10.0.13"
-        ]
+        ],
+        "Architecture": "win-x64",
+        "AppVersion": "0.3.5"
       },
       "self_checks": 140,
       "test_environment": "Native GitHub-hosted Windows x64"
     },
     "Linux": {
-      "version": "0.3.4",
+      "version": "0.3.5",
       "distribution": "portable Python/Tk source",
       "architectures": [
         "x64",
         "arm64"
       ],
       "core_tests": 23,
-      "archive_sha256": "dd803f1c46cf8c266a3566f8d94852368db535df1b2da0018d88b3d3f2a70903"
+      "archive_sha256": "54e64672dee9e0164aad7b0caf65eac9981d6db9586be3ad069b8513a50386a0"
     }
   },
   "audited_updater_source_unchanged": false,
-  "release_build_run": "https://github.com/CyberMike81/uLEAPP/actions/runs/40121839268"
+  "release_build_run": "https://github.com/CyberMike81/uLEAPP/actions/runs/40123157145"
 }
