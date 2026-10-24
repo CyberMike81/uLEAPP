@@ -223,7 +223,7 @@ final class DirectMacInstaller: NSObject, URLSessionDownloadDelegate {
     static let publisherTeam = "N2G83326TZ"
     static func assessPublisher(_ app: URL) throws {
         let requirement = "anchor apple generic and certificate leaf[subject.OU] = \"\(publisherTeam)\""
-        try command("/usr/bin/codesign", ["--verify", "--strict", "--deep", "-R", requirement, app.path])
+        try command("/usr/bin/codesign", ["--verify", "--strict", "--deep", "-R=" + requirement, app.path])
         try command("/usr/sbin/spctl", ["--assess", "--type", "execute", "--verbose=2", app.path])
     }
     static func quarantine(_ app: URL) throws {

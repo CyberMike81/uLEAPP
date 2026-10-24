@@ -90,3 +90,32 @@ keeps the selected version and one previous version per app, and shows a list
 before moving eligible older copies to Trash. The scan rechecks the records and
 app signatures after confirmation. Homebrew copies, unmarked folders, folders
 with extra files and changed apps are left alone. Cleanup never runs automatically.
+
+## Automatic checks and network use
+
+The saved **Check for uLEAPP updates automatically** setting controls the startup
+and daily uLEAPP metadata request. Uncheck it to stop those requests, or launch
+with `--no-update-check` to disable them for that run. Explicit tool checks and
+installation requests still contact the publishers when requested. No case data
+is included in these requests; the User-Agent identifies the uLEAPP version.
+
+Metadata requests send cached ETags and use cached content only when GitHub
+confirms it with HTTP 304. Network failures never become a cached “up to date”
+result. GitHub’s unauthenticated limit is shared by source IP (typically 60/hour);
+conditional requests are not exempt without authentication. Details show the
+remaining quota and reset timestamp on HTTP 403/429. No GitHub token is stored.
+
+## Direct copies and returning to Homebrew
+
+Rows show the recorded Homebrew and direct versions. uLEAPP’s Launch uses the
+selected direct bundle under `~/Applications/uLEAPP`; Finder, Spotlight and Dock
+items pointing into `/Applications` can still open the older Homebrew bundle.
+**Return to Homebrew** refreshes the cask and checks that its published version
+and actual app in Applications are at least as new as the selected direct copy.
+Only after publisher/Gatekeeper verification succeeds is the direct selection
+record removed. Direct folders remain available for manual rollback; Homebrew
+resumes managing subsequent checks. A failed/too-old return keeps direct selected.
+
+Direct installs and Launch of older direct copies enforce LEAPP team `N2G83326TZ`,
+Gatekeeper assessment and quarantine. Other teams and ad hoc publisher apps are
+refused; this is separate from uLEAPP’s own ad hoc-signed preview build.
