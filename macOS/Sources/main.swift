@@ -50,9 +50,9 @@ struct ToolRow: View {
     var body: some View {
         HStack(spacing: 12) {
             if let icon = tool.icon {
-                Image(nsImage: icon).resizable().interpolation(.high).frame(width: 36, height: 36).accessibilityHidden(true)
+                Image(nsImage: icon).resizable().interpolation(.high).frame(width: 32, height: 32).accessibilityHidden(true)
             } else {
-                Image(systemName: "app.dashed").font(.system(size: 24)).foregroundStyle(Palette.muted).frame(width: 36, height: 36).accessibilityHidden(true)
+                Image(systemName: "app.dashed").font(.system(size: 24)).foregroundStyle(Palette.muted).frame(width: 32, height: 32).accessibilityHidden(true)
             }
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 7) {
@@ -89,7 +89,7 @@ struct ToolRow: View {
                     .controlSize(.small).tint(Palette.green).disabled(actionsDisabled)
                     .help(usesHomebrew && !tool.directOnly ? "Install or register through Homebrew" : "Download and install the official Mac build")
             }
-        }.padding(.horizontal, 12).padding(.vertical, 7).accessibilityElement(children: .contain)
+        }.padding(.horizontal, 12).padding(.vertical, 5).accessibilityElement(children: .contain)
     }
 
 }

@@ -490,7 +490,7 @@ final class UpdaterModel: ObservableObject {
         if status != 130 && !demo && (currentMode == .check || currentMode == .install || currentMode == .update) {
             let direct = (currentMode == .update ? tools.filter { $0.status == "pending" } : []) + companions
             if !direct.isEmpty {
-                if currentMode == .check { checkDirect(direct) } else { updateDirect(direct) }
+                if currentMode == .check { checkDirect(direct, preserveLog: true) } else { updateDirect(direct) }
                 return
             }
         }
@@ -523,7 +523,7 @@ final class UpdaterModel: ObservableObject {
             lastChecked = DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .short)
         }
     }
-    func checkDirect(_ selected: [LEAPPTool]) {
+    func checkDirect(_ selected: [LEAPPTool], preserveLog: Bool = false) {
         guard !busy, !loading, !demo else { return }
         let cancellation = DirectMacCancellation()
         directCancellation = cancellation; directProgress = 0
@@ -531,7 +531,7 @@ final class UpdaterModel: ObservableObject {
         busy = true; stopRequested = false
         title = "Checking official Mac releases"
         subtitle = "Homebrew is optional; checking does not install apps."
-        flushLog(); log = ""; logURL = nil
+        flushLog(); if !preserveLog { log = ""; logURL = nil }
         for index in tools.indices where activeIDs.contains(tools[index].id) { tools[index].status = "checking" }
         let fetch = fetchRelease
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -708,8 +708,8 @@ final class UpdaterModel: ObservableObject {
                 for index in self.tools.indices where self.activeIDs.contains(self.tools[index].id) && self.tools[index].status == "waiting" { self.tools[index].status = self.usesHomebrew ? "pending" : "available" }
                 self.directCancellation = nil; self.directProgress = 0; self.busy = false; self.phase = ""
                 self.flushLog(); try? self.logHandle?.close(); self.logHandle = nil
-                self.title = cancellation.isCancelled ? "Stopped safely" : failures > 0 ? "A few things need attention" : "Your LEAPP apps are ready"
-                self.subtitle = failures > 0 ? "Open Details for the error. Existing apps were preserved." : "Direct installs use ~/Applications/uLEAPP. Launch opens the selected version."
+                self.title = cancellation.isCancelled ? "Stopped safely" : (failures > 0 || self.failedCount > 0) ? "A few things need attention" : "Your LEAPP apps are ready"
+                self.subtitle = (failures > 0 || self.failedCount > 0) ? "Open Details for the error. Existing apps were preserved." : "Direct installs use ~/Applications/uLEAPP. Launch opens the selected version."
                 self.lastChecked = DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .short)
             }
         }

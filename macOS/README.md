@@ -2,7 +2,7 @@
 
 Idea by [@CyberMike81](https://github.com/CyberMike81).
 
-A local desktop updater for the seven LEAPP apps distributed by the official `leapps-org/leapps` Homebrew tap: LAVA, ALEAPP, iLEAPP, RLEAPP, VLEAPP, DLEAPP and GLEAPP.
+A local desktop updater for the core LEAPP apps distributed by the official `leapps-org/leapps` Homebrew tap: LAVA, ALEAPP, iLEAPP, RLEAPP, VLEAPP, DLEAPP and GLEAPP.
 
 The app shows installed versions, checks for updates, updates installed tools, and offers **Install** beside a missing app plus **Install missing apps** for the group. **Launch** opens an existing app from `/Applications` or your personal `~/Applications` folder, including manually installed apps. Launch is unavailable while an update or installation is running. Details and logs are available when an operation needs attention. Batch LEAPP and GLEAPP Map Downloader are outside this version's scope.
 
@@ -134,5 +134,22 @@ Settings**, explains enabling uLEAPP and retrying, and does not bypass security.
 Already-present quarantine attributes are not rewritten on Launch. New staged
 installs still receive quarantine after publisher and Gatekeeper verification.
 
-The compact initial window shows all seven tools and the main controls together.
+The compact initial window shows the supported tools and the main controls together.
 Its size is bounded by the available screen; smaller screens retain scrolling.
+
+## Companion tools (0.3.9)
+
+GLEAPP Map Downloader can be checked, installed, updated and launched on Mac,
+Windows and Linux, with native x64 and ARM64 packages where published. It downloads
+map data when you use it; GLEAPP itself remains offline.
+
+Batch LEAPP is supported on Windows x64 (including Windows ARM through x64
+emulation). Its current Mac GUI is Apple silicon only and requires manual download
+and installation: the publisher's v1.2.0 app is ad hoc signed, not notarized, and
+reports bundle version 0.0.0. uLEAPP offers the exact official Mac download and
+can launch an existing Applications copy; it does not disable Gatekeeper or claim
+that copy is up to date. No Linux or Intel Mac Batch package is currently published,
+so those platforms do not offer it. Companions use direct downloads, not Homebrew.
+
+Managed companion installs retain the current and previous versions and participate
+in **Remove old installs**. Manually installed Batch copies are outside that cleanup.

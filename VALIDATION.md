@@ -9,7 +9,7 @@ Prepared October 24, 2026 for the Community Preview bug-fix release.
 | Windows ARM64 | Fresh build and 168 packaged self-checks on a native Windows 11 ARM GitHub runner | Full manual installer/portable GUI flow on a user computer |
 | Linux x64/ARM64 | 36 core tests; interface and extracted-package smoke checks on Ubuntu 24.04 runners; official GLEAPP archive checksum and layout checked | Actual LEAPP graphical launches on Linux hardware; WSL compatibility |
 
-Windows release builds: https://github.com/CyberMike81/uLEAPP/actions/runs/40135325881
+Windows release builds: https://github.com/CyberMike81/uLEAPP/actions/runs/40136221654
 
 The October 21 bug fixes move Windows installation work off the UI thread,
 throttle progress, add Windows/Linux download cancellation and stalled-transfer
@@ -106,3 +106,10 @@ without scrolling in the initial 1040 × 840 window.
 - Linux recorded Map Downloader metadata covers both native architectures and duplicate rejection. A real official x64 archive passed digest verification, safe extraction, executable discovery and isolated installation recording on the build Mac; Linux execution is checked separately by platform CI smoke checks for uLEAPP.
 - Mac selector tests cover both Map Downloader architectures, the Batch Apple silicon ZIP, refusal of Intel Batch selection and refusal of automatic Batch installation. The release download is manual for Batch; no Gatekeeper or publisher checks are disabled.
 - Intel Mac omits Batch because the publisher has no Intel GUI package. Linux omits Batch because the publisher has no Linux binary package. Windows ARM uses the published x64 Batch GUI through operating-system emulation.
+
+The real Mac Map Downloader installation passed in an isolated temporary home,
+including publisher identity, Gatekeeper, architecture, bundle version, quarantine
+and selected record. Real user applications were unchanged.
+
+Final Mac visual check confirmed all nine tool rows and footer controls fit at
+1040 × 840 while a real combined update check displayed its progress controls.

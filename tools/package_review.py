@@ -63,7 +63,7 @@ def verify(project: Path) -> tuple[str, dict[str, dict]]:
     run("/usr/bin/codesign", "--verify", "--strict", "--deep", mac)
     if "self-check passed" not in run(executable, "--selfcheck"):
         raise ValueError("The packaged Mac self-check did not pass.")
-    for name in ["lava", "aleapp", "ileapp", "rleapp", "vleapp", "dleapp", "gleapp"]:
+    for name in [p.stem for p in sorted((project / "assets/tool-icons").glob("*.png"))]:
         if (mac / f"Contents/Resources/tool-icons/{name}.png").read_bytes() != (project / f"assets/tool-icons/{name}.png").read_bytes():
             raise ValueError(f"The Mac catalog icon differs from its source: {name}")
 
