@@ -15,7 +15,7 @@ bash tools/build.sh
 open uLEAPP.app
 ```
 
-Homebrew must be installed to use the updater. Close your LEAPP apps before choosing **Update apps**. Checking refreshes Homebrew's package metadata; updating changes only the named installed LEAPP casks and their required dependencies. Missing apps are installed only when you choose an installation action. Installation actions leave already-managed apps alone.
+Homebrew is optional. Close your LEAPP apps before choosing **Update apps**. Checking refreshes Homebrew's package metadata; updating changes only the named installed LEAPP casks and their required dependencies. Missing apps are installed only when you choose an installation action. Installation actions leave already-managed apps alone.
 
 The standalone updater is in `scripts/LEAPP Updater.command`; it can also be double-clicked from Finder. `--dry-run` previews without changing Homebrew or apps. `--check` refreshes Homebrew and checks without upgrading. `--install lava` installs one supported cask; `--install-missing` installs the missing supported tools.
 
@@ -48,7 +48,7 @@ The local build uses an ad hoc signature. Public distribution still needs a rele
 
 This build is for macOS. The separate Windows source is in `../Windows/`, with outputs in `../Windows-x64/` and `../Windows-ARM64/`. Windows uses verified official release downloads and preserves previous portable versions. Windows x64 and ARM64 package checks run on native GitHub runners; manual installation/UI coverage remains in VALIDATION.md.
 
-Homebrew remains the first installation source. Before reporting an app as current,
+Homebrew is used when installed and **Use Homebrew when available** is enabled. Before reporting an app as current,
 uLEAPP also checks the publisher’s latest stable GitHub release. If GitHub is newer,
 **Homebrew update pending** offers **Update** to download, verify and install the
 correct Apple silicon/Intel app directly. **Update apps** uses the same fallback
@@ -119,3 +119,17 @@ resumes managing subsequent checks. A failed/too-old return keeps direct selecte
 Direct installs and Launch of older direct copies enforce LEAPP team `N2G83326TZ`,
 Gatekeeper assessment and quarantine. Other teams and ad hoc publisher apps are
 refused; this is separate from uLEAPP’s own ad hoc-signed preview build.
+
+## Homebrew-free operation and App Management
+
+Macs without Homebrew use direct release checks and signed/notarized publisher
+app downloads. When Homebrew is installed, turn off **Use Homebrew when available**
+to use the same direct path; `--no-homebrew` applies this choice for one run.
+Existing Applications bundles and uLEAPP-selected direct copies are discovered;
+current or newer installed versions are not downloaded again or downgraded.
+
+macOS can require Privacy & Security → App Management permission for uLEAPP to
+set quarantine on an existing app. The permission dialog now offers **Open
+Settings**, explains enabling uLEAPP and retrying, and does not bypass security.
+Already-present quarantine attributes are not rewritten on Launch. New staged
+installs still receive quarantine after publisher and Gatekeeper verification.

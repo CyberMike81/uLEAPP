@@ -1,4 +1,4 @@
-# uLEAPP 0.3.7 validation
+# uLEAPP 0.3.8 validation
 
 Prepared October 24, 2026 for the Community Preview bug-fix release.
 
@@ -84,3 +84,10 @@ return-to-Homebrew test refused an older version, accepted a verified current
 copy and removed only the selected record. Read-only live Homebrew evidence was
 regenerated successfully with LAVA as the controlled minimum-version target;
 all seven installed-version and final-status events were verified in both runs.
+
+0.3.8 Mac coverage includes Homebrew-free discovery and all seven direct release
+checks using injected release metadata, with no Homebrew executable or network.
+Quarantine tests verify that an existing value is preserved. Native direct
+installation still validates publisher identity, Gatekeeper and quarantine.
+App Management messaging covers EPERM/EACCES; macOS permission grants remain a
+user action in System Settings.

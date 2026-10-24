@@ -226,16 +226,35 @@ final class DirectMacInstaller: NSObject, URLSessionDownloadDelegate {
         try command("/usr/bin/codesign", ["--verify", "--strict", "--deep", "-R=" + requirement, app.path])
         try command("/usr/sbin/spctl", ["--assess", "--type", "execute", "--verbose=2", app.path])
     }
-    static func quarantine(_ app: URL) throws {
-        let value = "0083;" + String(Int(Date().timeIntervalSince1970), radix: 16) + ";uLEAPP;" + UUID().uuidString
-        try command("/usr/bin/xattr", ["-w", "com.apple.quarantine", value, app.path])
+    struct AppManagementRequired: LocalizedError {
+        var errorDescription: String? {
+            "macOS blocked a required security attribute. Enable uLEAPP in System Settings → Privacy & Security → App Management, then try again."
+        }
     }
-    func install(_ tool: LEAPPTool, store: DirectMacStore = DirectMacStore(), cancellation: DirectMacCancellation,
+    static func quarantine(_ app: URL, force: Bool = false) throws {
+        // Do not reset first-launch state on an already quarantined bundle.
+        // macOS can protect attributes of registered apps via App Management.
+        let existing = getxattr(app.path, "com.apple.quarantine", nil, 0, 0, XATTR_NOFOLLOW)
+        if !force && existing > 0 { return }
+        if existing < 0 && errno != ENOATTR {
+            if errno == EPERM || errno == EACCES { throw AppManagementRequired() }
+            throw UpstreamRelease.Failure(message: "Could not read the app's quarantine attribute: " + String(cString: strerror(errno)))
+        }
+        let value = "0083;" + String(Int(Date().timeIntervalSince1970), radix: 16) + ";uLEAPP;" + UUID().uuidString
+        let result = value.withCString { pointer in
+            setxattr(app.path, "com.apple.quarantine", pointer, value.utf8.count, 0, XATTR_NOFOLLOW)
+        }
+        if result != 0 {
+            if errno == EPERM || errno == EACCES { throw AppManagementRequired() }
+            throw UpstreamRelease.Failure(message: "Could not set the app's quarantine attribute: " + String(cString: strerror(errno)))
+        }
+    }
+    func install(_ tool: LEAPPTool, store: DirectMacStore = DirectMacStore(), cancellation: DirectMacCancellation, metadata: [String: Any]? = nil,
                  phase: @escaping (String) -> Void, progress: @escaping (Double) -> Void) throws -> DirectMacApp {
         guard !NSWorkspace.shared.runningApplications.contains(where: { $0.bundleURL?.lastPathComponent == tool.bundle + ".app" }) else { throw UpstreamRelease.Failure(message: "Close \(tool.name) before updating it.") }
         try cancellation.check()
         phase("Finding \(tool.name)'s official Mac release")
-        let json = try UpstreamRelease.fetch(tool.id)
+        let json = try metadata ?? UpstreamRelease.fetch(tool.id)
         try cancellation.check()
         let release = try Self.select(json, tool: tool, architecture: Self.architecture)
         if !tool.version.isEmpty, !(try UpstreamRelease.assess(json, installed: tool.version)).1 {
@@ -278,7 +297,7 @@ final class DirectMacInstaller: NSObject, URLSessionDownloadDelegate {
         let stagedApp = stage.appendingPathComponent(tool.bundle + ".app")
         try Self.command("/usr/bin/ditto", [app.path, stagedApp.path])
         try Self.assessPublisher(stagedApp)
-        try Self.quarantine(stagedApp)
+        try Self.quarantine(stagedApp, force: true)
         try cancellation.check()
         // Finish the short atomic publish before honoring a subsequent stop.
         _ = try store.publish(stage, tool: tool, version: release.version)
@@ -319,6 +338,12 @@ final class DirectMacInstaller: NSObject, URLSessionDownloadDelegate {
         try! fm.createDirectory(at: home, withIntermediateDirectories: true)
         defer { try? fm.removeItem(at: home) }
         let bytes = Data("test".utf8); let file = home.appendingPathComponent("test.dmg"); try! bytes.write(to: file)
+        try! quarantine(file)
+        let before = try! command("/usr/bin/xattr", ["-p", "com.apple.quarantine", file.path])
+        try! quarantine(file)
+        let after = try! command("/usr/bin/xattr", ["-p", "com.apple.quarantine", file.path])
+        precondition(before == after, "Launch must preserve an existing quarantine value")
+        precondition(AppManagementRequired().localizedDescription.contains("App Management"))
         let hash = SHA256.hash(data: bytes).map { String(format: "%02x", $0) }.joined()
         let valid = DirectMacRelease(version: "2026.4.4", name: "test.dmg", url: URL(string: "https://github.com/test")!, digest: hash, size: 4)
         try! verify(file, release: valid)
