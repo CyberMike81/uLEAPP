@@ -20,7 +20,7 @@ from launch_errors import Launch
 from urllib.parse import quote, urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
-VERSION = '0.3.6'
+VERSION = '0.3.7'
 MAX_BYTES = 2 * 1024**3
 
 @dataclass(frozen=True)
@@ -51,9 +51,9 @@ class GitHubRedirects(HTTPRedirectHandler):
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
-def request(url):
+def request(url, headers=None):
     return build_opener(GitHubRedirects()).open(Request(url, headers={
-        'User-Agent': 'uLEAPP/' + VERSION, 'Accept': 'application/vnd.github+json'}), timeout=30)
+        'User-Agent': 'uLEAPP/' + VERSION, 'Accept': 'application/vnd.github+json', **(headers or {})}), timeout=30)
 
 
 @dataclass(frozen=True)
@@ -95,7 +95,7 @@ def check_cancel(cancel):
     if cancel is not None and cancel.is_set(): raise Cancelled('Stopped at your request.')
 
 
-def stream_bytes(url, cancel=None, idle_timeout=60):
+def stream_bytes(url, cancel=None, idle_timeout=60, metadata_headers=None, response_info=None):
     # A bounded reader queue keeps Stop responsive even during a blocking socket
     # read. Only this consumer writes files; a cancelled reader can never install.
     chunks = queue.Queue(maxsize=2)
@@ -106,7 +106,9 @@ def stream_bytes(url, cancel=None, idle_timeout=60):
             except queue.Full: pass
     def reader():
         try:
-            with request(url) as response:
+            with (request(url) if metadata_headers is None else request(url, metadata_headers)) as response:
+                if response_info is not None:
+                    response_info.update({key.lower(): value for key, value in getattr(response, 'headers', {}).items()})
                 read = getattr(response, 'read1', response.read)
                 while not stopped.is_set():
                     data = read(128 * 1024)
@@ -131,11 +133,8 @@ def stream_bytes(url, cancel=None, idle_timeout=60):
 
 
 def latest(tool, arch, cancel=None):
-    data = bytearray()
-    for chunk in stream_bytes(f'https://api.github.com/repos/{tool.repo}/releases/latest', cancel):
-        data.extend(chunk)
-        if len(data) > 8 * 1024**2: raise ValueError('Release metadata is too large.')
-    return select_release(tool, json.loads(data), arch)
+    from release_metadata import fetch_json
+    return select_release(tool, fetch_json(f'https://api.github.com/repos/{tool.repo}/releases/latest', cancel), arch)
 
 
 def needs_update(installed, target):

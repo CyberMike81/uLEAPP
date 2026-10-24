@@ -1,13 +1,13 @@
-# uLEAPP 0.3.6 validation
+# uLEAPP 0.3.7 validation
 
 Prepared October 24, 2026 for the Community Preview bug-fix release.
 
 | Platform | Completed checks | Remaining manual coverage |
 | --- | --- | --- |
-| macOS 13+ | Universal Apple silicon/Intel build; native and Rosetta self-checks; archive extraction, resources, version and ad hoc signature verified; 93 Homebrew worker tests | Physical Intel Mac on macOS 13; clean installation; real password-helper flow and cancellation |
-| Windows x64 | Fresh build and 150 packaged self-checks on a native GitHub x64 runner | Full manual installer/portable GUI flow on a user computer |
-| Windows ARM64 | Fresh build and 150 packaged self-checks on a native Windows 11 ARM GitHub runner | Full manual installer/portable GUI flow on a user computer |
-| Linux x64/ARM64 | 32 core tests; interface and extracted-package smoke checks on Ubuntu 24.04 runners; official GLEAPP archive checksum and layout checked | Actual LEAPP graphical launches on Linux hardware; WSL compatibility |
+| macOS 13+ | Universal Apple silicon/Intel build; native and Rosetta self-checks; archive extraction, resources, version and ad hoc signature verified; 101 Homebrew worker tests | Physical Intel Mac on macOS 13; clean installation; real password-helper flow and cancellation |
+| Windows x64 | Fresh build and 156 packaged self-checks on a native GitHub x64 runner | Full manual installer/portable GUI flow on a user computer |
+| Windows ARM64 | Fresh build and 156 packaged self-checks on a native Windows 11 ARM GitHub runner | Full manual installer/portable GUI flow on a user computer |
+| Linux x64/ARM64 | 35 core tests; interface and extracted-package smoke checks on Ubuntu 24.04 runners; official GLEAPP archive checksum and layout checked | Actual LEAPP graphical launches on Linux hardware; WSL compatibility |
 
 Windows release builds: https://github.com/CyberMike81/uLEAPP/actions/runs/40125038437
 
@@ -67,3 +67,13 @@ Mac self-checks now isolate direct-install discovery from real user records, so
 the packaged tests remain deterministic after users install direct copies. Demo
 mode also excludes these records. Normal app discovery continues to select the
 recorded direct app and version.
+
+Audit follow-up: native integration checks cover publisher team verification,
+Gatekeeper assessment, quarantine, refusal of a Homebrew downgrade, and a verified
+return in an isolated home. ETag/304 and quota-error paths use controlled responses.
+Windows tests require a positive Recycle Bin destination callback; non-fixed
+volume types are refused. Physical USB media, disabled-bin policy and quota edge
+cases still need dedicated manual hardware coverage; no system policy is changed
+by the automated tests. The Mac live Homebrew check dynamically selects a cask
+whose decisions are still Homebrew-managed and explicitly skips the controlled
+minimum-version assertion if none exists.

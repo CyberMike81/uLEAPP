@@ -36,6 +36,7 @@ struct ToolRow: View {
     let launch: () -> Void
     let install: () -> Void
     let directUpdate: () -> Void
+    let returnHomebrew: () -> Void
     var stateColor: Color {
         switch tool.status {
         case "current": return Palette.green
@@ -61,6 +62,15 @@ struct ToolRow: View {
                     if !tool.version.isEmpty {
                         Text(tool.version).font(.system(size: 11, design: .monospaced)).foregroundStyle(Palette.muted)
                     }
+                }
+                if !tool.directVersion.isEmpty {
+                    Text("Homebrew \(tool.homebrewVersion.isEmpty ? "not installed" : tool.homebrewVersion) · Direct \(tool.directVersion)")
+                        .font(.system(size: 10)).foregroundStyle(Palette.orange)
+                    Text("Launch uses Direct; Finder/Dock may open the Homebrew copy.")
+                        .font(.system(size: 10)).foregroundStyle(Palette.muted)
+                    Button("Return to Homebrew") { returnHomebrew() }
+                        .buttonStyle(.plain).font(.system(size: 11)).foregroundStyle(Palette.green).disabled(actionsDisabled)
+                        .help("Switch only after Homebrew and its app in Applications are at least as new as the direct copy")
                 }
                 Text(tool.description).font(.system(size: 12)).foregroundStyle(Palette.muted)
             }
@@ -117,7 +127,7 @@ struct UpdaterView: View {
                     Text("One place. Every LEAPP up to date.").font(.system(size: 14)).foregroundStyle(Palette.muted)
                 }
                 Spacer()
-                Text(model.demo ? "DEMO · 0.3.6" : "FOR macOS · 0.3.6")
+                Text(model.demo ? "DEMO · 0.3.7" : "FOR macOS · 0.3.7")
                     .font(.system(size: 10, weight: .semibold)).tracking(1.2)
                     .foregroundStyle(Palette.green).padding(.horizontal, 11).padding(.vertical, 7)
                     .overlay(Capsule().stroke(Palette.green.opacity(0.25)))
@@ -170,7 +180,8 @@ struct UpdaterView: View {
                                 launchDisabled: model.busy || model.loading,
                                 launch: { model.launch(tool) },
                                 install: { model.start(.install, cask: tool.id) },
-                                directUpdate: { model.updateDirect([tool]) })
+                                directUpdate: { model.updateDirect([tool]) },
+                                returnHomebrew: { model.start(.returnHomebrew, cask: tool.id) })
                         if tool.id != model.tools.last?.id {
                             Rectangle().fill(Palette.border).frame(height: 1).padding(.leading, 76)
                         }
@@ -180,6 +191,8 @@ struct UpdaterView: View {
             .background(Palette.card).clipShape(RoundedRectangle(cornerRadius: 14))
             .overlay(RoundedRectangle(cornerRadius: 14).stroke(Palette.border))
 
+            Toggle("Check for uLEAPP updates automatically", isOn: Binding(get: { model.automaticUpdates }, set: { model.setAutomaticUpdates($0) }))
+                .font(.system(size: 11)).foregroundStyle(Palette.muted).disabled(!model.updatePreferenceEnabled || model.demo)
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     Button {
@@ -273,7 +286,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             credits.addAttribute(.link, value: notices, range: (text as NSString).range(of: "License notices"))
         }
         NSApp.orderFrontStandardAboutPanel(options: [
-            .applicationName: "uLEAPP", .applicationVersion: "0.3.6", .credits: credits
+            .applicationName: "uLEAPP", .applicationVersion: "0.3.7", .credits: credits
         ])
     }
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -318,6 +331,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 }
 
+if CommandLine.arguments.contains("--homebrew-candidate") || CommandLine.arguments.contains("--complete-homebrew-return") {
+    do {
+        guard CommandLine.arguments.count == 4, let tool = LEAPPTool.all.first(where: { $0.id == CommandLine.arguments[2] }) else { exit(1) }
+        if CommandLine.arguments[1] == "--homebrew-candidate" {
+            let data = FileHandle.standardInput.readDataToEndOfFile()
+            guard data.count <= 2 * 1024 * 1024,
+                  let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let casks = json["casks"] as? [[String: Any]],
+                  let cask = casks.first(where: { $0["token"] as? String == tool.id }),
+                  let version = cask["version"] as? String else { exit(1) }
+            let fixture: [String: Any] = ["tag_name": CommandLine.arguments[3], "draft": false, "prerelease": false]
+            guard !(try UpstreamRelease.assess(fixture, installed: version)).1 else { throw UpstreamRelease.Failure(message: "Homebrew has not caught up. The direct copy remains selected.") }
+            print(version)
+        } else { try DirectMacStore().returnToHomebrew(tool, installed: CommandLine.arguments[3]) }
+        exit(0)
+    } catch { FileHandle.standardError.write(Data((error.localizedDescription + "\n").utf8)); exit(1) }
+}
 if CommandLine.arguments.contains("--direct-tool-version") {
     do {
         guard CommandLine.arguments.count == 3, let tool = LEAPPTool.all.first(where: { $0.id == CommandLine.arguments[2] }) else { exit(1) }
@@ -327,9 +357,9 @@ if CommandLine.arguments.contains("--direct-tool-version") {
 }
 if CommandLine.arguments.contains("--check-tool-release") { exit(UpstreamRelease.run(CommandLine.arguments)) }
 if CommandLine.arguments.contains("--askpass") { runAskpass() }
-if CommandLine.arguments.contains("--version") { print("uLEAPP 0.3.6"); exit(0) }
+if CommandLine.arguments.contains("--version") { print("uLEAPP 0.3.7"); exit(0) }
 if CommandLine.arguments.contains("--help") {
-    print("uLEAPP for Mac\n--version     Report the app version\n--selfcheck   Check the packaged app without changing installed tools\n--demo        Preview the interface with simulated updates")
+    print("uLEAPP for Mac\n--no-update-check Disable automatic update requests for this run\n--version     Report the app version\n--selfcheck   Check the packaged app without changing installed tools\n--demo        Preview the interface with simulated updates")
     exit(0)
 }
 if CommandLine.arguments.contains("--self-test") || CommandLine.arguments.contains("--selfcheck") {
@@ -352,6 +382,7 @@ if CommandLine.arguments.contains("--self-test") || CommandLine.arguments.contai
             precondition(NSImage(contentsOf: icon) != nil, "Catalog icon is not readable: \(name)")
         }
     }
+    GitHubMetadata.selfCheck()
     UpstreamRelease.selfCheck()
     DirectMacInstaller.selfCheck()
     let model = UpdaterModel(directStore: nil)

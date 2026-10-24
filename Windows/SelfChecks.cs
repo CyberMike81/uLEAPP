@@ -30,6 +30,24 @@ public static class SelfChecks
             var icon = ToolIcons.Load(tool.Id);
             Check(icon.IsFrozen && icon.PixelWidth == 256 && icon.PixelHeight == 256,tool.Name + " actual catalog icon is embedded and decodes without an installed app");
         }
+        var confirmation = new WindowsTrash.RecycleConfirmation();
+        confirmation.PostDeleteItem(0,IntPtr.Zero,0,IntPtr.Zero);
+        Check(!confirmation.Recycled,"a missing Recycle Bin destination is never confirmed as recycled");
+        confirmation.PostDeleteItem(0,IntPtr.Zero,unchecked((int)0x80004005),new IntPtr(1));
+        Check(!confirmation.Recycled,"a failed delete callback is never confirmed as recycled");
+        confirmation.PostDeleteItem(0,IntPtr.Zero,0,new IntPtr(1));
+        Check(confirmation.Recycled,"the shell must report a successful Recycle Bin destination");
+        Check(!WindowsTrash.IsSupportedDrive(DriveType.Removable) && !WindowsTrash.IsSupportedDrive(DriveType.Network),"cleanup refuses removable and network drives");
+        string cacheTest = Path.Combine(Path.GetTempPath(),"uleapp-metadata-" + Guid.NewGuid().ToString("N"));
+        try {
+            using var handler = new MetadataHandler();
+            using var http = new HttpClient(handler);
+            string first = await GitHubMetadata.FetchAsync(http,"https://api.github.com/test",CancellationToken.None,cacheTest);
+            string second = await GitHubMetadata.FetchAsync(http,"https://api.github.com/test",CancellationToken.None,cacheTest);
+            Check(first == second && handler.Conditional == "\"one\"","ETag conditional response reuses only server-confirmed cached metadata");
+            try { await GitHubMetadata.FetchAsync(http,"https://api.github.com/test",CancellationToken.None,cacheTest); throw new Exception("Rate limit ignored"); }
+            catch (IOException error) { Check(error.Message.Contains("remaining: 0") && error.Message.Contains("12345"),"rate-limit errors include remaining quota and reset details instead of stale success"); }
+        } finally { if (Directory.Exists(cacheTest)) Directory.Delete(cacheTest,true); }
         var actionRow = new ToolRow(Catalog.All[0]);
         Check(actionRow.ActionLabel == "Install" && actionRow.ActionVisibility == System.Windows.Visibility.Visible,"missing apps keep their Install button");
         bool visibilityChanged = false;
@@ -240,6 +258,19 @@ public static class SelfChecks
         }
         finally { Directory.Delete(scratch,true); }
         Console.WriteLine($"uLEAPP self-check passed: {checks} checks. No installed apps were changed.");
+    }
+    private sealed class MetadataHandler : HttpMessageHandler
+    {
+        private int calls;
+        public string? Conditional;
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,CancellationToken cancellation)
+        {
+            calls++; Conditional = request.Headers.IfNoneMatch.FirstOrDefault()?.ToString();
+            var response = new HttpResponseMessage(calls == 1 ? HttpStatusCode.OK : calls == 2 ? HttpStatusCode.NotModified : HttpStatusCode.Forbidden);
+            if (calls == 1) { response.Content = new StringContent("{\"tag_name\":\"v1.2.3\"}"); response.Headers.ETag = new System.Net.Http.Headers.EntityTagHeaderValue("\"one\""); }
+            if (calls == 3) { response.Headers.Add("X-RateLimit-Remaining","0"); response.Headers.Add("X-RateLimit-Reset","12345"); }
+            return Task.FromResult(response);
+        }
     }
     private static void CheckSettingsRecovery(string scratch)
     {

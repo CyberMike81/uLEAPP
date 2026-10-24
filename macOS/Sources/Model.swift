@@ -6,6 +6,8 @@ struct LEAPPTool: Identifiable {
     let name: String
     let description: String
     let bundle: String
+    var homebrewVersion = ""
+    var directVersion = ""
     var upstreamVersion = ""
     var version = ""
     var status = "unknown"
@@ -41,8 +43,10 @@ struct LEAPPTool: Identifiable {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
         existingBundlePath = ["/Applications/\(bundle).app", "\(home)/Applications/\(bundle).app"]
             .first { FileManager.default.fileExists(atPath: $0) }
+        directVersion = ""
         if let store = store, let direct = try? store.current(self) {
             existingBundlePath = direct.1.path
+            directVersion = direct.0.version
             version = direct.0.version
         }
         if let path = existingBundlePath {
@@ -56,22 +60,33 @@ struct LEAPPTool: Identifiable {
 
 }
 
-enum UpdateMode: String { case check, update, install }
+enum UpdateMode: String { case check, update, install, returnHomebrew }
 
 final class UpdaterModel: ObservableObject {
     @Published var appUpdate: AppUpdate?
     private var selfUpdateTimer: Timer?
     private var selfUpdateStarted = false
+    let updatePreferenceEnabled = !CommandLine.arguments.contains("--no-update-check")
+    @Published var automaticUpdates = !CommandLine.arguments.contains("--no-update-check") && (UserDefaults.standard.object(forKey: "AutomaticUpdateChecks") == nil || UserDefaults.standard.bool(forKey: "AutomaticUpdateChecks"))
+    func setAutomaticUpdates(_ enabled: Bool) {
+        UserDefaults.standard.set(enabled, forKey: "AutomaticUpdateChecks")
+        automaticUpdates = enabled && updatePreferenceEnabled
+        if automaticUpdates { startSelfUpdateChecks() }
+        else { selfUpdateTimer?.invalidate(); selfUpdateTimer = nil; selfUpdateStarted = false; appUpdate = nil }
+    }
     func startSelfUpdateChecks() {
-        guard !demo, !selfUpdateStarted else { return }
+        guard !demo, automaticUpdates, !selfUpdateStarted else { return }
         selfUpdateStarted = true
         checkSelfUpdate()
         selfUpdateTimer = Timer.scheduledTimer(withTimeInterval: 24 * 60 * 60, repeats: true) { [weak self] _ in self?.checkSelfUpdate() }
     }
     private func checkSelfUpdate() {
-        SelfUpdate.check { [weak self] update in
-            DispatchQueue.main.async { if let update = update { self?.appUpdate = update } }
-        }
+        guard automaticUpdates, !demo else { return }
+        SelfUpdate.check(completion: { [weak self] update in
+            DispatchQueue.main.async { if self?.automaticUpdates == true, let update = update { self?.appUpdate = update } }
+        }, failure: { [weak self] message in
+            DispatchQueue.main.async { if self?.automaticUpdates == true { self?.handleLine("uLEAPP update check: " + message); self?.flushLog() } }
+        })
     }
     @Published var tools = LEAPPTool.all
     @Published var busy = false
@@ -128,6 +143,21 @@ final class UpdaterModel: ObservableObject {
             showLaunchError(tool, message: "The app could not be found in Applications. Refresh your installed apps or install it again.")
             return
         }
+        if !tool.directVersion.isEmpty {
+            loading = true
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                do {
+                    let app = URL(fileURLWithPath: path)
+                    try DirectMacInstaller.assessPublisher(app)
+                    try DirectMacInstaller.quarantine(app)
+                    DispatchQueue.main.async { self?.loading = false; self?.openInstalled(tool, path: path) }
+                } catch { DispatchQueue.main.async { self?.loading = false; self?.showLaunchError(tool, message: error.localizedDescription) } }
+            }
+            return
+        }
+        openInstalled(tool, path: path)
+    }
+    private func openInstalled(_ tool: LEAPPTool, path: String) {
         let configuration = NSWorkspace.OpenConfiguration()
         configuration.activates = true
         NSWorkspace.shared.openApplication(at: URL(fileURLWithPath: path), configuration: configuration) { [weak self] _, error in
@@ -217,6 +247,7 @@ final class UpdaterModel: ObservableObject {
             }
         }
         for index in tools.indices {
+            tools[index].homebrewVersion = versions[tools[index].id] ?? ""
             tools[index].version = versions[tools[index].id] ?? ""
             tools[index].status = versions[tools[index].id] == nil ? (tools[index].existingBundlePath == nil ? "notInstalled" : "unmanaged") : "installed"
         }
@@ -281,7 +312,8 @@ final class UpdaterModel: ObservableObject {
         environment["SUDO_ASKPASS"] = askpass
         environment["HOMEBREW_NO_COLOR"] = "1"
         let arguments: [String]
-        if mode == .check { arguments = [worker, "--check"] }
+        if mode == .returnHomebrew, let cask = cask { arguments = [worker, "--return-to-homebrew", cask] }
+        else if mode == .check { arguments = [worker, "--check"] }
         else if mode == .install { arguments = cask.map { [worker, "--install", $0] } ?? [worker, "--install-missing"] }
         else { arguments = [worker] }
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -342,6 +374,7 @@ final class UpdaterModel: ObservableObject {
                     tools[index].version = fields[4]
                     tools[index].refreshPresentation(store: directStore)
                 }
+                if fields[1] == "homebrew" { tools[index].homebrewVersion = fields[4] }
                 if fields[1] == "upstream" { tools[index].upstreamVersion = fields[4] }
                 if fields[1] == "app" {
                     tools[index].status = fields[3]
@@ -412,6 +445,9 @@ final class UpdaterModel: ObservableObject {
         } else if status != 0 || failedCount > 0 {
             title = "A few things need attention"
             subtitle = "Open Details to see what happened, then try again."
+        } else if currentMode == .returnHomebrew {
+            title = "Homebrew management restored"
+            subtitle = "Launch uses the Homebrew copy in Applications. Direct app folders were retained."
         } else if currentMode == .install {
             title = "Your LEAPP apps are ready"
             subtitle = "Installation finished. You can check for updates whenever you're ready."

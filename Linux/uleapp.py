@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
-"""uLEAPP Linux desktop interface. No downloads occur on startup."""
+"""uLEAPP Linux desktop interface. No app downloads occur on startup; optional release metadata is checked."""
 import argparse
 from pathlib import Path
 import queue
@@ -15,6 +15,7 @@ from core import TOOLS, VERSION, Store, architecture, latest, needs_update, Canc
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--version', action='version', version='uLEAPP ' + VERSION)
+    parser.add_argument('--no-update-check', action='store_true', help='Disable automatic uLEAPP update requests for this run')
     parser.add_argument('--smoke-test', action='store_true', help=argparse.SUPPRESS)
     parser.add_argument('--demo', action='store_true', help='Preview without downloads or launching apps')
     args = parser.parse_args()
@@ -35,6 +36,8 @@ def main():
     style.configure('Heading.TLabel', font=('Sans', 24, 'bold'))
     root.configure(background='#18211c')
     store = Store()
+    from preferences import load_automatic, save_automatic
+    automatic_updates = tk.BooleanVar(value=not args.no_update_check and load_automatic(store.root))
     arch = architecture()
     events = queue.Queue()
     releases, records, row_status, actions, launches = {}, {}, {}, {}, {}
@@ -48,6 +51,15 @@ def main():
     ttk.Label(frame, textvariable=title, style='Heading.TLabel').pack(anchor='w', pady=(8, 4))
     ttk.Label(frame, textvariable=subtitle, wraplength=850).pack(anchor='w', pady=(0, 18))
     app_update = {}
+    def set_automatic():
+        try: save_automatic(store.root, automatic_updates.get())
+        except Exception as error: append('Could not save update preference: ' + str(error))
+        if automatic_updates.get(): check_self_update(schedule=False)
+        else: update_banner.pack_forget()
+    preference = ttk.Checkbutton(frame, text='Check for uLEAPP updates automatically', variable=automatic_updates, command=set_automatic)
+    preference.pack(anchor='w', pady=(0, 8))
+    if args.no_update_check or args.demo: preference.configure(state='disabled')
+
     update_banner = ttk.Frame(frame)
     app_update_text = tk.StringVar()
     ttk.Label(update_banner, textvariable=app_update_text, foreground='#8ee563').pack(side='left')
@@ -242,7 +254,7 @@ def main():
             elif kind == 'cleanup_log': append(value)
             elif kind == 'stopped': append('Stopped at your request.')
             elif kind == 'app_update':
-                if value:
+                if value and automatic_updates.get():
                     app_update.update(value)
                     app_update_text.set('uLEAPP ' + value['version'] + ' is available')
                     update_banner.pack(fill='x', pady=(0, 10), before=rows)
@@ -272,13 +284,13 @@ def main():
         if busy:
             messagebox.showinfo('Operation in progress', 'Wait for the current downloads and installations to finish before closing.', parent=root)
         else: root.destroy()
-    def check_self_update():
-        if args.demo or args.smoke_test: return
+    def check_self_update(schedule=True):
+        if schedule: root.after(24 * 60 * 60 * 1000, check_self_update)
+        if args.demo or args.smoke_test or args.no_update_check or not automatic_updates.get(): return
         def work():
             try: events.put(('app_update', check_update()))
-            except Exception: pass  # Optional check must never interrupt LEAPP work.
+            except Exception as error: events.put(('error', 'uLEAPP update check: ' + str(error)))
         threading.Thread(target=work, daemon=True).start()
-        root.after(24 * 60 * 60 * 1000, check_self_update)
     root.after(500, check_self_update)
     root.protocol('WM_DELETE_WINDOW', close)
     refresh_buttons()

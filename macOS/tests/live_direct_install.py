@@ -26,6 +26,18 @@ do {
     precondition(selected.1.path.hasPrefix(home.path + "/"))
     precondition(FileManager.default.fileExists(atPath: selected.1.appendingPathComponent("Contents/Info.plist").path))
     try DirectMacInstaller.command("/usr/bin/codesign", ["--verify", "--strict", "--deep", selected.1.path])
+    try DirectMacInstaller.assessPublisher(selected.1)
+    let quarantine = try DirectMacInstaller.command("/usr/bin/xattr", ["-p", "com.apple.quarantine", selected.1.path])
+    precondition(quarantine.hasPrefix("0083;") && quarantine.contains(";uLEAPP;"))
+    print("PASS: publisher team, Gatekeeper assessment and quarantine verified.")
+    do { try store.returnToHomebrew(tool, installed: "2020.1", home: home); preconditionFailure("Return downgraded the selected app") } catch {}
+    precondition(try! store.current(tool) != nil)
+    let brewApp = home.appendingPathComponent("Applications/ALEAPP.app")
+    try DirectMacInstaller.command("/usr/bin/ditto", [selected.1.path, brewApp.path])
+    try store.returnToHomebrew(tool, installed: result.version, home: home, applicationPaths: [brewApp])
+    precondition(try! store.current(tool) == nil)
+    precondition(FileManager.default.fileExists(atPath: selected.1.path))
+    print("PASS: return to a verified current Homebrew copy clears only the direct selection; downgrade is refused.")
     print("PASS: official download, checksum, disk-image mount, app version, architecture, signature, copy and selected-install record verified in a temporary home.")
 } catch {
     FileHandle.standardError.write(Data((error.localizedDescription + "\\n").utf8))

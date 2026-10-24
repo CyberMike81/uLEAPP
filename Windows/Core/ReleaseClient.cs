@@ -14,18 +14,15 @@ public sealed class ReleaseClient : IDisposable
     public TimeSpan ReadIdleTimeout { get; init; } = TimeSpan.FromSeconds(60);
     public ReleaseClient(HttpMessageHandler? handler = null)
     {
-        client = new HttpClient(handler ?? new HttpClientHandler { AllowAutoRedirect = false }) { Timeout = TimeSpan.FromMinutes(15) };
+        client = new HttpClient(handler ?? new HttpClientHandler { AllowAutoRedirect = false }) { Timeout = TimeSpan.FromMinutes(15), MaxResponseContentBufferSize = 8 * 1024 * 1024 };
         client.DefaultRequestHeaders.UserAgent.ParseAdd("uLEAPP/" + Catalog.Version);
         client.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
     }
 
     public async Task<Release> LatestAsync(Tool tool, string architecture, bool installerManaged, CancellationToken cancellation)
     {
-        using var response = await client.GetAsync($"https://api.github.com/repos/{tool.Repository}/releases/latest", cancellation).ConfigureAwait(false);
-        if (response.StatusCode == HttpStatusCode.Forbidden || (int)response.StatusCode == 429)
-            throw new IOException("GitHub's download limit was reached. Please try again later.");
-        response.EnsureSuccessStatusCode();
-        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellation).ConfigureAwait(false));
+        string body = await GitHubMetadata.FetchAsync(client,$"https://api.github.com/repos/{tool.Repository}/releases/latest",cancellation).ConfigureAwait(false);
+        using var json = JsonDocument.Parse(body);
         return Select(tool, json.RootElement, architecture, installerManaged);
     }
 

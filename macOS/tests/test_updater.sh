@@ -43,6 +43,7 @@ case "$1" in
       cat "$LEAPP_TEST_DIR/installed"
     fi
     ;;
+  info) printf '{"casks":[{"token":"aleapp-gui","version":"2026.4.4"}]}\n' ;;
   outdated)
     token="${!#}"
     if [[ "${LEAPP_TEST_FAIL:-}" == "outdated:$token" ]]; then
@@ -75,8 +76,19 @@ BREW
 chmod 755 "$scratch/bin/brew"
 cat > "$scratch/bin/release-checker" <<'CHECKER'
 #!/bin/bash
+if [[ "$1" == --homebrew-candidate ]]; then
+  cat >/dev/null
+  [[ "${LEAPP_TEST_MODE:-}" != return-behind ]] || exit 1
+  printf '2026.4.4\n'; exit 0
+fi
+if [[ "$1" == --complete-homebrew-return ]]; then
+  [[ "${LEAPP_TEST_MODE:-}" != return-invalid ]] || exit 1
+  touch "$LEAPP_TEST_DIR/returned"
+  exit 0
+fi
 if [[ "$1" == --direct-tool-version ]]; then
   case "${LEAPP_TEST_MODE:-}:$2" in
+    return-ok:aleapp-gui|return-behind:aleapp-gui|return-invalid:aleapp-gui) printf '2026.4.4\n'; exit 0 ;;
     direct-managed:aleapp-gui) printf '2026.4.4\n'; exit 0 ;;
     direct-newer:aleapp-gui) printf '2026.4.3\n'; exit 0 ;;
     direct-error:aleapp-gui) exit 1 ;;
@@ -354,6 +366,27 @@ events=1
 run_case --check
 expect 'an unreadable direct record is not called up to date' test "$status" -eq 1
 expect 'an unreadable direct record needs attention' grep -Fq $'ULEAPP\tapp\taleapp-gui\tfailed\t' "$case_dir/output"
+
+new_case return-homebrew
+mode=return-ok
+events=1
+run_case --return-to-homebrew aleapp-gui
+expect 'return to Homebrew upgrades only the selected tool' upgrade_count 1
+expect 'verified return releases the direct selection' test -f "$case_dir/returned"
+expect 'return operation reports success' test "$status" -eq 0
+
+new_case return-behind
+mode=return-behind
+run_case --return-to-homebrew aleapp-gui
+expect 'older Homebrew refuses the return before upgrading' upgrade_count 0
+expect 'older Homebrew retains the direct selection' test ! -f "$case_dir/returned"
+expect 'older Homebrew return explains failure' test "$status" -eq 1
+
+new_case return-invalid
+mode=return-invalid
+run_case --return-to-homebrew aleapp-gui
+expect 'failed bundle verification retains direct selection' test ! -f "$case_dir/returned"
+expect 'failed bundle verification reports failure' test "$status" -eq 1
 
 printf '\n%s passed; %s failed.\n' "$passed" "$failed"
 [[ "$failed" -eq 0 ]]

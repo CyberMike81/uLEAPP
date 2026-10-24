@@ -2,7 +2,7 @@
 """Optional uLEAPP update notification; never installs or downloads a package."""
 import json
 import re
-from core import VERSION, stream_bytes
+from core import VERSION
 
 REPOSITORY = 'CyberMike81/uLEAPP'
 
@@ -24,8 +24,5 @@ def select_update(data, current=VERSION):
 
 
 def check_update():
-    data = bytearray()
-    for chunk in stream_bytes(f'https://api.github.com/repos/{REPOSITORY}/releases/latest', idle_timeout=15):
-        data.extend(chunk)
-        if len(data) > 1024**2: raise ValueError('Update metadata is too large.')
-    return select_update(json.loads(data))
+    from release_metadata import fetch_json
+    return select_update(fetch_json(f'https://api.github.com/repos/{REPOSITORY}/releases/latest'))

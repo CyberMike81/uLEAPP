@@ -22,7 +22,7 @@ public static class Program
             }
             if (args.Contains("--help"))
             {
-                Console.WriteLine("uLEAPP for Windows\n--version       Report the app version\n--selfcheck     Check packaging and updater behavior without changing apps\n--diagnose-app ID Report the registered executable for a supported app, without changes\n--demo          Preview a clean Windows installation\n--demo-installed Preview installed apps"); return 0;
+                Console.WriteLine("uLEAPP for Windows\n--no-update-check Disable automatic update requests for this run\n--version       Report the app version\n--selfcheck     Check packaging and updater behavior without changing apps\n--diagnose-app ID Report the registered executable for a supported app, without changes\n--demo          Preview a clean Windows installation\n--demo-installed Preview installed apps"); return 0;
             }
             if (args.Contains("--selfcheck"))
             {

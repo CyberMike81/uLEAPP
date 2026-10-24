@@ -25,11 +25,18 @@ preview=0
 check_only=0
 install_missing=0
 install_target=''
+return_homebrew=0
 case "${1:-}" in
   '') ;;
   --dry-run) preview=1 ;;
   --check) check_only=1 ;;
   --install-missing) install_missing=1 ;;
+  --return-to-homebrew)
+    [[ $# -eq 2 ]] || exit 2
+    install_target="$2"
+    case "$install_target" in lava|aleapp-gui|ileapp-gui|rleapp-gui|vleapp-gui|dleapp-gui|gleapp) ;; *) exit 2 ;; esac
+    return_homebrew=1
+    ;;
   --install)
     if [[ $# -ne 2 ]]; then
       printf 'Use --install followed by one LEAPP cask name.\n'
@@ -49,6 +56,7 @@ case "${1:-}" in
       'Updates only apps already installed through Homebrew.' \
       'Other apps are skipped and listed in the summary.' \
       'Use --check to refresh Homebrew and check without upgrading apps.' \
+      'Use --return-to-homebrew CASK to switch after Homebrew catches up.' \
       'Use --install CASK to install one missing LEAPP app.' \
       'Use --install-missing to install the missing apps without upgrading existing ones.' \
       'Use --dry-run in Terminal to preview without making changes.'
@@ -122,7 +130,8 @@ report_version() {
     while read -r token version; do
       if [[ "${token##*/}" == "$cask" && -n "$version" ]]; then
         installed_version="$version"
-        event version "$cask" '' "$version"
+        event homebrew "$cask" '' "$version"
+        if [[ "${1:-}" != homebrew-only ]]; then event version "$cask" '' "$version"; fi
         break
       fi
     done <<< "$version_lines"
@@ -237,7 +246,29 @@ for target in "${targets[@]}"; do
     direct_version="$("$checker" --direct-tool-version "$cask")"
     direct_status=$?
   fi
+  if [[ "$direct_status" -eq 0 && "$return_homebrew" -eq 1 ]]; then
+    if ! metadata="$("$brew_bin" info --cask --json=v2 "$tap/$cask")" || ! printf '%s' "$metadata" | "$checker" --homebrew-candidate "$cask" "$direct_version"; then
+      event app "$cask" failed 'Homebrew has not caught up; direct copy kept'
+      failed_count=$((failed_count + 1)); failed_apps="$failed_apps $name"
+      continue
+    fi
+    event app "$cask" updating 'Refreshing Homebrew copy'
+    if is_managed "$cask"; then
+      "$brew_bin" upgrade --cask --greedy "$tap/$cask" || result=$?
+    else
+      "$brew_bin" install --cask --adopt "$tap/$cask" || result=$?
+    fi
+    report_version
+    if [[ "$result" -eq 0 ]] && "$checker" --complete-homebrew-return "$cask" "$installed_version"; then
+      report_version
+      confirm_current || result=$?
+      printf '%s: returned to Homebrew. Direct copies were retained.\n' "$name"
+    else result=1; fi
+    if [[ "$result" -ne 0 ]]; then event app "$cask" failed 'Return failed; direct record kept unless verification completed'; failed_count=$((failed_count + 1)); failed_apps="$failed_apps $name"; fi
+    continue
+  fi
   if [[ "$direct_status" -eq 0 ]]; then
+    report_version homebrew-only
     installed_version="$direct_version"
     event version "$cask" '' "$installed_version"
     event app "$cask" checking 'Checking official releases'

@@ -7,7 +7,7 @@ struct AppUpdate {
 }
 
 enum SelfUpdate {
-    static var currentVersion: String { Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.3.6" }
+    static var currentVersion: String { Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.3.7" }
     static let repository = "CyberMike81/uLEAPP"
     static func select(_ json: [String: Any], current: String) -> AppUpdate? {
         guard let tag = json["tag_name"] as? String,
@@ -27,17 +27,10 @@ enum SelfUpdate {
               let downloadURL = URL(string: download), let pageURL = URL(string: page) else { return nil }
         return AppUpdate(version: version, download: downloadURL, page: pageURL)
     }
-    static func check(completion: @escaping (AppUpdate?) -> Void) {
-        var request = URLRequest(url: URL(string: "https://api.github.com/repos/\(repository)/releases/latest")!)
-        request.timeoutInterval = 15
-        request.setValue("uLEAPP/\(currentVersion)", forHTTPHeaderField: "User-Agent")
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            guard error == nil, let response = response as? HTTPURLResponse, response.statusCode == 200,
-                  let data = data, data.count <= 1024 * 1024,
-                  let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
-                completion(nil); return
-            }
-            completion(select(json, current: currentVersion))
-        }.resume()
+    static func check(completion: @escaping (AppUpdate?) -> Void, failure: @escaping (String) -> Void = { _ in }) {
+        DispatchQueue.global(qos: .utility).async {
+            do { completion(select(try GitHubMetadata.fetch(repository), current: currentVersion)) }
+            catch { failure(error.localizedDescription); completion(nil) }
+        }
     }
 }

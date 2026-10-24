@@ -1,9 +1,11 @@
-# uLEAPP 0.3.6 — Community Preview
+# uLEAPP 0.3.7 — Community Preview
 
-- **Remove old installs** is now available on Windows and Linux as well as Mac. Review the list before moving eligible older copies to Recycle Bin/Trash. The current and one previous version are kept; nothing is cleaned up automatically.
-- Windows and Linux now save an app-file inventory with new managed installs. Cleanup skips modified folders, added case/report files, symbolic links and older copies without an inventory. Current selections and contents are checked again after confirmation.
-- Includes the Mac direct-install fallback when Homebrew is behind, Windows portable-package fallback, automatic uLEAPP update notifications and earlier fixes.
+- Mac direct installs now require the LEAPP publisher’s Developer ID team and a successful Gatekeeper assessment. Quarantine is applied before selecting the app; older direct copies are checked and quarantined when launched through uLEAPP.
+- Mac rows show both Homebrew and direct versions and explain the selected Launch copy. **Return to Homebrew** switches only after the cask and app in Applications have caught up and verification succeeds. Direct app folders are preserved.
+- Windows cleanup now requires the shell’s Recycle Bin destination confirmation, refuses non-fixed drives, and checks known disabled-recycling settings.
+- All platforms offer a saved **Check for uLEAPP updates automatically** setting and a `--no-update-check` option. Release checks reuse ETags; rate-limit failures show remaining quota and reset details in Details. Unauthenticated checks still share GitHub’s hourly IP limit.
+- The live Homebrew integration test now picks a Homebrew-managed cask dynamically instead of assuming iLEAPP is still Homebrew-managed.
 
-Download and extract the complete platform package. Mac requires macOS 13+ and Homebrew and supports Apple silicon/Intel. Windows x64/ARM64 packages include .NET. Mac is ad hoc signed without notarization; Windows builds are unsigned. Linux requires Python 3.10+ and Tk; cleanup uses desktop Trash on the same filesystem and preserves folders if Trash is unavailable.
+Includes all earlier fixes, portable Windows updates, direct Mac updates and manual old-install cleanup on all three platforms. Mac requires macOS 13+ and Homebrew; Windows packages include .NET; Linux requires Python 3.10+ and Tk. uLEAPP’s Mac build is ad hoc signed without notarization and Windows builds are unsigned.
 
-SHA256SUMS-0.3.6.txt covers all downloads.
+SHA256SUMS-0.3.7.txt covers all downloads.

@@ -29,9 +29,7 @@ public static class SelfUpdate
         using var client = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false })
             { Timeout = TimeSpan.FromSeconds(15), MaxResponseContentBufferSize = 1024 * 1024 };
         client.DefaultRequestHeaders.UserAgent.ParseAdd("uLEAPP/" + Catalog.Version);
-        using var response = await client.GetAsync($"https://api.github.com/repos/{Repository}/releases/latest").ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
-        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync().ConfigureAwait(false));
+        using var json = JsonDocument.Parse(await GitHubMetadata.FetchAsync(client,$"https://api.github.com/repos/{Repository}/releases/latest",CancellationToken.None).ConfigureAwait(false));
         return Select(json.RootElement, Catalog.Version, Catalog.Architecture);
     }
 }

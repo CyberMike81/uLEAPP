@@ -18,15 +18,28 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private readonly ReleaseClient releases = new();
     private readonly bool demo;
     private AppUpdate? appUpdate;
+    private readonly bool noUpdateCheck = Environment.GetCommandLineArgs().Contains("--no-update-check");
+    private bool automaticUpdates = UpdatePreferences.Load();
+    public bool AutomaticUpdates {
+        get => automaticUpdates && !noUpdateCheck;
+        set {
+            try { UpdatePreferences.Save(value); automaticUpdates = value; Changed();
+                if (value && !noUpdateCheck) { selfUpdateTimer?.Start(); _ = CheckSelfUpdateAsync(); }
+                else { selfUpdateTimer?.Stop(); appUpdate = null; Changed(nameof(AppUpdateVisibility)); }
+            } catch (Exception error) { StatusDetail = error.Message; Changed(); }
+        }
+    }
+    public bool UpdatePreferenceEnabled => !noUpdateCheck && !demo;
     private System.Windows.Threading.DispatcherTimer? selfUpdateTimer;
     public string AppUpdateLabel => appUpdate == null ? "" : "uLEAPP " + appUpdate.Version + " is available";
     public Visibility AppUpdateVisibility => appUpdate == null ? Visibility.Collapsed : Visibility.Visible;
     private async Task CheckSelfUpdateAsync()
     {
+        if (!AutomaticUpdates || demo) return;
         try {
             var update = await SelfUpdate.CheckAsync();
-            if (update != null) { appUpdate = update; Changed(nameof(AppUpdateLabel)); Changed(nameof(AppUpdateVisibility)); }
-        } catch { /* Optional checks must never interrupt LEAPP work. */ }
+            if (AutomaticUpdates && update != null) { appUpdate = update; Changed(nameof(AppUpdateLabel)); Changed(nameof(AppUpdateVisibility)); }
+        } catch (Exception error) { if (AutomaticUpdates) WriteLog("uLEAPP update check: " + error.Message); }
     }
     private void DownloadSelfUpdate(object sender, RoutedEventArgs e)
     {
@@ -84,7 +97,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 _ = CheckSelfUpdateAsync();
                 selfUpdateTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromDays(1) };
                 selfUpdateTimer.Tick += async (_, _) => await CheckSelfUpdateAsync();
-                selfUpdateTimer.Start();
+                if (AutomaticUpdates) selfUpdateTimer.Start();
             }
             if (demo)
             {

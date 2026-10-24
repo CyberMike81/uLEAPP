@@ -84,6 +84,7 @@
       </ScrollViewer>
     </Border>
     <StackPanel Grid.Row="4" Margin="0,14,0,14">
+      <CheckBox Content="Check for uLEAPP updates automatically" IsChecked="{Binding AutomaticUpdates}" IsEnabled="{Binding UpdatePreferenceEnabled}" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,0,0,8" />
       <DockPanel>
         <Button Content="Remove old installs" DockPanel.Dock="Right" Click="RemoveOldClicked" IsEnabled="{Binding ActionsEnabled}" Padding="8,5" FontSize="10" Background="Transparent" Foreground="{StaticResource Muted}" />
         <Button Content="Choose folder" DockPanel.Dock="Right" Click="ChooseFolderClicked" IsEnabled="{Binding ActionsEnabled}" Padding="8,5" FontSize="10" Background="Transparent" Foreground="#8EE563" />

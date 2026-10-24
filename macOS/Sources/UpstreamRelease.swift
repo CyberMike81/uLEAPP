@@ -35,28 +35,7 @@ enum UpstreamRelease {
     }
     static func fetch(_ cask: String) throws -> [String: Any] {
         guard let repository = repositories[cask] else { throw Failure(message: "Unknown LEAPP tool.") }
-            var request = URLRequest(url: URL(string: "https://api.github.com/repos/\(repository)/releases/latest")!)
-            request.timeoutInterval = 15
-            request.cachePolicy = .reloadIgnoringLocalCacheData
-            request.setValue("uLEAPP/\(SelfUpdate.currentVersion)", forHTTPHeaderField: "User-Agent")
-            request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-            let ready = DispatchSemaphore(value: 0)
-            var result: Result<[String: Any], Error>?
-            let task = URLSession.shared.dataTask(with: request) { data, response, error in
-                defer { ready.signal() }
-                if let error = error { result = .failure(error); return }
-                guard let response = response as? HTTPURLResponse, response.statusCode == 200,
-                      let data = data, data.count <= 2 * 1024 * 1024,
-                      let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
-                    result = .failure(Failure(message: "GitHub release check failed. Check your connection or GitHub's rate limit and retry.")); return
-                }
-                result = .success(json)
-            }
-            task.resume()
-            guard ready.wait(timeout: .now() + 20) == .success else {
-                task.cancel(); throw Failure(message: "GitHub release check timed out. Update status is unknown.")
-            }
-            return try result!.get()
+        return try GitHubMetadata.fetch(repository)
     }
     static func run(_ arguments: [String]) -> Int32 {
         do {

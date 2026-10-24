@@ -57,6 +57,19 @@ struct DirectMacStore {
         } catch { try? fm.removeItem(at: folder); throw error }
         return folder.appendingPathComponent(tool.bundle + ".app")
     }
+    func returnToHomebrew(_ tool: LEAPPTool, installed: String, home: URL = FileManager.default.homeDirectoryForCurrentUser, applicationPaths: [URL]? = nil) throws {
+        guard let selected = try current(tool) else { return }
+        let json: [String: Any] = ["tag_name": selected.0.version, "draft": false, "prerelease": false]
+        guard !(try UpstreamRelease.assess(json, installed: installed)).1 else { throw UpstreamRelease.Failure(message: "Homebrew is still older. The direct copy remains selected.") }
+        let candidates = applicationPaths ?? [URL(fileURLWithPath: "/Applications/" + tool.bundle + ".app"), home.appendingPathComponent("Applications/" + tool.bundle + ".app")]
+        guard let app = candidates.first(where: { FileManager.default.fileExists(atPath: $0.path) }),
+              let data = try? Data(contentsOf: app.appendingPathComponent("Contents/Info.plist")),
+              let info = try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any],
+              let version = info["CFBundleShortVersionString"] as? String,
+              !(try UpstreamRelease.assess(json, installed: version)).1 else { throw UpstreamRelease.Failure(message: "The Homebrew app in Applications has not caught up. The direct copy remains selected.") }
+        try DirectMacInstaller.assessPublisher(app)
+        try FileManager.default.removeItem(at: records.appendingPathComponent(tool.id + ".json"))
+    }
     struct OldInstall {
         let label: String
         let folder: URL
@@ -207,6 +220,16 @@ final class DirectMacInstaller: NSObject, URLSessionDownloadDelegate {
         guard process.terminationStatus == 0 else { throw UpstreamRelease.Failure(message: output.isEmpty ? "\(URL(fileURLWithPath: executable).lastPathComponent) failed." : output) }
         return output
     }
+    static let publisherTeam = "N2G83326TZ"
+    static func assessPublisher(_ app: URL) throws {
+        let requirement = "anchor apple generic and certificate leaf[subject.OU] = \"\(publisherTeam)\""
+        try command("/usr/bin/codesign", ["--verify", "--strict", "--deep", "-R", requirement, app.path])
+        try command("/usr/sbin/spctl", ["--assess", "--type", "execute", "--verbose=2", app.path])
+    }
+    static func quarantine(_ app: URL) throws {
+        let value = "0083;" + String(Int(Date().timeIntervalSince1970), radix: 16) + ";uLEAPP;" + UUID().uuidString
+        try command("/usr/bin/xattr", ["-w", "com.apple.quarantine", value, app.path])
+    }
     func install(_ tool: LEAPPTool, store: DirectMacStore = DirectMacStore(), cancellation: DirectMacCancellation,
                  phase: @escaping (String) -> Void, progress: @escaping (Double) -> Void) throws -> DirectMacApp {
         guard !NSWorkspace.shared.runningApplications.contains(where: { $0.bundleURL?.lastPathComponent == tool.bundle + ".app" }) else { throw UpstreamRelease.Failure(message: "Close \(tool.name) before updating it.") }
@@ -254,7 +277,8 @@ final class DirectMacInstaller: NSObject, URLSessionDownloadDelegate {
         defer { try? fm.removeItem(at: stage) }
         let stagedApp = stage.appendingPathComponent(tool.bundle + ".app")
         try Self.command("/usr/bin/ditto", [app.path, stagedApp.path])
-        try Self.command("/usr/bin/codesign", ["--verify", "--strict", "--deep", stagedApp.path])
+        try Self.assessPublisher(stagedApp)
+        try Self.quarantine(stagedApp)
         try cancellation.check()
         // Finish the short atomic publish before honoring a subsequent stop.
         _ = try store.publish(stage, tool: tool, version: release.version)
@@ -263,6 +287,9 @@ final class DirectMacInstaller: NSObject, URLSessionDownloadDelegate {
     }
     static func selfCheck() {
         let tool = LEAPPTool.all.first { $0.id == "aleapp-gui" }!
+        if Bundle.main.bundleURL.pathExtension == "app" {
+            do { try assessPublisher(Bundle.main.bundleURL); preconditionFailure("An ad hoc uLEAPP build was accepted as the publisher") } catch {}
+        }
         func metadata(_ arch: String) -> [String: Any] {
             let name = "ALEAPP-2026.4.4-macos-\(arch).dmg"
             return ["tag_name": "v2026.4.4", "draft": false, "prerelease": false,
