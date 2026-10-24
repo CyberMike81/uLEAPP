@@ -1,4 +1,4 @@
-uLEAPP 0.3.10 self-check
+uLEAPP 0.3.11 self-check
 ok - nine supported tools including both companions
 ok - LAVA actual catalog icon is embedded and decodes without an installed app
 ok - ALEAPP actual catalog icon is embedded and decodes without an installed app
@@ -9,6 +9,21 @@ ok - DLEAPP actual catalog icon is embedded and decodes without an installed app
 ok - GLEAPP actual catalog icon is embedded and decodes without an installed app
 ok - Batch LEAPP actual catalog icon is embedded and decodes without an installed app
 ok - Map Downloader actual catalog icon is embedded and decodes without an installed app
+ok - actual window summary counts 0 installed apps against nine rows
+ok - actual window missing label counts all companions with 0 installed
+ok - bulk install visibility and enabled state match 9 missing apps
+ok - actual window summary counts 5 installed apps against nine rows
+ok - actual window missing label counts all companions with 5 installed
+ok - bulk install visibility and enabled state match 4 missing apps
+ok - actual window summary counts 7 installed apps against nine rows
+ok - actual window missing label counts all companions with 7 installed
+ok - bulk install visibility and enabled state match 2 missing apps
+ok - actual window summary counts 9 installed apps against nine rows
+ok - actual window missing label counts all companions with 9 installed
+ok - bulk install visibility and enabled state match 0 missing apps
+ok - window summary follows a growing row collection
+ok - missing label follows a growing row collection
+ok - a newly added missing row restores bulk installation
 ok - a missing Recycle Bin destination is never confirmed as recycled
 ok - a failed delete callback is never confirmed as recycled
 ok - the shell must report a successful Recycle Bin destination
@@ -167,5 +182,5 @@ ok - cancelled cleanup leaves app folders in place
 ok - untracked folders and forged cleanup paths are preserved
 ok - eligible old app moves to the Windows Recycle Bin
 ok - recycling keeps the current and previous app plus untracked case data
-uLEAPP self-check passed: 168 checks. No installed apps were changed.
+uLEAPP self-check passed: 183 checks. No installed apps were changed.
 
