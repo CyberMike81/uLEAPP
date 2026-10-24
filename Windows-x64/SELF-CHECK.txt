@@ -1,4 +1,4 @@
-uLEAPP 0.3.6 self-check
+uLEAPP 0.3.7 self-check
 ok - seven supported tools; no extra applications
 ok - LAVA actual catalog icon is embedded and decodes without an installed app
 ok - ALEAPP actual catalog icon is embedded and decodes without an installed app
@@ -7,6 +7,12 @@ ok - RLEAPP actual catalog icon is embedded and decodes without an installed app
 ok - VLEAPP actual catalog icon is embedded and decodes without an installed app
 ok - DLEAPP actual catalog icon is embedded and decodes without an installed app
 ok - GLEAPP actual catalog icon is embedded and decodes without an installed app
+ok - a missing Recycle Bin destination is never confirmed as recycled
+ok - a failed delete callback is never confirmed as recycled
+ok - the shell must report a successful Recycle Bin destination
+ok - cleanup refuses removable and network drives
+ok - ETag conditional response reuses only server-confirmed cached metadata
+ok - rate-limit errors include remaining quota and reset details instead of stale success
 ok - missing apps keep their Install button
 ok - an up-to-date app hides Update and notifies the interface
 ok - an available update restores the Update button
@@ -149,5 +155,5 @@ ok - cancelled cleanup leaves app folders in place
 ok - untracked folders and forged cleanup paths are preserved
 ok - eligible old app moves to the Windows Recycle Bin
 ok - recycling keeps the current and previous app plus untracked case data
-uLEAPP self-check passed: 150 checks. No installed apps were changed.
+uLEAPP self-check passed: 156 checks. No installed apps were changed.
 

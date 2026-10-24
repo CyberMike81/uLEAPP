@@ -1,9 +1,9 @@
 {
-  "Architecture": "win-arm64",
+  "AppVersion": "0.3.7",
   "RuntimePacks": [
     "runtimepack.Microsoft.NETCore.App.Runtime.win-arm64/10.0.13",
     "runtimepack.Microsoft.WindowsDesktop.App.Runtime.win-arm64/10.0.13"
   ],
-  "Sdk": "10.0.402",
-  "AppVersion": "0.3.6"
+  "Architecture": "win-arm64",
+  "Sdk": "10.0.402"
 }

@@ -109,3 +109,17 @@ version per tool. Cleanup is manual; checking or installing never removes old
 versions automatically. A file inventory saved by new installs protects added
 case/report files, changed app files and links. Older folders without this
 inventory are preserved. Eligibility is checked again after review.
+
+## Automatic checks and network use
+
+The saved **Check for uLEAPP updates automatically** setting controls the startup
+and daily uLEAPP metadata request. Uncheck it to stop those requests, or launch
+with `--no-update-check` to disable them for that run. Explicit tool checks and
+installation requests still contact the publishers when requested. No case data
+is included in these requests; the User-Agent identifies the uLEAPP version.
+
+Metadata requests send cached ETags and use cached content only when GitHub
+confirms it with HTTP 304. Network failures never become a cached “up to date”
+result. GitHub’s unauthenticated limit is shared by source IP (typically 60/hour);
+conditional requests are not exempt without authentication. Details show the
+remaining quota and reset timestamp on HTTP 403/429. No GitHub token is stored.
