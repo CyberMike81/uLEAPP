@@ -59,7 +59,9 @@ def main():
     app_update = {}
     def set_automatic():
         try: save_automatic(store.root, automatic_updates.get())
-        except Exception as error: append('Could not save update preference: ' + str(error))
+        except Exception as error:
+            append('Could not save update preference: ' + str(error))
+            if not log.winfo_manager(): toggle_details()
         if automatic_updates.get(): check_self_update(schedule=False)
         else: update_banner.pack_forget()
     settings = ttk.Frame(frame)
@@ -250,6 +252,7 @@ def main():
         except Exception as error: messagebox.showerror('Could not launch ' + tool.name, str(error), parent=root)
 
     for index, tool in enumerate(TOOLS):
+        record = None
         try:
             record = None if args.demo else store.installed(tool)
             if record: records[tool.id] = record

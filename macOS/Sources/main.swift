@@ -69,16 +69,16 @@ struct ToolRow: View {
             if tool.status == "pending" || ((!usesHomebrew || tool.directOnly) && !tool.manualDownload && tool.status == "available" && !tool.version.isEmpty) {
                 Button("Update") { directUpdate() }.controlSize(.small).tint(Palette.green).disabled(actionsDisabled)
             }
-            if tool.existingBundlePath != nil {
-                Button("Launch") { launch() }.controlSize(.small).tint(Palette.green).disabled(launchDisabled)
-                    .help("Open \(tool.name)").accessibilityLabel("Launch \(tool.name)")
-            }
             if tool.manualDownload {
                 Button("Get latest") { install() }.controlSize(.small).disabled(actionsDisabled)
             } else if tool.version.isEmpty {
                 Button(tool.existingBundlePath == nil || !usesHomebrew || tool.directOnly ? "Install" : "Add") { install() }
                     .controlSize(.small).tint(Palette.green).disabled(actionsDisabled)
                     .help(usesHomebrew && !tool.directOnly ? "Install or register through Homebrew" : "Download and install the official Mac build")
+            }
+            if tool.existingBundlePath != nil {
+                Button("Launch") { launch() }.controlSize(.small).tint(Palette.green).disabled(launchDisabled)
+                    .help("Open \(tool.name)").accessibilityLabel("Launch \(tool.name)")
             }
             Menu {
                 if let path = tool.existingBundlePath {
@@ -154,7 +154,7 @@ struct UpdaterView: View {
             HStack {
                 Text("YOUR LEAPP TOOLS").font(.system(size: 10, weight: .semibold)).tracking(1.3)
                 Spacer()
-                Text("\(model.installedCount) of \(model.tools.count) installed" + (model.availableCount + model.pendingCount > 0 ? " · \(model.availableCount + model.pendingCount) available" : "")).font(.system(size: 11))
+                Text("\(model.displayedInstalledCount) of \(model.tools.count) installed" + (model.availableCount + model.pendingCount > 0 ? " · \(model.availableCount + model.pendingCount) available" : "")).font(.system(size: 11))
             }.foregroundStyle(Palette.muted).padding(.horizontal, 3)
 
             ScrollView {
@@ -403,6 +403,15 @@ if CommandLine.arguments.contains("--self-test") || CommandLine.arguments.contai
     var companion = LEAPPTool.all.first { $0.id == "mapdownloader" }!
     companion.directVersion = "0.2.0"
     precondition(!companion.canReturnToHomebrew && !companion.sourceLine(usesHomebrew: true).contains("none"))
+    let manualFolder = FileManager.default.temporaryDirectory.appendingPathComponent("uleapp-manual-presentation-" + UUID().uuidString + ".app")
+    try! FileManager.default.createDirectory(at: manualFolder, withIntermediateDirectories: true)
+    var manual = LEAPPTool(id: "batch-leapp", name: "Batch LEAPP", description: "", bundle: "Batch LEAPP")
+    manual.refreshPresentation(store: nil, applicationPaths: [manualFolder.path])
+    let manualModel = UpdaterModel(directStore: nil)
+    manualModel.tools = [manual]
+    precondition(manualModel.displayedInstalledCount == 1 && manualModel.installedCount == 0 && manualModel.missingCount == 0)
+    precondition(manual.pillLabel == "Installed by you", "A real manual copy is installed, but its unknown version is not called current")
+    try! FileManager.default.removeItem(at: manualFolder)
     let directOnly = UpdaterModel(directStore: nil, brewResolver: { nil }, fetchRelease: { cask in
         let tool = LEAPPTool.all.first { $0.id == cask }!
         let arch = DirectMacInstaller.architecture

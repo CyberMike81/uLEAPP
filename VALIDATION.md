@@ -9,7 +9,7 @@ Prepared October 24, 2026 for the Community Preview bug-fix release.
 | Windows ARM64 | Fresh build and 187 packaged self-checks on a native Windows 11 ARM GitHub runner | Full manual installer/portable GUI flow on a user computer |
 | Linux x64/ARM64 | 36 core tests; interface and extracted-package smoke checks on Ubuntu 24.04 runners; official GLEAPP archive checksum and layout checked | Actual LEAPP graphical launches on Linux hardware; WSL compatibility |
 
-Windows release builds: https://github.com/CyberMike81/uLEAPP/actions/runs/40138032107
+Windows release builds: https://github.com/CyberMike81/uLEAPP/actions/runs/40138913623
 
 The October 21 bug fixes move Windows installation work off the UI thread,
 throttle progress, add Windows/Linux download cancellation and stalled-transfer
@@ -136,3 +136,8 @@ receipt, an older Applications copy, missing/invalid versions or a direct-only
 companion. These menu preconditions supplement the existing install-time publisher,
 Gatekeeper and version checks; they do not replace them. Linux smoke coverage
 checks that Settings and Details start collapsed and all tool actions remain.
+
+Mac visual review confirmed all nine real tool rows fit in the initial window,
+with Settings folded and Homebrew switching disabled for older receipt/copy
+versions. Existing manual app bundles contribute to the displayed installed
+count without being treated as version-verified or automatically managed.

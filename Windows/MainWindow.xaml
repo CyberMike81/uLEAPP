@@ -84,25 +84,29 @@
       </ScrollViewer>
     </Border>
     <StackPanel Grid.Row="4" Margin="0,10,0,10">
-      <Expander Header="Settings" Foreground="{StaticResource Muted}" FontSize="12">
-        <StackPanel Margin="0,6,0,6">
-          <CheckBox Content="Check for uLEAPP updates automatically" IsChecked="{Binding AutomaticUpdates}" IsEnabled="{Binding UpdatePreferenceEnabled}" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,0,0,6" />
-          <TextBlock Text="Checks run at startup and once a day. Downloading an update is your choice." FontSize="10" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,6" />
-          <DockPanel>
-            <Button Content="Choose folder" DockPanel.Dock="Right" Click="ChooseFolderClicked" IsEnabled="{Binding ActionsEnabled}" Padding="8,5" FontSize="10" Background="Transparent" Foreground="#8EE563" />
-            <TextBlock Text="{Binding InstallFolder}" TextTrimming="CharacterEllipsis" Foreground="{StaticResource Muted}" FontSize="10" VerticalAlignment="Center" ToolTip="{Binding InstallFolder}" />
-          </DockPanel>
+      <DockPanel>
+        <Button DockPanel.Dock="Right" Click="RemoveOldClicked" IsEnabled="{Binding ActionsEnabled}" Padding="8,5" FontSize="10" Background="Transparent" Foreground="{StaticResource Muted}" AutomationProperties.Name="Remove old installs">
+          <StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;" Margin="0,0,6,0" /><TextBlock Text="Remove old installs" /></StackPanel>
+        </Button>
+        <StackPanel Orientation="Horizontal">
+          <Expander x:Name="SettingsToggle" Header="Settings" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,0,12,0" />
+          <Expander x:Name="DetailsToggle" Header="Details" Foreground="{StaticResource Muted}" FontSize="12" IsExpanded="{Binding DetailsExpanded}" />
         </StackPanel>
-      </Expander>
-      <Button Click="RemoveOldClicked" IsEnabled="{Binding ActionsEnabled}" Padding="8,5" FontSize="10" Background="Transparent" Foreground="{StaticResource Muted}" HorizontalAlignment="Right" AutomationProperties.Name="Remove old installs">
-        <StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;" Margin="0,0,6,0" /><TextBlock Text="Remove old installs" /></StackPanel>
-      </Button>
-      <Expander Header="Details" Foreground="{StaticResource Muted}" Margin="0,6,0,0" IsExpanded="{Binding DetailsExpanded}">
-        <StackPanel>
-          <TextBox Text="{Binding Log, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Height="100" Background="#0C100D" Foreground="{StaticResource Muted}" BorderThickness="0" FontFamily="Consolas" FontSize="10" Padding="10" />
-          <Button Content="Copy log" Click="CopyLogClicked" Background="Transparent" Foreground="{StaticResource Muted}" FontSize="10" Padding="5" HorizontalAlignment="Right" />
-        </StackPanel>
-      </Expander>
+      </DockPanel>
+      <StackPanel Margin="0,6,0,6">
+        <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding IsExpanded, ElementName=SettingsToggle}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+        <CheckBox Content="Check for uLEAPP updates automatically" IsChecked="{Binding AutomaticUpdates}" IsEnabled="{Binding UpdatePreferenceEnabled}" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,0,0,6" />
+        <TextBlock Text="Checks run at startup and once a day. Downloading an update is your choice." FontSize="10" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,6" />
+        <DockPanel>
+          <Button Content="Choose folder" DockPanel.Dock="Right" Click="ChooseFolderClicked" IsEnabled="{Binding ActionsEnabled}" Padding="8,5" FontSize="10" Background="Transparent" Foreground="#8EE563" />
+          <TextBlock Text="{Binding InstallFolder}" TextTrimming="CharacterEllipsis" Foreground="{StaticResource Muted}" FontSize="10" VerticalAlignment="Center" ToolTip="{Binding InstallFolder}" />
+        </DockPanel>
+      </StackPanel>
+      <StackPanel Margin="0,6,0,0">
+        <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding IsExpanded, ElementName=DetailsToggle}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+        <TextBox Text="{Binding Log, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Height="100" Background="#0C100D" Foreground="{StaticResource Muted}" BorderThickness="0" FontFamily="Consolas" FontSize="10" Padding="10" />
+        <Button Content="Copy log" Click="CopyLogClicked" Background="Transparent" Foreground="{StaticResource Muted}" FontSize="10" Padding="5" HorizontalAlignment="Right" />
+      </StackPanel>
     </StackPanel>
     <Grid Grid.Row="5">
       <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>

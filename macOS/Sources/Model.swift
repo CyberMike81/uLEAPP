@@ -186,6 +186,7 @@ final class UpdaterModel: ObservableObject {
     private(set) var logURL: URL?
     var pendingCount: Int { tools.filter { $0.status == "pending" }.count }
     var availableCount: Int { tools.filter { $0.status == "available" }.count }
+    var displayedInstalledCount: Int { tools.filter { !$0.version.isEmpty || $0.existingBundlePath != nil }.count }
     var installedCount: Int { tools.filter { !$0.version.isEmpty }.count }
     var missingCount: Int { tools.filter { $0.version.isEmpty && !$0.manualDownload }.count }
     var allInstalledCurrent: Bool { installedCount > 0 && tools.filter { !$0.version.isEmpty }.allSatisfy { $0.status == "current" } }
@@ -337,7 +338,7 @@ final class UpdaterModel: ObservableObject {
         }
         refreshPresentation()
         for index in tools.indices where !tools[index].version.isEmpty { tools[index].status = "installed" }
-        subtitle = "\(installedCount) of \(tools.count) apps installed. Ready to check for updates."
+        subtitle = "\(displayedInstalledCount) of \(tools.count) apps installed. Ready to check for updates."
         if installedCount == 0 {
             title = "Your first LEAPP starts here"
             subtitle = "Install an app below, or install the missing apps together."
@@ -565,7 +566,7 @@ final class UpdaterModel: ObservableObject {
             subtitle = "Close your LEAPP apps, then choose Update apps."
             lastChecked = Date()
         } else {
-            title = "You're all up to date"
+            title = "Checked apps are up to date"
             subtitle = "Your installed LEAPP apps are ready for the next case."
             lastChecked = Date()
         }
@@ -608,7 +609,7 @@ final class UpdaterModel: ObservableObject {
                 guard let self = self else { return }
                 for index in self.tools.indices where self.activeIDs.contains(self.tools[index].id) && self.tools[index].status == "checking" { self.tools[index].status = "unknown" }
                 self.directCancellation = nil; self.busy = false; self.phase = ""; self.flushLog()
-                self.title = cancellation.isCancelled ? "Stopped safely" : self.failedCount > 0 ? "A few things need attention" : self.availableCount > 0 ? "New Mac releases are available" : "You're all up to date"
+                self.title = cancellation.isCancelled ? "Stopped safely" : self.failedCount > 0 ? "A few things need attention" : self.availableCount > 0 ? "New Mac releases are available" : "Checked apps are up to date"
                 self.subtitle = "Choose Install or Update to use the official Mac download."
                 self.lastChecked = Date()
             }
