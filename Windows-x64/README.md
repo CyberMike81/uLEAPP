@@ -124,7 +124,7 @@ result. GitHub’s unauthenticated limit is shared by source IP (typically 60/ho
 conditional requests are not exempt without authentication. Details show the
 remaining quota and reset timestamp on HTTP 403/429. No GitHub token is stored.
 
-## Companion tools (0.3.11)
+## Companion tools (0.3.12)
 
 GLEAPP Map Downloader can be checked, installed, updated and launched on Mac,
 Windows and Linux, with native x64 and ARM64 packages where published. It downloads
@@ -136,7 +136,12 @@ and installation: the publisher's v1.2.0 app is ad hoc signed, not notarized, an
 reports bundle version 0.0.0. uLEAPP offers the exact official Mac download and
 can launch an existing Applications copy; it does not disable Gatekeeper or claim
 that copy is up to date. No Linux or Intel Mac Batch package is currently published,
-so those platforms do not offer it. Companions use direct downloads, not Homebrew.
+so those platforms do not offer it. All tools use their publishers’ official release downloads.
 
 Managed companion installs retain the current and previous versions and participate
 in **Remove old installs**. Manually installed Batch copies are outside that cleanup.
+
+0.3.12 groups preferences under Settings and logs under Details. Tool status
+pills include versions; hover for check evidence. Row menus reveal installed
+copies and open release notes. All platforms use official publisher releases;
+there is no update-method choice.

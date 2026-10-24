@@ -8,21 +8,13 @@
 		<data>
 		EHqNxmJYed+mD00dQ8aB3cCkZcw=
 		</data>
-		<key>Resources/LEAPP Updater.command</key>
-		<data>
-		Q6uJqCC4riBdDkihtv4QcSakucc=
-		</data>
 		<key>Resources/LICENSE</key>
 		<data>
 		IY/IwVU06IQMv/WAFYLEUMl4aas=
 		</data>
 		<key>Resources/THIRD-PARTY-NOTICES.md</key>
 		<data>
-		ecn09zYvcGG+0PG4wQ60ur/Islk=
-		</data>
-		<key>Resources/askpass.sh</key>
-		<data>
-		IXVaxfzXannuQLvTbhmzFyjK0Kk=
+		jt/VkOLH5gM5S//8/9BI0xH/GP0=
 		</data>
 		<key>Resources/licenses/ALEAPP.txt</key>
 		<data>
@@ -134,13 +126,6 @@
 			YDIiLowOIDB+uZdecuGhEQDhMWpGvwl2lBpy6ht1Ty8=
 			</data>
 		</dict>
-		<key>Resources/LEAPP Updater.command</key>
-		<dict>
-			<key>hash2</key>
-			<data>
-			SLi+vZWXVRzbEb1yoSLJRSXg31ets0TbJzHF4I6S7fg=
-			</data>
-		</dict>
 		<key>Resources/LICENSE</key>
 		<dict>
 			<key>hash2</key>
@@ -152,14 +137,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			KD9wWrGdkEaqYpoPrxDdOJPG0jlDyv/SKz0BWOHlbI0=
-			</data>
-		</dict>
-		<key>Resources/askpass.sh</key>
-		<dict>
-			<key>hash2</key>
-			<data>
-			GZRJwDZ4EA3CSyAFZz31HQa1oDbqrJKii4hDKtjNL9Q=
+			OUU+vuu8+dI3A7UXyO4IZL2cd/2u3QyY8vLP/z6icPg=
 			</data>
 		</dict>
 		<key>Resources/licenses/ALEAPP.txt</key>

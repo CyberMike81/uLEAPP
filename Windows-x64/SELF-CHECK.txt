@@ -1,4 +1,4 @@
-uLEAPP 0.3.11 self-check
+uLEAPP 0.3.12 self-check
 ok - nine supported tools including both companions
 ok - LAVA actual catalog icon is embedded and decodes without an installed app
 ok - ALEAPP actual catalog icon is embedded and decodes without an installed app
@@ -33,6 +33,10 @@ ok - rate-limit errors include remaining quota and reset details instead of stal
 ok - missing apps keep their Install button
 ok - an up-to-date app hides Update and notifies the interface
 ok - an available update restores the Update button
+ok - unchecked installed apps are not presented as current
+ok - current pill includes the selected version and check evidence
+ok - update pill shows installed and available versions
+ok - a failed operation does not reuse an up-to-date label
 ok - newer installed releases are never downgraded
 ok - matching versions are left alone
 ok - an older version can be updated
@@ -182,5 +186,5 @@ ok - cancelled cleanup leaves app folders in place
 ok - untracked folders and forged cleanup paths are preserved
 ok - eligible old app moves to the Windows Recycle Bin
 ok - recycling keeps the current and previous app plus untracked case data
-uLEAPP self-check passed: 183 checks. No installed apps were changed.
+uLEAPP self-check passed: 187 checks. No installed apps were changed.
 
