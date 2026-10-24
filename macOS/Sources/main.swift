@@ -354,7 +354,7 @@ if CommandLine.arguments.contains("--self-test") || CommandLine.arguments.contai
     }
     UpstreamRelease.selfCheck()
     DirectMacInstaller.selfCheck()
-    let model = UpdaterModel()
+    let model = UpdaterModel(directStore: nil)
     model.applyInstalled("lava 0.15.0\nleapps-org/leapps/ileapp-gui 2026.4.4\nopenscad 2021.01\n")
     precondition(model.installedCount == 2)
     precondition(model.tools.first(where: { $0.id == "ileapp-gui" })?.version == "2026.4.4")

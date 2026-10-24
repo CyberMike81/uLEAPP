@@ -9,7 +9,7 @@ Prepared October 24, 2026 for the Community Preview bug-fix release.
 | Windows ARM64 | Fresh build and 150 packaged self-checks on a native Windows 11 ARM GitHub runner | Full manual installer/portable GUI flow on a user computer |
 | Linux x64/ARM64 | 32 core tests; interface and extracted-package smoke checks on Ubuntu 24.04 runners; official GLEAPP archive checksum and layout checked | Actual LEAPP graphical launches on Linux hardware; WSL compatibility |
 
-Windows release builds: https://github.com/CyberMike81/uLEAPP/actions/runs/40123157145
+Windows release builds: https://github.com/CyberMike81/uLEAPP/actions/runs/40125038437
 
 The October 21 bug fixes move Windows installation work off the UI thread,
 throttle progress, add Windows/Linux download cancellation and stalled-transfer
@@ -62,3 +62,8 @@ Windows/Linux manual cleanup validation:
 - Added case data, modified binaries, unknown/linked folders, invalid manifests and forged paths are preserved. Review-time state and contents are rechecked before a move; cancellation keeps remaining folders.
 - Windows native self-checks exercise IFileOperation recycling and verify the selected/current app and previous version remain.
 - Linux tests verify Trash restore metadata and app contents, plus safe preservation on a failed move. GUI smoke checks verify the cleanup button is present and disabled in demo mode.
+
+Mac self-checks now isolate direct-install discovery from real user records, so
+the packaged tests remain deterministic after users install direct copies. Demo
+mode also excludes these records. Normal app discovery continues to select the
+recorded direct app and version.

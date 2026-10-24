@@ -37,11 +37,11 @@ struct LEAPPTool: Identifiable {
     }
     private(set) var existingBundlePath: String?
     private(set) var icon: NSImage?
-    mutating func refreshPresentation() {
+    mutating func refreshPresentation(store: DirectMacStore? = DirectMacStore()) {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
         existingBundlePath = ["/Applications/\(bundle).app", "\(home)/Applications/\(bundle).app"]
             .first { FileManager.default.fileExists(atPath: $0) }
-        if let direct = try? DirectMacStore().current(self) {
+        if let store = store, let direct = try? store.current(self) {
             existingBundlePath = direct.1.path
             version = direct.0.version
         }
@@ -87,6 +87,7 @@ final class UpdaterModel: ObservableObject {
     @Published var activeIDs = Set(LEAPPTool.all.map { $0.id })
     let demo: Bool
     let demoMissing: Bool
+    private let directStore: DirectMacStore?
     private var buffer = Data()
     private var pendingCarriageReturn = false
     private var pendingLog = ""
@@ -108,12 +109,13 @@ final class UpdaterModel: ObservableObject {
     var completedCount: Int { tools.filter { activeIDs.contains($0.id) && ["installed", "current", "available", "pending", "failed", "skipped", "notInstalled", "unmanaged"].contains($0.status) }.count }
     var progress: Double { (Double(completedCount) + (directCancellation == nil ? 0 : directProgress)) / Double(max(1, progressTotal)) }
 
-    init(demo: Bool = false, demoMissing: Bool = false) {
+    init(demo: Bool = false, demoMissing: Bool = false, directStore: DirectMacStore? = DirectMacStore()) {
         self.demo = demo; self.demoMissing = demoMissing
+        self.directStore = demo ? nil : directStore
         refreshPresentation()
     }
     func refreshPresentation() {
-        for index in tools.indices { tools[index].refreshPresentation() }
+        for index in tools.indices { tools[index].refreshPresentation(store: directStore) }
     }
     static func brewPath() -> String? {
         let paths = ["/opt/homebrew/bin/brew", "/usr/local/bin/brew"]
@@ -338,7 +340,7 @@ final class UpdaterModel: ObservableObject {
             if let index = tools.firstIndex(where: { $0.id == fields[2] }) {
                 if fields[1] == "version" {
                     tools[index].version = fields[4]
-                    tools[index].refreshPresentation()
+                    tools[index].refreshPresentation(store: directStore)
                 }
                 if fields[1] == "upstream" { tools[index].upstreamVersion = fields[4] }
                 if fields[1] == "app" {
@@ -518,7 +520,7 @@ final class UpdaterModel: ObservableObject {
                     DispatchQueue.main.async {
                         guard let self = self, let index = self.tools.firstIndex(where: { $0.id == tool.id }) else { return }
                         self.tools[index].version = installed.version
-                        self.tools[index].refreshPresentation()
+                        self.tools[index].refreshPresentation(store: self.directStore)
                         self.tools[index].status = "current"; self.directProgress = 0
                         self.handleLine("\(tool.name) \(installed.version): installed in ~/Applications/uLEAPP. Previous copies preserved.")
                     }
