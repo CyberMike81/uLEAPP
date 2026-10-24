@@ -1,0 +1,25 @@
+{
+  "tag_name": "v1.2.0",
+  "draft": false,
+  "prerelease": false,
+  "assets": [
+    {
+      "name": "batch-leapp-macos-arm64.tar.gz",
+      "browser_download_url": "https://github.com/abrignoni/batch-leapp/releases/download/v1.2.0/batch-leapp-macos-arm64.tar.gz",
+      "digest": "sha256:8409917c4b549b08c56f49ea625556569dfb6433fe404f3f282289f6441dbe09",
+      "size": 9150767
+    },
+    {
+      "name": "Batch-LEAPP-macos-arm64.zip",
+      "browser_download_url": "https://github.com/abrignoni/batch-leapp/releases/download/v1.2.0/Batch-LEAPP-macos-arm64.zip",
+      "digest": "sha256:baba02bd2727448959292ef954955db154e76358e2395335413e665011d0c732",
+      "size": 11873390
+    },
+    {
+      "name": "Batch-LEAPP-windows-x64.zip",
+      "browser_download_url": "https://github.com/abrignoni/batch-leapp/releases/download/v1.2.0/Batch-LEAPP-windows-x64.zip",
+      "digest": "sha256:363e8ed12ff066af9f7f8584e683a1f6c21c25b8c65e0512576182ccca93a931",
+      "size": 23681478
+    }
+  ]
+}

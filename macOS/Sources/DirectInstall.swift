@@ -138,7 +138,7 @@ final class DirectMacInstaller: NSObject, URLSessionDownloadDelegate {
               let assets = json["assets"] as? [[String: Any]] else { throw UpstreamRelease.Failure(message: "No supported stable Mac release was returned.") }
         _ = try UpstreamRelease.parts(tag)
         let version = tag.hasPrefix("v") ? String(tag.dropFirst()) : tag
-        let name = tool.id == "lava" ? "LAVA-\(version)-macOS-\(architecture == "arm64" ? "Apple_Silicon" : "Mac_Intel").dmg" : "\(tool.bundle)-\(version)-macos-\(architecture).dmg"
+        let name = tool.id == "batch-leapp" ? "Batch-LEAPP-macos-\(architecture).zip" : tool.id == "mapdownloader" ? "GLEAPP-MapDownloader-\(tag)-macos-\(architecture).dmg" : tool.id == "lava" ? "LAVA-\(version)-macOS-\(architecture == "arm64" ? "Apple_Silicon" : "Mac_Intel").dmg" : "\(tool.bundle)-\(version)-macos-\(architecture).dmg"
         let matches = assets.filter { $0["name"] as? String == name }
         let expected = "https://github.com/\(repository)/releases/download/\(tag)/\(name)"
         guard matches.count == 1, let asset = matches.first,
@@ -146,7 +146,7 @@ final class DirectMacInstaller: NSObject, URLSessionDownloadDelegate {
               let digest = asset["digest"] as? String,
               digest.range(of: "^sha256:[0-9a-fA-F]{64}$", options: .regularExpression) != nil,
               let size = asset["size"] as? Int64, size > 0, size <= 2 * 1024 * 1024 * 1024,
-              let url = URL(string: expected) else { throw UpstreamRelease.Failure(message: "No unique, checksummed \(architecture) Mac disk image is published for \(tool.name).") }
+              let url = URL(string: expected) else { throw UpstreamRelease.Failure(message: "No unique, checksummed \(architecture) Mac package is published for \(tool.name).") }
         return DirectMacRelease(version: version, name: name, url: url, digest: String(digest.dropFirst(7)).lowercased(), size: size)
     }
     private let ready = DispatchSemaphore(value: 0)
@@ -251,6 +251,7 @@ final class DirectMacInstaller: NSObject, URLSessionDownloadDelegate {
     }
     func install(_ tool: LEAPPTool, store: DirectMacStore = DirectMacStore(), cancellation: DirectMacCancellation, metadata: [String: Any]? = nil,
                  phase: @escaping (String) -> Void, progress: @escaping (Double) -> Void) throws -> DirectMacApp {
+        guard !tool.manualDownload else { throw UpstreamRelease.Failure(message: "This publisher build requires manual installation. Use Download; no security checks were bypassed.") }
         guard !NSWorkspace.shared.runningApplications.contains(where: { $0.bundleURL?.lastPathComponent == tool.bundle + ".app" }) else { throw UpstreamRelease.Failure(message: "Close \(tool.name) before updating it.") }
         try cancellation.check()
         phase("Finding \(tool.name)'s official Mac release")
@@ -322,6 +323,17 @@ final class DirectMacInstaller: NSObject, URLSessionDownloadDelegate {
             let selected = try! select(metadata(arch), tool: tool, architecture: arch)
             precondition(selected.name.contains("-\(arch).dmg"))
             reject { _ = try select(metadata(arch), tool: tool, architecture: arch == "arm64" ? "x64" : "arm64") }
+        }
+        for id in ["mapdownloader", "batch-leapp"] {
+            let companion = LEAPPTool(id: id, name: id, description: "", bundle: id == "mapdownloader" ? "GLEAPP Map Downloader" : "Batch LEAPP")
+            for arch in ["arm64", "x64"] {
+                let name = id == "mapdownloader" ? "GLEAPP-MapDownloader-v0.2.0-macos-\(arch).dmg" : "Batch-LEAPP-macos-arm64.zip"
+                let json: [String: Any] = ["tag_name": "v0.2.0", "draft": false, "prerelease": false,
+                    "assets": [["name": name, "browser_download_url": "https://github.com/\(UpstreamRelease.repositories[id]!)/releases/download/v0.2.0/\(name)", "digest": "sha256:" + String(repeating: "a", count: 64), "size": Int64(4)]]]
+                if id == "batch-leapp" && arch == "x64" { reject { _ = try select(json, tool: companion, architecture: arch) } }
+                else { precondition(try! select(json, tool: companion, architecture: arch).name == name) }
+                if companion.manualDownload { reject { _ = try DirectMacInstaller().install(companion, cancellation: DirectMacCancellation(), metadata: json, phase: { _ in }, progress: { _ in }) } }
+            }
         }
         var duplicate = metadata("arm64"); duplicate["assets"] = (duplicate["assets"] as! [[String: Any]]) + (duplicate["assets"] as! [[String: Any]])
         reject { _ = try select(duplicate, tool: tool, architecture: "arm64") }

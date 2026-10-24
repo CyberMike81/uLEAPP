@@ -6,7 +6,7 @@ uLEAPP gives the LEAPP family one desktop interface for installing missing apps,
 checking versions and updating installed apps. It started as a script to run the
 official Homebrew commands and grew into native Mac and Windows GUI apps.
 
-**Community preview 0.3.8 — available for testing and feedback.** This is a
+**Community preview 0.3.9 — available for testing and feedback.** This is a
 community project; publisher endorsement and inclusion on leapps.org are decisions
 for the LEAPP maintainers. No upstream pull request is required to try these builds.
 
@@ -27,14 +27,14 @@ executables or installers are bundled with uLEAPP.
 
 ## Download and run
 
-Download the matching ZIP from the [0.3.8 preview release](https://github.com/CyberMike81/uLEAPP/releases/tag/v0.3.8),
+Download the matching ZIP from the [0.3.9 preview release](https://github.com/CyberMike81/uLEAPP/releases/tag/v0.3.9),
 extract the complete folder, and open its app. Keep the included license/notices files.
 
 | Platform | Download / repository folder | Requirements |
 | --- | --- | --- |
-| macOS | `uLEAPP-0.3.8-macOS.zip` / `macOS/uLEAPP.app` | macOS 13+; Homebrew installed; universal Apple silicon/Intel build |
-| Windows ARM64 | `uLEAPP-0.3.8-Windows-ARM64.zip` / `Windows-ARM64/uLEAPP.exe` | Windows 11 ARM; .NET runtime included |
-| Windows x64 | `uLEAPP-0.3.8-Windows-x64.zip` / `Windows-x64/uLEAPP.exe` | Intel/AMD Windows; .NET runtime included |
+| macOS | `uLEAPP-0.3.9-macOS.zip` / `macOS/uLEAPP.app` | macOS 13+; Homebrew installed; universal Apple silicon/Intel build |
+| Windows ARM64 | `uLEAPP-0.3.9-Windows-ARM64.zip` / `Windows-ARM64/uLEAPP.exe` | Windows 11 ARM; .NET runtime included |
+| Windows x64 | `uLEAPP-0.3.9-Windows-x64.zip` / `Windows-x64/uLEAPP.exe` | Intel/AMD Windows; .NET runtime included |
 
 Close LEAPP tools before updating. Mac can adopt matching manually installed apps
 into Homebrew without forcing replacement. Windows setup-installed tools keep
@@ -55,7 +55,7 @@ logs and build instructions.
 A Linux desktop preview is available in [`Linux/`](Linux/README.md), with Install,
 Update and Launch controls. It uses Python 3.10+ and Tk and manages official Linux
 packages in your user folder. GLEAPP is currently x64-only on Linux.
-Download `uLEAPP-0.3.8-Linux.tar.gz` from the [Community Preview release](https://github.com/CyberMike81/uLEAPP/releases/tag/v0.3.8). Requires Python 3.10+ and Tk.
+Download `uLEAPP-0.3.9-Linux.tar.gz` from the [Community Preview release](https://github.com/CyberMike81/uLEAPP/releases/tag/v0.3.9). Requires Python 3.10+ and Tk.
 
 ## Screenshots
 
@@ -119,3 +119,20 @@ available** preference selects Homebrew management when installed; turn it off
 (or launch with `--no-homebrew`) to check and install directly. Existing app
 copies are preserved. App Management permission errors offer an explanation
 and an Open Settings button. Publisher/Gatekeeper checks are not bypassed.
+
+## Companion tools (0.3.9)
+
+GLEAPP Map Downloader can be checked, installed, updated and launched on Mac,
+Windows and Linux, with native x64 and ARM64 packages where published. It downloads
+map data when you use it; GLEAPP itself remains offline.
+
+Batch LEAPP is supported on Windows x64 (including Windows ARM through x64
+emulation). Its current Mac GUI is Apple silicon only and requires manual download
+and installation: the publisher's v1.2.0 app is ad hoc signed, not notarized, and
+reports bundle version 0.0.0. uLEAPP offers the exact official Mac download and
+can launch an existing Applications copy; it does not disable Gatekeeper or claim
+that copy is up to date. No Linux or Intel Mac Batch package is currently published,
+so those platforms do not offer it. Companions use direct downloads, not Homebrew.
+
+Managed companion installs retain the current and previous versions and participate
+in **Remove old installs**. Manually installed Batch copies are outside that cleanup.

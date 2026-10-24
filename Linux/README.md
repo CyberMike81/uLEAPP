@@ -1,6 +1,6 @@
-# uLEAPP for Linux · 0.3.8 preview
+# uLEAPP for Linux · 0.3.9 preview
 
-Install, update and launch the seven LEAPP apps from their official GitHub releases.
+Install, update and launch LEAPP apps and Map Downloader from their official GitHub releases.
 This Linux preview uses Python 3.10+ and Tk; no Python packages from pip are needed.
 It installs apps for your user without sudo. It does not adopt existing installations.
 
@@ -78,3 +78,20 @@ confirms it with HTTP 304. Network failures never become a cached “up to date�
 result. GitHub’s unauthenticated limit is shared by source IP (typically 60/hour);
 conditional requests are not exempt without authentication. Details show the
 remaining quota and reset timestamp on HTTP 403/429. No GitHub token is stored.
+
+## Companion tools (0.3.9)
+
+GLEAPP Map Downloader can be checked, installed, updated and launched on Mac,
+Windows and Linux, with native x64 and ARM64 packages where published. It downloads
+map data when you use it; GLEAPP itself remains offline.
+
+Batch LEAPP is supported on Windows x64 (including Windows ARM through x64
+emulation). Its current Mac GUI is Apple silicon only and requires manual download
+and installation: the publisher's v1.2.0 app is ad hoc signed, not notarized, and
+reports bundle version 0.0.0. uLEAPP offers the exact official Mac download and
+can launch an existing Applications copy; it does not disable Gatekeeper or claim
+that copy is up to date. No Linux or Intel Mac Batch package is currently published,
+so those platforms do not offer it. Companions use direct downloads, not Homebrew.
+
+Managed companion installs retain the current and previous versions and participate
+in **Remove old installs**. Manually installed Batch copies are outside that cleanup.

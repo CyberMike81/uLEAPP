@@ -71,21 +71,23 @@ struct ToolRow: View {
                 Text(tool.statusLabel).font(.system(size: 10, weight: .medium))
             }.foregroundStyle(stateColor).padding(.horizontal, 8).padding(.vertical, 5)
                 .background(stateColor.opacity(0.09)).clipShape(Capsule())
-            if !tool.directVersion.isEmpty && usesHomebrew {
+            if !tool.directVersion.isEmpty && usesHomebrew && !tool.directOnly {
                 Button("Return to Homebrew") { returnHomebrew() }.controlSize(.small).font(.system(size: 11))
                     .disabled(actionsDisabled).help("Switch only after Homebrew catches up; direct copies are retained")
             }
-            if tool.status == "pending" || (!usesHomebrew && tool.status == "available" && !tool.version.isEmpty) {
+            if tool.status == "pending" || ((!usesHomebrew || tool.directOnly) && !tool.manualDownload && tool.status == "available" && !tool.version.isEmpty) {
                 Button("Update") { directUpdate() }.controlSize(.small).tint(Palette.green).disabled(actionsDisabled)
             }
             if tool.existingBundlePath != nil {
                 Button("Launch") { launch() }.controlSize(.small).tint(Palette.green).disabled(launchDisabled)
                     .help("Open \(tool.name)").accessibilityLabel("Launch \(tool.name)")
             }
-            if tool.version.isEmpty {
-                Button(tool.existingBundlePath == nil || !usesHomebrew ? "Install" : "Add") { install() }
+            if tool.manualDownload {
+                Button("Download") { install() }.controlSize(.small).disabled(actionsDisabled)
+            } else if tool.version.isEmpty {
+                Button(tool.existingBundlePath == nil || !usesHomebrew || tool.directOnly ? "Install" : "Add") { install() }
                     .controlSize(.small).tint(Palette.green).disabled(actionsDisabled)
-                    .help(usesHomebrew ? "Install or register through Homebrew" : "Download and install the official Mac build")
+                    .help(usesHomebrew && !tool.directOnly ? "Install or register through Homebrew" : "Download and install the official Mac build")
             }
         }.padding(.horizontal, 12).padding(.vertical, 7).accessibilityElement(children: .contain)
     }
@@ -105,7 +107,7 @@ struct UpdaterView: View {
                     Text("One place. Every LEAPP up to date.").font(.system(size: 12)).foregroundStyle(Palette.muted)
                 }
                 Spacer()
-                Text(model.demo ? "DEMO · 0.3.8" : "FOR macOS · 0.3.8")
+                Text(model.demo ? "DEMO · 0.3.9" : "FOR macOS · 0.3.9")
                     .font(.system(size: 10, weight: .semibold)).tracking(1.2)
                     .foregroundStyle(Palette.green).padding(.horizontal, 11).padding(.vertical, 7)
                     .overlay(Capsule().stroke(Palette.green.opacity(0.25)))
@@ -157,7 +159,7 @@ struct UpdaterView: View {
                                 actionsDisabled: model.busy || model.loading,
                                 launchDisabled: model.busy || model.loading,
                                 launch: { model.launch(tool) },
-                                install: { model.start(.install, cask: tool.id) },
+                                install: { if tool.manualDownload { model.downloadCompanion(tool) } else { model.start(.install, cask: tool.id) } },
                                 directUpdate: { model.updateDirect([tool]) },
                                 returnHomebrew: { model.start(.returnHomebrew, cask: tool.id) },
                                 usesHomebrew: model.usesHomebrew)
@@ -267,7 +269,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             credits.addAttribute(.link, value: notices, range: (text as NSString).range(of: "License notices"))
         }
         NSApp.orderFrontStandardAboutPanel(options: [
-            .applicationName: "uLEAPP", .applicationVersion: "0.3.8", .credits: credits
+            .applicationName: "uLEAPP", .applicationVersion: "0.3.9", .credits: credits
         ])
     }
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -338,7 +340,7 @@ if CommandLine.arguments.contains("--direct-tool-version") {
 }
 if CommandLine.arguments.contains("--check-tool-release") { exit(UpstreamRelease.run(CommandLine.arguments)) }
 if CommandLine.arguments.contains("--askpass") { runAskpass() }
-if CommandLine.arguments.contains("--version") { print("uLEAPP 0.3.8"); exit(0) }
+if CommandLine.arguments.contains("--version") { print("uLEAPP 0.3.9"); exit(0) }
 if CommandLine.arguments.contains("--help") {
     print("uLEAPP for Mac\n--no-homebrew  Use direct Mac downloads for this run\n--no-update-check Disable automatic update requests for this run\n--version     Report the app version\n--selfcheck   Check the packaged app without changing installed tools\n--demo        Preview the interface with simulated updates")
     exit(0)
@@ -369,7 +371,7 @@ if CommandLine.arguments.contains("--self-test") || CommandLine.arguments.contai
     let directOnly = UpdaterModel(directStore: nil, brewResolver: { nil }, fetchRelease: { cask in
         let tool = LEAPPTool.all.first { $0.id == cask }!
         let arch = DirectMacInstaller.architecture
-        let name = cask == "lava" ? "LAVA-1.2.3-macOS-\(arch == "arm64" ? "Apple_Silicon" : "Mac_Intel").dmg" : "\(tool.bundle)-1.2.3-macos-\(arch).dmg"
+        let name = cask == "batch-leapp" ? "Batch-LEAPP-macos-\(arch).zip" : cask == "mapdownloader" ? "GLEAPP-MapDownloader-v1.2.3-macos-\(arch).dmg" : cask == "lava" ? "LAVA-1.2.3-macOS-\(arch == "arm64" ? "Apple_Silicon" : "Mac_Intel").dmg" : "\(tool.bundle)-1.2.3-macos-\(arch).dmg"
         return ["tag_name": "v1.2.3", "draft": false, "prerelease": false,
                 "assets": [["name": name, "browser_download_url": "https://github.com/\(UpstreamRelease.repositories[cask]!)/releases/download/v1.2.3/\(name)", "size": Int64(4), "digest": "sha256:" + String(repeating: "a", count: 64)]]]
     })
@@ -378,7 +380,7 @@ if CommandLine.arguments.contains("--self-test") || CommandLine.arguments.contai
     directOnly.start(.check)
     let deadline = Date().addingTimeInterval(10)
     while directOnly.busy && Date() < deadline { _ = RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.02)) }
-    precondition(!directOnly.busy && directOnly.availableCount == 7 && directOnly.failedCount == 0, "Homebrew-free checks must cover all tools")
+    precondition(!directOnly.busy && directOnly.tools.filter { $0.status == "available" || $0.status == "download" }.count == LEAPPTool.all.count && directOnly.failedCount == 0, "Homebrew-free checks must cover all tools")
     let model = UpdaterModel(directStore: nil)
     model.applyInstalled("lava 0.15.0\nleapps-org/leapps/ileapp-gui 2026.4.4\nopenscad 2021.01\n")
     precondition(model.installedCount == 2)

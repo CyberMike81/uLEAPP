@@ -1,0 +1,4 @@
+Batch LEAPP is downloaded on demand from https://github.com/abrignoni/batch-leapp.
+Its program is not redistributed with uLEAPP. No standalone license file is
+published in the v1.2.0 source tree; consult the publisher for its terms.
+uLEAPP uses its own generic batch icon, not the publisher artwork.

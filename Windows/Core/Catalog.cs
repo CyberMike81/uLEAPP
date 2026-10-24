@@ -5,7 +5,10 @@ using System.Runtime.InteropServices;
 
 namespace uLEAPP;
 
-public sealed record Tool(string Id, string Name, string Description, string Repository, bool InstallerOnly = false);
+public sealed record Tool(string Id, string Name, string Description, string Repository, bool InstallerOnly = false, string? PackageName = null)
+{
+    public string AssetName => PackageName ?? Name;
+}
 
 public static class Catalog
 {
@@ -16,10 +19,12 @@ public static class Catalog
         new("rleapp", "RLEAPP", "Provider returns", "abrignoni/RLEAPP"),
         new("vleapp", "VLEAPP", "Vehicle artifacts", "abrignoni/VLEAPP"),
         new("dleapp", "DLEAPP", "Desktop artifacts", "abrignoni/DLEAPP"),
-        new("gleapp", "GLEAPP", "Image & video triage", "abrignoni/GLEAPP")
+        new("gleapp", "GLEAPP", "Image & video triage", "abrignoni/GLEAPP"),
+        new("batch-leapp", "Batch LEAPP", "Run LEAPPs across multiple extractions", "abrignoni/batch-leapp", PackageName: "Batch-LEAPP"),
+        new("mapdownloader", "Map Downloader", "Download offline maps for GLEAPP", "abrignoni/GLEAPP-MapDownloader", PackageName: "GLEAPP-MapDownloader")
     ];
     public static string Architecture => RuntimeInformation.OSArchitecture == System.Runtime.InteropServices.Architecture.Arm64 ? "arm64" : "x64";
-    public static string Version => "0.3.8";
+    public static string Version => "0.3.9";
 }
 
 public sealed class ToolRow(Tool tool) : INotifyPropertyChanged

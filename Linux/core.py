@@ -20,7 +20,7 @@ from launch_errors import Launch
 from urllib.parse import quote, urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
-VERSION = '0.3.8'
+VERSION = '0.3.9'
 MAX_BYTES = 2 * 1024**3
 
 @dataclass(frozen=True)
@@ -28,10 +28,12 @@ class Tool:
     id: str
     name: str
     repo: str
+    package_name: str = ''
+    executable: str = ''
 
 TOOLS = (Tool('lava', 'LAVA', 'leapps-org/LAVA-releases'),) + tuple(
     Tool(name.lower(), name, 'abrignoni/' + name)
-    for name in ('ALEAPP', 'iLEAPP', 'RLEAPP', 'VLEAPP', 'DLEAPP', 'GLEAPP'))
+    for name in ('ALEAPP', 'iLEAPP', 'RLEAPP', 'VLEAPP', 'DLEAPP', 'GLEAPP')) + (Tool('mapdownloader', 'Map Downloader', 'abrignoni/GLEAPP-MapDownloader', 'GLEAPP-MapDownloader', 'GLEAPP-MapDownloader'),)
 
 
 def architecture():
@@ -70,7 +72,7 @@ def select_release(tool, data, arch):
     if not re.fullmatch(r'v?\d+(?:\.\d+){1,3}', tag) or data.get('draft') or data.get('prerelease'):
         raise ValueError('Only stable numeric releases are supported.')
     if arch not in ('x64', 'arm64'): raise ValueError('Unsupported architecture.')
-    pattern = re.compile(re.escape(tool.name) + r'-' + re.escape(tag.lstrip('v')) +
+    pattern = re.compile(re.escape(tool.package_name or tool.name) + r'-' + (r'v' if tool.id == 'mapdownloader' else '') + re.escape(tag.lstrip('v')) +
                          r'-linux[-_]' + arch + r'\.(?:AppImage|tar\.gz)', re.I)
     matches = [a for a in data['assets'] if pattern.fullmatch(a['name'])]
     if len(matches) != 1:
@@ -253,7 +255,7 @@ class Store:
             else:
                 extract_archive(package, payload, cancel)
                 matches = [p for p in payload.rglob('*') if p.is_file() and
-                           p.name.lower() == tool.id and os.access(p, os.X_OK)]
+                           p.name.lower() == (tool.executable or tool.id).lower() and os.access(p, os.X_OK)]
                 if len(matches) != 1: raise ValueError('Archive has no unique recognized executable.')
                 executable = matches[0]
             relative = executable.relative_to(payload)

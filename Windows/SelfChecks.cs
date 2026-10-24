@@ -24,7 +24,7 @@ public static class SelfChecks
     public static async Task RunAsync(string? fixtures = null)
     {
         Console.WriteLine("uLEAPP " + Catalog.Version + " self-check");
-        Check(Catalog.All.Length == 7 && Catalog.All.Select(t => t.Id).Distinct().Count() == 7, "seven supported tools; no extra applications");
+        Check(Catalog.All.Length == 9 && Catalog.All.Select(t => t.Id).Distinct().Count() == 9, "nine supported tools including both companions");
         foreach (var tool in Catalog.All)
         {
             var icon = ToolIcons.Load(tool.Id);
@@ -64,7 +64,7 @@ public static class SelfChecks
         Check(Directory.GetFiles(Path.Combine(AppContext.BaseDirectory,"runtime-notices"), "*", SearchOption.AllDirectories).Length >= 4, "exact runtime licenses and third-party notices are present");
         if (fixtures != null)
         {
-            foreach (var tool in Catalog.All)
+            foreach (var tool in Catalog.All.Where(t => t.Id is not ("batch-leapp" or "mapdownloader")))
             {
                 using var releaseFixture = JsonDocument.Parse(File.ReadAllText(Path.Combine(fixtures,tool.Id + ".json")));
                 foreach (string architecture in new[] { "arm64", "x64" })
@@ -82,6 +82,19 @@ public static class SelfChecks
                     }
                 }
             }
+        }
+
+        if (fixtures != null) {
+        foreach (var id in new[] { "batch-leapp", "mapdownloader" })
+        {
+            var companion = Catalog.All.Single(t => t.Id == id);
+            using var fixture = JsonDocument.Parse(File.ReadAllText(Path.Combine(fixtures!, id + ".json")));
+            foreach (var arch in new[] { "x64", "arm64" }) {
+                var release = ReleaseClient.Select(companion, fixture.RootElement, arch);
+                Check(!release.Asset.IsInstaller && release.Asset.Architecture == (id == "batch-leapp" ? "x64" : arch), id + " selects official portable GUI package on " + arch);
+                Check(!ReleaseClient.Select(companion, fixture.RootElement, arch, true).Asset.IsInstaller, id + " stays portable for registered discovery");
+            }
+        }
         }
 
         foreach (string arch in new[] { "x64", "arm64" })
@@ -162,6 +175,12 @@ public static class SelfChecks
             }
             string duplicates = Path.Combine(scratch,"duplicate.zip"); MakeZip(duplicates,["Tool.exe","tool.EXE"]);
             Reject(() => PortablePackage.Extract(duplicates,Path.Combine(scratch,"duplicates")),"case-insensitive duplicate files are refused");
+            string companionFolder = Path.Combine(scratch,"companion"); Directory.CreateDirectory(companionFolder);
+            File.WriteAllText(Path.Combine(companionFolder,"batch-leapp.exe"),"cli");
+            File.WriteAllText(Path.Combine(companionFolder,"Batch LEAPP.exe"),"gui");
+            Check(Path.GetFileName(PortablePackage.FindExecutable(companionFolder,Catalog.All.Single(t => t.Id == "batch-leapp"))) == "Batch LEAPP.exe","Batch chooses GUI instead of adjacent CLI");
+            File.WriteAllText(Path.Combine(companionFolder,"GLEAPP-MapDownloader.exe"),"map");
+            Check(PortablePackage.FindExecutable(companionFolder,Catalog.All.Single(t => t.Id == "mapdownloader"))?.EndsWith("GLEAPP-MapDownloader.exe") == true,"Map Downloader executable is discovered");
             string valid = Path.Combine(scratch,"valid.zip"); MakeZip(valid,[@"vleapp.exe",@"_internal\support.dll","LICENSE.txt","THIRD-PARTY-NOTICES.txt"]);
             string app = Path.Combine(scratch,"app"); PortablePackage.Extract(valid,app);
             Check(File.Exists(Path.Combine(app,"_internal","support.dll")),"Windows archive separators and support files are preserved");

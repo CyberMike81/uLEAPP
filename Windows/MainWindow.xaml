@@ -61,10 +61,10 @@
       <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <ItemsControl ItemsSource="{Binding Rows}" IsEnabled="{Binding ActionsEnabled}">
           <ItemsControl.ItemTemplate><DataTemplate>
-            <Border BorderBrush="#303C32" BorderThickness="0,0,0,1" Padding="12,8">
+            <Border BorderBrush="#303C32" BorderThickness="0,0,0,1" Padding="12,6">
               <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                <Image Source="{Binding Icon}" Width="34" Height="34" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                <Image Source="{Binding Icon}" Width="30" Height="30" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" VerticalAlignment="Center" HorizontalAlignment="Left" />
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="7,0,10,0">
                   <StackPanel Orientation="Horizontal"><TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" /><TextBlock Text="{Binding Version}" Foreground="{StaticResource Muted}" FontSize="11" Margin="9,3,0,0" /></StackPanel>
                   <TextBlock Text="{Binding Detail}" FontSize="10" Foreground="{StaticResource Muted}" TextTrimming="CharacterEllipsis" Margin="0,3,0,0" ToolTip="{Binding Description}" />

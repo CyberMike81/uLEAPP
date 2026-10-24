@@ -35,14 +35,15 @@ public sealed class ReleaseClient : IDisposable
         if (json.TryGetProperty("draft", out var draft) && draft.GetBoolean() ||
             json.TryGetProperty("prerelease", out var preview) && preview.GetBoolean())
             throw new InvalidDataException("Only stable public releases are supported.");
-        string wanted = tool.InstallerOnly || installerManaged ? "setup.exe" : "portable.zip";
+        bool companion = tool.Id is "batch-leapp" or "mapdownloader";
+        string wanted = companion ? ".zip" : tool.InstallerOnly || installerManaged ? "setup.exe" : "portable.zip";
         JsonElement[] assets = json.GetProperty("assets").EnumerateArray().ToArray();
         JsonElement? Find(string arch, string kind)
         {
             var matches = assets.Where(a =>
             {
                 string name = a.GetProperty("name").GetString() ?? "";
-                return name.StartsWith(tool.Name + "-", StringComparison.OrdinalIgnoreCase) &&
+                return name.StartsWith(tool.AssetName + "-", StringComparison.OrdinalIgnoreCase) &&
                        name.Contains("Windows", StringComparison.OrdinalIgnoreCase) &&
                        name.Contains(arch, StringComparison.OrdinalIgnoreCase) &&
                        name.EndsWith(kind, StringComparison.OrdinalIgnoreCase);
@@ -58,7 +59,7 @@ public sealed class ReleaseClient : IDisposable
         JsonElement? FindCompatible(string kind)
         {
             var candidate = Find(actualArchitecture, kind);
-            if (candidate == null && architecture == "arm64" && tool.Id == "gleapp")
+            if (candidate == null && architecture == "arm64" && (tool.Id == "gleapp" || tool.Id == "batch-leapp"))
             {
                 candidate = Find("x64", kind);
                 if (candidate != null) actualArchitecture = "x64";

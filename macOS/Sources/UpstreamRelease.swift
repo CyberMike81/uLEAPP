@@ -8,7 +8,8 @@ enum UpstreamRelease {
         "lava": "leapps-org/LAVA-releases", "aleapp-gui": "abrignoni/ALEAPP",
         "ileapp-gui": "abrignoni/iLEAPP", "rleapp-gui": "abrignoni/RLEAPP",
         "vleapp-gui": "abrignoni/VLEAPP", "dleapp-gui": "abrignoni/DLEAPP",
-        "gleapp": "abrignoni/GLEAPP"
+        "gleapp": "abrignoni/GLEAPP", "batch-leapp": "abrignoni/batch-leapp",
+        "mapdownloader": "abrignoni/GLEAPP-MapDownloader"
     ]
     struct Failure: LocalizedError {
         let message: String

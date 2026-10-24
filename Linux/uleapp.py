@@ -213,7 +213,7 @@ def main():
             if record: records[tool.id] = record
             status = record['version'] + ' · Installed' if record else 'Not installed'
         except Exception as error: status = 'Needs attention: ' + str(error)
-        ttk.Label(rows, text=tool.name, font=('Sans', 13, 'bold')).grid(row=index, column=0, sticky='w', pady=7)
+        ttk.Label(rows, text=tool.name, font=('Sans', 13, 'bold')).grid(row=index, column=0, sticky='w', pady=5)
         row_status[tool.id] = tk.StringVar(value=status)
         ttk.Label(rows, textvariable=row_status[tool.id], wraplength=380).grid(row=index, column=1, padx=12)
         launches[tool.id] = ttk.Button(rows, text='Launch', command=lambda t=tool: launch(t))
@@ -301,7 +301,7 @@ def main():
     refresh_buttons()
     root.after(100, poll)
     if args.smoke_test:
-        assert len(actions) == 7 and len(launches) == 7
+        assert len(actions) == len(TOOLS) and len(launches) == len(TOOLS)
         assert cleanup.cget('text') == 'Remove old installs'
         if args.demo: assert cleanup.instate(['disabled'])
         root.update_idletasks()

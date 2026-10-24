@@ -20,8 +20,29 @@ def metadata(tool=TOOLS[1], arch='x64', suffix='AppImage'):
 
 
 class CoreTests(unittest.TestCase):
+    def test_map_downloader_release_and_install(self):
+        tool = next(t for t in TOOLS if t.id == 'mapdownloader')
+        data = json.loads((Path(__file__).parent / 'mapdownloader.json').read_text())
+        self.assertNotIn('batch-leapp', [t.id for t in TOOLS])
+        for arch in ('x64', 'arm64'):
+            release = select_release(tool, data, arch)
+            self.assertEqual(release.version, '0.2.0')
+            self.assertTrue(release.name.endswith('-linux-' + arch + '.tar.gz'))
+        bad = json.loads(json.dumps(data)); bad['assets'] *= 2
+        with self.assertRaises(ValueError): select_release(tool, bad, 'x64')
+        with tempfile.TemporaryDirectory() as temp:
+            def fetch(_release, destination, _progress):
+                with tarfile.open(destination, 'w:gz') as tar:
+                    info = tarfile.TarInfo('Map/GLEAPP-MapDownloader'); info.mode = 0o755; info.size = 4
+                    tar.addfile(info, io.BytesIO(b'test'))
+            store = Store(Path(temp).resolve())
+            with patch('core.download', side_effect=fetch):
+                record = store.install(tool, Release('0.2.0', 'map.tar.gz', '', '', 1))
+            self.assertEqual(record['path'], '0.2.0/Map/GLEAPP-MapDownloader')
+            self.assertEqual(store.installed(tool), record)
+
     def test_all_appimage_catalog_entries_and_architectures(self):
-        for tool in TOOLS[:-1]:
+        for tool in TOOLS[:6]:
             for arch in ('x64', 'arm64'):
                 data = metadata(tool, arch)
                 if tool.id == 'lava':
@@ -31,7 +52,7 @@ class CoreTests(unittest.TestCase):
                 self.assertEqual(select_release(tool, data, arch).version, '1.2.3')
 
     def test_gleapp_native_only(self):
-        tool = TOOLS[-1]
+        tool = next(t for t in TOOLS if t.id == "gleapp")
         self.assertTrue(select_release(tool, metadata(tool, suffix='tar.gz'), 'x64').name.endswith('.tar.gz'))
         with self.assertRaises(ValueError): select_release(tool, metadata(tool, suffix='tar.gz'), 'arm64')
 
@@ -181,7 +202,7 @@ class CoreTests(unittest.TestCase):
                     tar.addfile(info, io.BytesIO(b'test'))
             store = Store(Path(temp).resolve())
             with patch('core.download', side_effect=fetch):
-                record = store.install(TOOLS[-1], Release('1.2.3','test.tar.gz','','',1))
+                record = store.install(next(t for t in TOOLS if t.id == 'gleapp'), Release('1.2.3','test.tar.gz','','',1))
             self.assertEqual(record['path'], '1.2.3/GLEAPP/GLEAPP')
 
     def test_store_rejects_symlink_root_and_escaped_record(self):

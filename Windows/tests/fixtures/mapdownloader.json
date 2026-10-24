@@ -1,0 +1,55 @@
+{
+  "tag_name": "v0.2.0",
+  "draft": false,
+  "prerelease": false,
+  "assets": [
+    {
+      "name": "GLEAPP-MapDownloader-v0.2.0-linux-arm64.tar.gz",
+      "browser_download_url": "https://github.com/abrignoni/GLEAPP-MapDownloader/releases/download/v0.2.0/GLEAPP-MapDownloader-v0.2.0-linux-arm64.tar.gz",
+      "digest": "sha256:37e0ff49a6b216466255fca018fccfbe1b678712182a612c28552f26cd859aef",
+      "size": 29386421
+    },
+    {
+      "name": "GLEAPP-MapDownloader-v0.2.0-linux-x64.tar.gz",
+      "browser_download_url": "https://github.com/abrignoni/GLEAPP-MapDownloader/releases/download/v0.2.0/GLEAPP-MapDownloader-v0.2.0-linux-x64.tar.gz",
+      "digest": "sha256:4753972f2f9ca933184ddee30cbc15c4bbcc8a8062d6a673e7fd0216d3459062",
+      "size": 30437687
+    },
+    {
+      "name": "GLEAPP-MapDownloader-v0.2.0-macos-arm64.dmg",
+      "browser_download_url": "https://github.com/abrignoni/GLEAPP-MapDownloader/releases/download/v0.2.0/GLEAPP-MapDownloader-v0.2.0-macos-arm64.dmg",
+      "digest": "sha256:147c707a4a5982aa3ef67c5fa4e613f792f9412ac074c0d258e9d6cda477ce61",
+      "size": 14202629
+    },
+    {
+      "name": "GLEAPP-MapDownloader-v0.2.0-macos-x64.dmg",
+      "browser_download_url": "https://github.com/abrignoni/GLEAPP-MapDownloader/releases/download/v0.2.0/GLEAPP-MapDownloader-v0.2.0-macos-x64.dmg",
+      "digest": "sha256:92b4dcace4259df173b12882309e74c78632d640e1ced0d76bef830f16fb3d69",
+      "size": 14605060
+    },
+    {
+      "name": "GLEAPP-MapDownloader-v0.2.0-windows-arm64.zip",
+      "browser_download_url": "https://github.com/abrignoni/GLEAPP-MapDownloader/releases/download/v0.2.0/GLEAPP-MapDownloader-v0.2.0-windows-arm64.zip",
+      "digest": "sha256:dc78eaedfe25461f800049885d5513873de1cf58039fc58051ed23932cd83d8a",
+      "size": 13387008
+    },
+    {
+      "name": "GLEAPP-MapDownloader-v0.2.0-windows-x64.zip",
+      "browser_download_url": "https://github.com/abrignoni/GLEAPP-MapDownloader/releases/download/v0.2.0/GLEAPP-MapDownloader-v0.2.0-windows-x64.zip",
+      "digest": "sha256:45d5481941f2312e4b1d44c4c9b26ec912d0572cd8504764ae8dc9977d99bc67",
+      "size": 13838326
+    },
+    {
+      "name": "mapdownloader.py",
+      "browser_download_url": "https://github.com/abrignoni/GLEAPP-MapDownloader/releases/download/v0.2.0/mapdownloader.py",
+      "digest": "sha256:e2a5b551d107073f6371bc78e3eb83d7773b2492235f350082f5d567afe0af6e",
+      "size": 51733
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "browser_download_url": "https://github.com/abrignoni/GLEAPP-MapDownloader/releases/download/v0.2.0/SHA256SUMS.txt",
+      "digest": "sha256:c4497aac8afb2639276a7fca22a2e8446603f6a6f850196f2c5b272a93b7d296",
+      "size": 747
+    }
+  ]
+}

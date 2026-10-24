@@ -6,6 +6,8 @@ struct LEAPPTool: Identifiable {
     let name: String
     let description: String
     let bundle: String
+    var directOnly: Bool { id == "batch-leapp" || id == "mapdownloader" }
+    var manualDownload: Bool { id == "batch-leapp" }
     var homebrewVersion = ""
     var applicationVersion = ""
     var directVersion = ""
@@ -19,10 +21,12 @@ struct LEAPPTool: Identifiable {
         .init(id: "rleapp-gui", name: "RLEAPP", description: "Provider returns", bundle: "RLEAPP"),
         .init(id: "vleapp-gui", name: "VLEAPP", description: "Vehicle artifacts", bundle: "VLEAPP"),
         .init(id: "dleapp-gui", name: "DLEAPP", description: "Desktop artifacts", bundle: "DLEAPP"),
-        .init(id: "gleapp", name: "GLEAPP", description: "Image & video triage", bundle: "GLEAPP")
-    ]
+        .init(id: "gleapp", name: "GLEAPP", description: "Image & video triage", bundle: "GLEAPP"),
+        .init(id: "mapdownloader", name: "Map Downloader", description: "Offline maps for GLEAPP", bundle: "GLEAPP Map Downloader")
+    ] + (DirectMacInstaller.architecture == "arm64" ? [.init(id: "batch-leapp", name: "Batch LEAPP", description: "Manual download · Apple silicon · publisher build is not notarized", bundle: "Batch LEAPP")] : [])
     var statusLabel: String {
         switch status {
+        case "download": return "Manual download"
         case "installed": return "Installed"
         case "notInstalled": return "Not installed"
         case "unmanaged": return "Installed manually"
@@ -50,7 +54,7 @@ struct LEAPPTool: Identifiable {
            let info = (try? PropertyListSerialization.propertyList(from: data, format: nil)) as? [String: Any],
            let found = info["CFBundleShortVersionString"] as? String {
             applicationVersion = found
-            if discoverManual && version.isEmpty { version = found }
+            if (discoverManual || directOnly) && version.isEmpty && !(manualDownload && found == "0.0.0") { version = found }
         }
         directVersion = ""
         if let store = store, let direct = try? store.current(self) {
@@ -141,7 +145,7 @@ final class UpdaterModel: ObservableObject {
     var allInstalledCurrent: Bool { installedCount > 0 && tools.filter { !$0.version.isEmpty }.allSatisfy { $0.status == "current" } }
     var failedCount: Int { tools.filter { $0.status == "failed" }.count }
     var progressTotal: Int { activeIDs.count }
-    var completedCount: Int { tools.filter { activeIDs.contains($0.id) && ["installed", "current", "available", "pending", "failed", "skipped", "notInstalled", "unmanaged"].contains($0.status) }.count }
+    var completedCount: Int { tools.filter { activeIDs.contains($0.id) && ["installed", "current", "available", "download", "pending", "failed", "skipped", "notInstalled", "unmanaged"].contains($0.status) }.count }
     var progress: Double { (Double(completedCount) + (directCancellation == nil ? 0 : directProgress)) / Double(max(1, progressTotal)) }
 
     init(demo: Bool = false, demoMissing: Bool = false, directStore: DirectMacStore? = DirectMacStore(), brewResolver: @escaping () -> String? = UpdaterModel.brewPath, fetchRelease: @escaping (String) throws -> [String: Any] = UpstreamRelease.fetch) {
@@ -287,12 +291,13 @@ final class UpdaterModel: ObservableObject {
         }
         refreshPresentation()
         for index in tools.indices where !tools[index].version.isEmpty { tools[index].status = "installed" }
-        subtitle = "\(installedCount) of 7 apps installed. Ready to check for updates."
+        subtitle = "\(installedCount) of \(tools.count) apps installed. Ready to check for updates."
         if installedCount == 0 {
             title = "Your first LEAPP starts here"
             subtitle = "Install an app below, or install the missing apps together."
         }
     }
+    private var queuedCompanions: [LEAPPTool] = []
     func start(_ mode: UpdateMode, cask: String? = nil) {
         guard !busy, !loading else { return }
         if mode == .install && !demo && tools.contains(where: { $0.id == "lava" && $0.version.isEmpty && (cask == nil || cask == "lava") }) {
@@ -309,7 +314,7 @@ final class UpdaterModel: ObservableObject {
             }
             guard response == .alertFirstButtonReturn else { return }
         }
-        if !usesHomebrew && !demo {
+        if (!usesHomebrew || tools.contains { $0.id == cask && $0.directOnly }) && !demo {
             if mode == .returnHomebrew {
                 title = "Homebrew is optional"
                 subtitle = "Enable Homebrew management to return a direct copy to Homebrew."
@@ -320,12 +325,13 @@ final class UpdaterModel: ObservableObject {
             else { updateDirect(selected) }
             return
         }
+        queuedCompanions = mode == .returnHomebrew ? [] : tools.filter { $0.directOnly && (cask == nil || $0.id == cask) && (mode != .install || $0.version.isEmpty) && (mode != .update || !$0.version.isEmpty) }
         currentMode = mode
-        activeIDs = cask.map { Set([$0]) } ?? Set(tools.map { $0.id })
+        activeIDs = cask.map { Set([$0]) } ?? Set(tools.filter { !$0.directOnly }.map { $0.id })
         busy = true
         stopRequested = false
         title = mode == .check ? "Looking for the latest LEAPPs" : (mode == .install ? "Making room for your next LEAPP" : "Keeping your LEAPPs current")
-        subtitle = mode == .check ? "Checking all seven tools for new releases." : (mode == .install ? "Installing the requested apps through the official Homebrew tap." : "Please keep your LEAPP apps closed while updating.")
+        subtitle = mode == .check ? "Checking supported tools for new releases." : (mode == .install ? "Installing the requested apps through the official Homebrew tap." : "Please keep your LEAPP apps closed while updating.")
         phase = "Preparing Homebrew"
         flushLog()
         log = ""
@@ -480,9 +486,13 @@ final class UpdaterModel: ObservableObject {
         if let error = launchError { log += error + "\n" }
         let unfinished = tools.indices.filter { activeIDs.contains(tools[$0].id) && ["waiting", "checking", "updating", "installing"].contains(tools[$0].status) }
         for index in unfinished { tools[index].status = status == 130 ? "unknown" : "failed" }
-        if status == 0 && currentMode == .update && pendingCount > 0 && !demo {
-            updateDirect(tools.filter { $0.status == "pending" })
-            return
+        let companions = queuedCompanions; queuedCompanions = []
+        if status != 130 && !demo && (currentMode == .check || currentMode == .install || currentMode == .update) {
+            let direct = (currentMode == .update ? tools.filter { $0.status == "pending" } : []) + companions
+            if !direct.isEmpty {
+                if currentMode == .check { checkDirect(direct) } else { updateDirect(direct) }
+                return
+            }
         }
         if status == 130 {
             title = "Stopped safely"
@@ -535,7 +545,7 @@ final class UpdaterModel: ObservableObject {
                     DispatchQueue.main.async {
                         guard let self = self, let index = self.tools.firstIndex(where: { $0.id == tool.id }) else { return }
                         self.tools[index].upstreamVersion = release.version
-                        self.tools[index].status = update ? "available" : "current"
+                        self.tools[index].status = tool.manualDownload ? "download" : update ? "available" : "current"
                         self.handleLine("\(tool.name): installed \(tool.version.isEmpty ? "none" : tool.version), latest \(release.version).")
                     }
                 } catch {
@@ -554,6 +564,22 @@ final class UpdaterModel: ObservableObject {
                 self.subtitle = "Choose Install or Update to use the official Mac download."
                 self.lastChecked = DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .short)
             }
+        }
+    }
+    func downloadCompanion(_ tool: LEAPPTool) {
+        guard !busy, !loading, !demo else { return }
+        loading = true
+        let fetch = fetchRelease
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            do {
+                let release = try DirectMacInstaller.select(fetch(tool.id), tool: tool, architecture: DirectMacInstaller.architecture)
+                DispatchQueue.main.async {
+                    self?.loading = false
+                    self?.title = "Download opened in your browser"
+                    self?.subtitle = "Batch LEAPP requires manual installation. Its current Mac build is not notarized; uLEAPP does not bypass macOS security checks."
+                    NSWorkspace.shared.open(release.url)
+                }
+            } catch { DispatchQueue.main.async { self?.loading = false; self?.showLaunchError(tool, message: error.localizedDescription) } }
         }
     }
     func removeOldInstalls() {
@@ -632,6 +658,12 @@ final class UpdaterModel: ObservableObject {
             var failures = 0
             for tool in selected {
                 if cancellation.isCancelled { break }
+                if tool.manualDownload {
+                    DispatchQueue.main.async {
+                        if let self = self, let index = self.tools.firstIndex(where: { $0.id == tool.id }) { self.tools[index].status = "download" }
+                        self?.handleLine("Batch LEAPP requires its Download button and manual installation; macOS security checks remain in place.") }
+                    continue
+                }
                 DispatchQueue.main.async {
                     guard let self = self, let index = self.tools.firstIndex(where: { $0.id == tool.id }) else { return }
                     self.tools[index].status = "updating"; self.directProgress = 0

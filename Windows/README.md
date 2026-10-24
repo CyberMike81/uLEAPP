@@ -15,7 +15,7 @@ Open `uLEAPP.exe` from the platform folder:
 Keep the complete folder together, including `LICENSE`, `licenses/` and
 `runtime-notices/`. The .NET runtime is included; no separate runtime install
 is needed. On launch, only uLEAPP release metadata is checked; no app packages are downloaded or installed.
-The actual seven LEAPP icons are embedded, so they appear before the apps are
+The LEAPP and companion icons are embedded, so they appear before the apps are
 installed. Publisher artwork keeps its own terms; see `artwork-notices/`.
 
 Choose **Check for updates**, **Update apps**, **Install** beside a missing
@@ -123,3 +123,20 @@ confirms it with HTTP 304. Network failures never become a cached “up to date�
 result. GitHub’s unauthenticated limit is shared by source IP (typically 60/hour);
 conditional requests are not exempt without authentication. Details show the
 remaining quota and reset timestamp on HTTP 403/429. No GitHub token is stored.
+
+## Companion tools (0.3.9)
+
+GLEAPP Map Downloader can be checked, installed, updated and launched on Mac,
+Windows and Linux, with native x64 and ARM64 packages where published. It downloads
+map data when you use it; GLEAPP itself remains offline.
+
+Batch LEAPP is supported on Windows x64 (including Windows ARM through x64
+emulation). Its current Mac GUI is Apple silicon only and requires manual download
+and installation: the publisher's v1.2.0 app is ad hoc signed, not notarized, and
+reports bundle version 0.0.0. uLEAPP offers the exact official Mac download and
+can launch an existing Applications copy; it does not disable Gatekeeper or claim
+that copy is up to date. No Linux or Intel Mac Batch package is currently published,
+so those platforms do not offer it. Companions use direct downloads, not Homebrew.
+
+Managed companion installs retain the current and previous versions and participate
+in **Remove old installs**. Manually installed Batch copies are outside that cleanup.

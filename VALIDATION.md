@@ -1,13 +1,13 @@
-# uLEAPP 0.3.8 validation
+# uLEAPP 0.3.9 validation
 
 Prepared October 24, 2026 for the Community Preview bug-fix release.
 
 | Platform | Completed checks | Remaining manual coverage |
 | --- | --- | --- |
 | macOS 13+ | Universal Apple silicon/Intel build; native and Rosetta self-checks; archive extraction, resources, version and ad hoc signature verified; 101 Homebrew worker tests | Physical Intel Mac on macOS 13; clean installation; real password-helper flow and cancellation |
-| Windows x64 | Fresh build and 156 packaged self-checks on a native GitHub x64 runner | Full manual installer/portable GUI flow on a user computer |
-| Windows ARM64 | Fresh build and 156 packaged self-checks on a native Windows 11 ARM GitHub runner | Full manual installer/portable GUI flow on a user computer |
-| Linux x64/ARM64 | 35 core tests; interface and extracted-package smoke checks on Ubuntu 24.04 runners; official GLEAPP archive checksum and layout checked | Actual LEAPP graphical launches on Linux hardware; WSL compatibility |
+| Windows x64 | Fresh build and 168 packaged self-checks on a native GitHub x64 runner | Full manual installer/portable GUI flow on a user computer |
+| Windows ARM64 | Fresh build and 168 packaged self-checks on a native Windows 11 ARM GitHub runner | Full manual installer/portable GUI flow on a user computer |
+| Linux x64/ARM64 | 36 core tests; interface and extracted-package smoke checks on Ubuntu 24.04 runners; official GLEAPP archive checksum and layout checked | Actual LEAPP graphical launches on Linux hardware; WSL compatibility |
 
 Windows release builds: https://github.com/CyberMike81/uLEAPP/actions/runs/40135325881
 
@@ -85,7 +85,7 @@ copy and removed only the selected record. Read-only live Homebrew evidence was
 regenerated successfully with LAVA as the controlled minimum-version target;
 all seven installed-version and final-status events were verified in both runs.
 
-0.3.8 Mac coverage includes Homebrew-free discovery and all seven direct release
+0.3.9 Mac coverage includes Homebrew-free discovery and all seven direct release
 checks using injected release metadata, with no Homebrew executable or network.
 Quarantine tests verify that an existing value is preserved. Native direct
 installation still validates publisher identity, Gatekeeper and quarantine.
@@ -99,3 +99,10 @@ text; Linux sizes to its requested content within the available screen height.
 Mac visual verification on the current display confirmed all seven installed
 tools, six direct-copy/Homebrew return controls and all footer actions visible
 without scrolling in the initial 1040 × 840 window.
+
+
+0.3.9 companion coverage:
+- Windows recorded official Batch v1.2.0 and Map Downloader v0.2.0 metadata covers both architectures, Batch x64 emulation fallback and GUI executable priority over the neighboring CLI.
+- Linux recorded Map Downloader metadata covers both native architectures and duplicate rejection. A real official x64 archive passed digest verification, safe extraction, executable discovery and isolated installation recording on the build Mac; Linux execution is checked separately by platform CI smoke checks for uLEAPP.
+- Mac selector tests cover both Map Downloader architectures, the Batch Apple silicon ZIP, refusal of Intel Batch selection and refusal of automatic Batch installation. The release download is manual for Batch; no Gatekeeper or publisher checks are disabled.
+- Intel Mac omits Batch because the publisher has no Intel GUI package. Linux omits Batch because the publisher has no Linux binary package. Windows ARM uses the published x64 Batch GUI through operating-system emulation.

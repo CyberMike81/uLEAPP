@@ -56,13 +56,14 @@ public static class PortablePackage
 
     public static string? FindExecutable(string directory, Tool tool)
     {
-        string[] names = [tool.Name + ".exe", tool.Id + "GUI.exe", tool.Id + ".exe"];
+        string[] names = [tool.Name + ".exe", tool.AssetName + ".exe", tool.Id + "GUI.exe", tool.Id + ".exe"];
         return Find(directory, 0);
         string? Find(string path, int depth)
         {
             if (!Directory.Exists(path) || (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0) return null;
-            foreach (var file in Directory.EnumerateFiles(path, "*.exe"))
-                if (names.Any(name => Path.GetFileName(file).Equals(name, StringComparison.OrdinalIgnoreCase))) return file;
+            foreach (var name in names)
+                foreach (var file in Directory.EnumerateFiles(path, "*.exe"))
+                    if (Path.GetFileName(file).Equals(name, StringComparison.OrdinalIgnoreCase)) return file;
             if (depth >= 2) return null;
             foreach (var child in Directory.EnumerateDirectories(path))
             {
