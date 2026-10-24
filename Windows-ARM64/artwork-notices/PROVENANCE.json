@@ -78,10 +78,12 @@
   },
   {
     "tool": "Batch LEAPP",
-    "source": "Original generic batch stack icon drawn for uLEAPP; publisher artwork is not included",
+    "source": "https://github.com/abrignoni/batch-leapp/blob/v1.2.0/batch-leapp.icns",
     "png": "batch-leapp.png",
-    "png_sha256": "43acf3785cf8f018f2c37ba71d85690e522824226dd04ab2f98ae39772500af4",
-    "license_reference": "LICENSE"
+    "png_sha256": "d529691a5d906d298247c87dfe7d7ae2ef5e744b9676abc97996a4d4667734b9",
+    "license_reference": "licenses/Batch-LEAPP.txt",
+    "source_icns_sha256": "ec4394bd49951ad711759dfa696b4405a6f6022bf23c224f440ea629f1fdd221",
+    "conversion": "Official ICNS converted to 256px PNG using macOS sips"
   },
   {
     "tool": "GLEAPP Map Downloader",

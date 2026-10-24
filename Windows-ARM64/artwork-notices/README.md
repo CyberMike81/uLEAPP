@@ -22,3 +22,7 @@ license; see `licenses/LAVA-EULA.txt`. That EULA reserves ownership of assets an
 does not clearly grant standalone logo redistribution. The maintainer chose to include this identifying icon for publisher review.
 The preview retains its unmodified EULA and provenance; it asserts no standalone
 artwork permission grant and does not relicense the icon under MIT.
+
+Batch LEAPP uses the official v1.2.0 application icon, converted from its ICNS.
+Its original rights are retained; see licenses/Batch-LEAPP.txt. Map Downloader
+uses its MIT-licensed v0.2.0 application icon; see licenses/GLEAPP-MapDownloader.txt.

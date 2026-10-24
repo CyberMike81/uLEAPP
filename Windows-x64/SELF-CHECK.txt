@@ -1,4 +1,4 @@
-uLEAPP 0.3.9 self-check
+uLEAPP 0.3.10 self-check
 ok - nine supported tools including both companions
 ok - LAVA actual catalog icon is embedded and decodes without an installed app
 ok - ALEAPP actual catalog icon is embedded and decodes without an installed app
