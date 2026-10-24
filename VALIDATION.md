@@ -51,3 +51,8 @@ Mac direct-install fallback validation (October 24):
 - Worker tests cover selecting the recorded direct version, recognizing it without a Homebrew receipt, offering newer direct releases and preventing Homebrew from replacing a directly managed copy.
 - The optional network integration downloaded official ALEAPP 2026.4.4, verified its image checksum, mounted it read-only, checked the app version, architecture and signature, copied it into an isolated temporary home, wrote the selected record and verified the copied signature. Real Applications folders, Homebrew receipts and user settings were unchanged.
 - Universal Mac build and native/Intel self-checks passed. The full interactive direct-install flow remains to be exercised on a physical Intel Mac.
+
+Manual Mac cleanup tests verify that the current and previous versions remain
+ineligible, scans do not delete anything, unmarked folders and extra case files
+are preserved, and changed app signatures are excluded. Cleanup is only invoked
+by **Remove old installs**, with a review before the macOS Trash operation.

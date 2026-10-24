@@ -49,13 +49,59 @@ struct DirectMacStore {
               records.standardizedFileURL == records.resolvingSymlinksInPath().standardizedFileURL else {
             throw UpstreamRelease.Failure(message: "Direct installation folders must not be symbolic links.")
         }
+        let record = DirectMacApp(version: version, relativePath: "\(tool.id)/\(version)/\(tool.bundle).app")
+        try JSONEncoder().encode(record).write(to: staged.appendingPathComponent(".uleapp-install.json"), options: .atomic)
         try fm.moveItem(at: staged, to: folder)
         do {
-            let record = DirectMacApp(version: version, relativePath: "\(tool.id)/\(version)/\(tool.bundle).app")
             try JSONEncoder().encode(record).write(to: records.appendingPathComponent(tool.id + ".json"), options: .atomic)
         } catch { try? fm.removeItem(at: folder); throw error }
         return folder.appendingPathComponent(tool.bundle + ".app")
     }
+    struct OldInstall {
+        let label: String
+        let folder: URL
+    }
+    // Only marked version folders whose app signature is intact are eligible.
+    // Unknown files (including cases/reports) leave the whole folder untouched.
+    func oldInstalls(_ tools: [LEAPPTool], cancellation: DirectMacCancellation,
+                     validate: (URL) throws -> Void = { app in
+                         try DirectMacInstaller.command("/usr/bin/codesign", ["--verify", "--strict", "--deep", app.path])
+                     }) throws -> [OldInstall] {
+        let fm = FileManager.default
+        var result: [OldInstall] = []
+        for tool in tools {
+            try cancellation.check()
+            guard let selected = try current(tool) else { continue }
+            let parent = apps.appendingPathComponent(tool.id, isDirectory: true)
+            guard parent.standardizedFileURL == parent.resolvingSymlinksInPath().standardizedFileURL else { continue }
+            var versions: [(String, URL)] = []
+            for folder in try fm.contentsOfDirectory(at: parent, includingPropertiesForKeys: [.isDirectoryKey, .isSymbolicLinkKey], options: [.skipsHiddenFiles]) {
+                try cancellation.check()
+                let attributes = try folder.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
+                guard attributes.isDirectory == true, attributes.isSymbolicLink != true,
+                      (try? UpstreamRelease.parts(folder.lastPathComponent)) != nil,
+                      let data = try? Data(contentsOf: folder.appendingPathComponent(".uleapp-install.json")),
+                      let marker = try? JSONDecoder().decode(DirectMacApp.self, from: data),
+                      marker.version == folder.lastPathComponent,
+                      marker.relativePath == "\(tool.id)/\(marker.version)/\(tool.bundle).app" else { continue }
+                versions.append((marker.version, folder))
+            }
+            versions.sort { (try! UpstreamRelease.parts($1.0)).lexicographicallyPrecedes(try! UpstreamRelease.parts($0.0)) }
+            let previous = versions.first { $0.0 != selected.0.version }?.0
+            for (version, folder) in versions where version != selected.0.version && version != previous {
+                try cancellation.check()
+                let contents = try fm.contentsOfDirectory(atPath: folder.path)
+                guard Set(contents).subtracting([tool.bundle + ".app", ".uleapp-install.json", ".DS_Store"]).isEmpty else { continue }
+                let app = folder.appendingPathComponent(tool.bundle + ".app", isDirectory: true)
+                let attrs = try app.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
+                guard attrs.isDirectory == true, attrs.isSymbolicLink != true else { continue }
+                do { try validate(app) } catch { continue }
+                result.append(OldInstall(label: "\(tool.name) \(version)", folder: folder))
+            }
+        }
+        return result
+    }
+
 }
 
 final class DirectMacCancellation {
@@ -167,8 +213,9 @@ final class DirectMacInstaller: NSObject, URLSessionDownloadDelegate {
         try cancellation.check()
         phase("Finding \(tool.name)'s official Mac release")
         let json = try UpstreamRelease.fetch(tool.id)
+        try cancellation.check()
         let release = try Self.select(json, tool: tool, architecture: Self.architecture)
-        if !tool.version.isEmpty, !(try UpstreamRelease.parts(tool.version)).lexicographicallyPrecedes(try UpstreamRelease.parts(release.version)) {
+        if !tool.version.isEmpty, !(try UpstreamRelease.assess(json, installed: tool.version)).1 {
             throw UpstreamRelease.Failure(message: "The installed version is already as new as this release. Check for updates again.")
         }
         let fm = FileManager.default
@@ -266,8 +313,25 @@ final class DirectMacInstaller: NSObject, URLSessionDownloadDelegate {
         _ = try! store.publish(staging("two"), tool: tool, version: "2026.4.4")
         precondition(try! store.current(tool)!.0.version == "2026.4.4")
         precondition(try! Data(contentsOf: evidence) == bytes)
+        _ = try! store.publish(staging("three"), tool: tool, version: "2026.4.5")
+        // The old copy with an extra case file must never become eligible.
+        let extra = old.deletingLastPathComponent().appendingPathComponent("case-notes.txt")
+        try! bytes.write(to: extra)
+        let cancellationForScan = DirectMacCancellation()
+        precondition(try! store.oldInstalls([tool], cancellation: cancellationForScan, validate: { _ in }).isEmpty)
+        try! fm.removeItem(at: extra)
+        let eligible = try! store.oldInstalls([tool], cancellation: cancellationForScan, validate: { _ in })
+        precondition(eligible.count == 1 && eligible[0].label == "ALEAPP 2026.4.3")
+        precondition(fm.fileExists(atPath: evidence.path), "Scanning must not remove an app")
+        precondition(try! store.oldInstalls([tool], cancellation: cancellationForScan, validate: { _ in throw UpstreamRelease.Failure(message: "Modified app") }).isEmpty)
+        let untracked = store.apps.appendingPathComponent(tool.id + "/2020.1/notes.txt")
+        try! fm.createDirectory(at: untracked.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try! bytes.write(to: untracked)
+        precondition(try! store.oldInstalls([tool], cancellation: cancellationForScan, validate: { _ in }).count == 1)
+        precondition(fm.fileExists(atPath: untracked.path))
+
         reject { _ = try store.publish(staging("duplicate"), tool: tool, version: "2026.4.4") }
-        precondition(try! store.current(tool)!.0.version == "2026.4.4")
+        precondition(try! store.current(tool)!.0.version == "2026.4.5")
         let record = store.records.appendingPathComponent(tool.id + ".json")
         try! JSONEncoder().encode(DirectMacApp(version: "2026.4.4", relativePath: "../../bad.app")).write(to: record)
         reject { _ = try store.current(tool) }

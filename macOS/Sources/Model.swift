@@ -368,7 +368,7 @@ final class UpdaterModel: ObservableObject {
         if let directCancellation = directCancellation {
             directCancellation.cancel()
             stopRequested = true
-            subtitle = "Stopping the direct download safely."
+            subtitle = "Stopping safely."
             return
         }
         if loading {
@@ -428,6 +428,57 @@ final class UpdaterModel: ObservableObject {
             title = "You're all up to date"
             subtitle = "Your installed LEAPP apps are ready for the next case."
             lastChecked = DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .short)
+        }
+    }
+    func removeOldInstalls() {
+        guard !busy, !loading, !demo else { return }
+        let cancellation = DirectMacCancellation()
+        directCancellation = cancellation; busy = true; stopRequested = false
+        let snapshots = tools
+        phase = "Finding old uLEAPP-managed installs"
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            do {
+                let candidates = try DirectMacStore().oldInstalls(snapshots, cancellation: cancellation)
+                DispatchQueue.main.async {
+                    guard let self = self else { return }
+                    self.busy = false; self.directCancellation = nil; self.phase = ""
+                    if cancellation.isCancelled { return }
+                    let alert = NSAlert()
+                    if candidates.isEmpty {
+                        alert.messageText = "No old installs to remove"
+                        alert.informativeText = "The current version and one previous version are kept. Homebrew copies, untracked folders and modified apps are left alone."
+                        alert.addButton(withTitle: "OK"); alert.runModal(); return
+                    }
+                    alert.messageText = "Move \(candidates.count) old installs to Trash?"
+                    alert.informativeText = "The current version and one previous version of each app will be kept.\n\n" + candidates.map { $0.label }.joined(separator: "\n")
+                    alert.addButton(withTitle: "Move to Trash"); alert.addButton(withTitle: "Cancel")
+                    guard alert.runModal() == .alertFirstButtonReturn else { return }
+                    self.busy = true; self.stopRequested = true; self.phase = "Moving old installs to Trash"
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        do {
+                            // Re-read current records and app contents after the confirmation.
+                            let fresh = try DirectMacStore().oldInstalls(snapshots, cancellation: DirectMacCancellation())
+                            let proposed = Set(candidates.map { $0.folder })
+                            let safe = fresh.filter { proposed.contains($0.folder) }.map { $0.folder }
+                            NSWorkspace.shared.recycle(safe) { moved, error in
+                                DispatchQueue.main.async {
+                                    self.busy = false; self.stopRequested = false; self.phase = ""
+                                    self.title = error == nil ? "Old installs removed" : "Some installs could not be moved"
+                                    self.subtitle = error?.localizedDescription ?? "\(moved.count) older versions moved to Trash. Current and previous versions kept."
+                                    self.handleLine(self.subtitle); self.flushLog()
+                                }
+                            }
+                        } catch {
+                            DispatchQueue.main.async { self.busy = false; self.stopRequested = false; self.phase = ""; self.title = "Could not remove old installs"; self.subtitle = error.localizedDescription }
+                        }
+                    }
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self?.busy = false; self?.directCancellation = nil; self?.phase = ""
+                    if !(error is CancellationError) { self?.title = "Could not check old installs"; self?.subtitle = error.localizedDescription }
+                }
+            }
         }
     }
     func updateDirect(_ selected: [LEAPPTool]) {

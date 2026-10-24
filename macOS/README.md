@@ -82,3 +82,11 @@ only in an automatically removed temporary home):
 ```sh
 python3 tests/live_direct_install.py
 ```
+
+## Remove old installs
+
+**Remove old installs** scans only uLEAPP-marked direct installation folders,
+keeps the selected version and one previous version per app, and shows a list
+before moving eligible older copies to Trash. The scan rechecks the records and
+app signatures after confirmation. Homebrew copies, unmarked folders, folders
+with extra files and changed apps are left alone. Cleanup never runs automatically.

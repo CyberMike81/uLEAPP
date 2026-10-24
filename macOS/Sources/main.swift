@@ -228,6 +228,10 @@ struct UpdaterView: View {
                         .font(.system(size: 10)).foregroundStyle(Palette.muted)
                 }
                 Spacer(minLength: 4)
+                Button("Remove old installs") { model.removeOldInstalls() }
+                    .buttonStyle(.plain).font(.system(size: 11)).foregroundStyle(Palette.muted)
+                    .disabled(model.busy || model.loading || model.demo)
+                    .help("Keep the current and previous direct installs; review older copies before moving them to Trash")
                 Button { model.start(.check) } label: { Label("Check for updates", systemImage: "arrow.clockwise") }
                     .buttonStyle(ActionStyle()).keyboardShortcut("r", modifiers: .command)
                     .disabled(model.busy || model.loading || !model.brewFound)
