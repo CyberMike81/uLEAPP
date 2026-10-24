@@ -58,18 +58,24 @@ public sealed class ReleaseClient : IDisposable
         // in the Windows 11 ARM test VM. Use its official x64 compatibility
         // installer for this release; future releases prefer native ARM.
         string actualArchitecture = architecture == "arm64" && tool.Id == "lava" && tag.TrimStart('v') == "0.15.0" ? "x64" : architecture;
-        var match = Find(actualArchitecture, wanted);
+        JsonElement? FindCompatible(string kind)
+        {
+            var candidate = Find(actualArchitecture, kind);
+            if (candidate == null && architecture == "arm64" && tool.Id == "gleapp")
+            {
+                candidate = Find("x64", kind);
+                if (candidate != null) actualArchitecture = "x64";
+            }
+            return candidate;
+        }
+        var match = FindCompatible(wanted);
         // Some publishers now ship portable ZIPs only. Preserve the old registered
         // installation and let Installer create a separate, versioned portable copy.
+        // Try the supported setup architectures first, including GLEAPP's x64 setup.
         if (match == null && installerManaged && !tool.InstallerOnly)
         {
             wanted = "portable.zip";
-            match = Find(actualArchitecture, wanted);
-        }
-        if (match == null && architecture == "arm64" && tool.Id == "gleapp")
-        {
-            match = Find("x64", wanted);
-            actualArchitecture = "x64";
+            match = FindCompatible(wanted);
         }
         var selected = match ?? throw new IOException($"No {actualArchitecture} Windows package is published for {tool.Name}.");
         string name = selected.GetProperty("name").GetString()!;
