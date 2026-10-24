@@ -31,7 +31,7 @@ terms. Calling an external executable does not copy it into uLEAPP. The inventor
 does not claim that every part of macOS, Windows or the development workstation
 is open source.
 
-The Windows 0.3.8 builds use Microsoft .NET SDK 10.0.402 and runtime packs
+The Windows 0.3.9 builds use Microsoft .NET SDK 10.0.402 and runtime packs
 10.0.13. `BUILD-INFO.json` in each Windows platform folder records the actual
 SDK, architecture and runtime versions. The desktop pack supplies a MIT
 `LICENSE` file; its additional notices are taken from the matching
@@ -117,3 +117,9 @@ Direct Mac installs require an Apple-anchored Developer ID signature from team
 and the published SHA-256 digest. uLEAPP applies quarantine before selecting the
 app. A publisher team change requires a reviewed uLEAPP update; ad hoc signatures
 and other teams are refused. Windows publisher builds remain unsigned.
+
+Companion tools: Batch LEAPP and GLEAPP Map Downloader are downloaded directly from
+their official abrignoni GitHub releases on demand; their programs are not bundled.
+Map Downloader artwork is MIT licensed; see licenses/GLEAPP-MapDownloader.txt.
+The Batch icon is an original generic stack icon under this project’s MIT license;
+no Batch publisher artwork is included. See licenses/Batch-LEAPP.txt for source information.

@@ -1,9 +1,9 @@
 {
-  "Sdk": "10.0.402",
-  "AppVersion": "0.3.8",
-  "Architecture": "win-x64",
   "RuntimePacks": [
     "runtimepack.Microsoft.NETCore.App.Runtime.win-x64/10.0.13",
     "runtimepack.Microsoft.WindowsDesktop.App.Runtime.win-x64/10.0.13"
-  ]
+  ],
+  "AppVersion": "0.3.9",
+  "Architecture": "win-x64",
+  "Sdk": "10.0.402"
 }

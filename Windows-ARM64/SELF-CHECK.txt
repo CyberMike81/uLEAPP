@@ -1,5 +1,5 @@
-uLEAPP 0.3.8 self-check
-ok - seven supported tools; no extra applications
+uLEAPP 0.3.9 self-check
+ok - nine supported tools including both companions
 ok - LAVA actual catalog icon is embedded and decodes without an installed app
 ok - ALEAPP actual catalog icon is embedded and decodes without an installed app
 ok - iLEAPP actual catalog icon is embedded and decodes without an installed app
@@ -7,6 +7,8 @@ ok - RLEAPP actual catalog icon is embedded and decodes without an installed app
 ok - VLEAPP actual catalog icon is embedded and decodes without an installed app
 ok - DLEAPP actual catalog icon is embedded and decodes without an installed app
 ok - GLEAPP actual catalog icon is embedded and decodes without an installed app
+ok - Batch LEAPP actual catalog icon is embedded and decodes without an installed app
+ok - Map Downloader actual catalog icon is embedded and decodes without an installed app
 ok - a missing Recycle Bin destination is never confirmed as recycled
 ok - a failed delete callback is never confirmed as recycled
 ok - the shell must report a successful Recycle Bin destination
@@ -57,6 +59,14 @@ ok - GLEAPP official asset for arm64
 ok - GLEAPP official setup for existing installer-managed copies
 ok - GLEAPP official asset for x64
 ok - GLEAPP official setup for existing installer-managed copies
+ok - batch-leapp selects official portable GUI package on x64
+ok - batch-leapp stays portable for registered discovery
+ok - batch-leapp selects official portable GUI package on arm64
+ok - batch-leapp stays portable for registered discovery
+ok - mapdownloader selects official portable GUI package on x64
+ok - mapdownloader stays portable for registered discovery
+ok - mapdownloader selects official portable GUI package on arm64
+ok - mapdownloader stays portable for registered discovery
 ok - self-update chooses the official x64 package
 ok - self-update hides the installed version
 ok - self-update never offers a downgrade
@@ -131,6 +141,8 @@ ok - unsafe archive is rejected before extraction
 ok - unsafe archive path is refused: folder/file:stream
 ok - unsafe archive is rejected before extraction
 ok - case-insensitive duplicate files are refused
+ok - Batch chooses GUI instead of adjacent CLI
+ok - Map Downloader executable is discovered
 ok - Windows archive separators and support files are preserved
 ok - upstream license and notice files are preserved
 ok - official portable executable is found
@@ -155,5 +167,5 @@ ok - cancelled cleanup leaves app folders in place
 ok - untracked folders and forged cleanup paths are preserved
 ok - eligible old app moves to the Windows Recycle Bin
 ok - recycling keeps the current and previous app plus untracked case data
-uLEAPP self-check passed: 156 checks. No installed apps were changed.
+uLEAPP self-check passed: 168 checks. No installed apps were changed.
 

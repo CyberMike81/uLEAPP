@@ -18,7 +18,7 @@
 		</data>
 		<key>Resources/THIRD-PARTY-NOTICES.md</key>
 		<data>
-		LDrOpfBIIanxrgNHz4dnPAwQjbg=
+		yQfqzTrd3IZtqLU/KotAeAp2f6g=
 		</data>
 		<key>Resources/askpass.sh</key>
 		<data>
@@ -28,9 +28,17 @@
 		<data>
 		85fF4jfgMszHglvun0gLsxhfmbk=
 		</data>
+		<key>Resources/licenses/Batch-LEAPP.txt</key>
+		<data>
+		gO1Q1foNza3m5wmo0EMvnU6W0e0=
+		</data>
 		<key>Resources/licenses/DLEAPP.txt</key>
 		<data>
 		85fF4jfgMszHglvun0gLsxhfmbk=
+		</data>
+		<key>Resources/licenses/GLEAPP-MapDownloader.txt</key>
+		<data>
+		nk/LGHsKzoFy/PcY7HHWwFlmNMs=
 		</data>
 		<key>Resources/licenses/GLEAPP.txt</key>
 		<data>
@@ -74,7 +82,7 @@
 		</data>
 		<key>Resources/tool-icons/PROVENANCE.json</key>
 		<data>
-		JI2QJ454y8YI5ju0hVekYiSMUBA=
+		G+A+E51MqNEje3W4JK8oLtaE9bw=
 		</data>
 		<key>Resources/tool-icons/README.md</key>
 		<data>
@@ -83,6 +91,10 @@
 		<key>Resources/tool-icons/aleapp.png</key>
 		<data>
 		wmKaaG8jgHmcUPxJM22gIuutqYU=
+		</data>
+		<key>Resources/tool-icons/batch-leapp.png</key>
+		<data>
+		9z6vhZJLavMwHHSj9hgUQGJ+nuw=
 		</data>
 		<key>Resources/tool-icons/dleapp.png</key>
 		<data>
@@ -99,6 +111,10 @@
 		<key>Resources/tool-icons/lava.png</key>
 		<data>
 		3ngtsiZORrZEJnYzQ5E4uYutx4Q=
+		</data>
+		<key>Resources/tool-icons/mapdownloader.png</key>
+		<data>
+		AqutQQkn45FS/deVvyV8KHH68Rw=
 		</data>
 		<key>Resources/tool-icons/rleapp.png</key>
 		<data>
@@ -136,7 +152,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			LyvUJPYfV/GMZUbOJPBiyjUiPxhyDBdZKVdnDcqeRks=
+			bCLhm2yvhwU3ia2IhOizmtAcMKsfumeVgLyZ0fSmTFs=
 			</data>
 		</dict>
 		<key>Resources/askpass.sh</key>
@@ -153,11 +169,25 @@
 			sGqBmBfBGWA6E12fjEDQIUKYcVO+WA3HKygpPy3Rd2U=
 			</data>
 		</dict>
+		<key>Resources/licenses/Batch-LEAPP.txt</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			Opi8LAAyCzK9OfxdV3FQjkg8ZHPvfeqTk4b/eqItFus=
+			</data>
+		</dict>
 		<key>Resources/licenses/DLEAPP.txt</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			sGqBmBfBGWA6E12fjEDQIUKYcVO+WA3HKygpPy3Rd2U=
+			</data>
+		</dict>
+		<key>Resources/licenses/GLEAPP-MapDownloader.txt</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			uQK4m1sgVhwef51ZYv5CTMC3v9ufgHStdya3j4EuGpo=
 			</data>
 		</dict>
 		<key>Resources/licenses/GLEAPP.txt</key>
@@ -234,7 +264,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			h2jISkEV+uq++jzwHN7OHCeIN8vwDejIpuKq39uovXs=
+			pytN3LyCbl3r8ZkY/twn4JWbU2co2nXuv9cyKTA57V8=
 			</data>
 		</dict>
 		<key>Resources/tool-icons/README.md</key>
@@ -249,6 +279,13 @@
 			<key>hash2</key>
 			<data>
 			72m2aJdXXynM8HEVYx6BEFp7ZtyOeovJ/FGnWarQvJA=
+			</data>
+		</dict>
+		<key>Resources/tool-icons/batch-leapp.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			Q6zzeFz48Bjyw3unHYVpDlIoJCJt0Eqy+Yrjl3JQCvQ=
 			</data>
 		</dict>
 		<key>Resources/tool-icons/dleapp.png</key>
@@ -277,6 +314,13 @@
 			<key>hash2</key>
 			<data>
 			TvQiTcJY+fnAfFc8tjrEWxKA73yWaZxTU1nrAqoQ1X0=
+			</data>
+		</dict>
+		<key>Resources/tool-icons/mapdownloader.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			gzn9o4QelKbsCpk2q+8lpeN4kUQ2Z5YmSXokGbQvkwE=
 			</data>
 		</dict>
 		<key>Resources/tool-icons/rleapp.png</key>

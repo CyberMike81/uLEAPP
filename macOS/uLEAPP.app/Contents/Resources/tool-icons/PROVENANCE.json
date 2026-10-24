@@ -75,5 +75,20 @@
     "png_sha256": "b1375ed192181d2b80578e42c9cdf45dee39abd8f7fe76f153e66bc687008714",
     "conversion": "unchanged embedded PNG frame",
     "license_reference": "licenses/GLEAPP.txt"
+  },
+  {
+    "tool": "Batch LEAPP",
+    "source": "Original generic batch stack icon drawn for uLEAPP; publisher artwork is not included",
+    "png": "batch-leapp.png",
+    "png_sha256": "43acf3785cf8f018f2c37ba71d85690e522824226dd04ab2f98ae39772500af4",
+    "license_reference": "LICENSE"
+  },
+  {
+    "tool": "GLEAPP Map Downloader",
+    "source": "https://github.com/abrignoni/GLEAPP-MapDownloader/blob/v0.2.0/packaging/icon.icns",
+    "png": "mapdownloader.png",
+    "png_sha256": "8339fda3841e94a6ec0a9936abef25a5e378914436679626497a2419b42f9301",
+    "conversion": "ICNS to 256px PNG using macOS sips",
+    "license_reference": "licenses/GLEAPP-MapDownloader.txt"
   }
 ]
