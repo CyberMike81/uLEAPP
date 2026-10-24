@@ -20,7 +20,7 @@ from launch_errors import Launch
 from urllib.parse import quote, urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
-VERSION = '0.3.4'
+VERSION = '0.3.5'
 MAX_BYTES = 2 * 1024**3
 
 @dataclass(frozen=True)

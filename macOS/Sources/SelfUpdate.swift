@@ -7,7 +7,7 @@ struct AppUpdate {
 }
 
 enum SelfUpdate {
-    static var currentVersion: String { Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.3.4" }
+    static var currentVersion: String { Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.3.5" }
     static let repository = "CyberMike81/uLEAPP"
     static func select(_ json: [String: Any], current: String) -> AppUpdate? {
         guard let tag = json["tag_name"] as? String,

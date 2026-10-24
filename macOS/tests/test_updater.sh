@@ -75,7 +75,17 @@ BREW
 chmod 755 "$scratch/bin/brew"
 cat > "$scratch/bin/release-checker" <<'CHECKER'
 #!/bin/bash
+if [[ "$1" == --direct-tool-version ]]; then
+  case "${LEAPP_TEST_MODE:-}:$2" in
+    direct-managed:aleapp-gui) printf '2026.4.4\n'; exit 0 ;;
+    direct-newer:aleapp-gui) printf '2026.4.3\n'; exit 0 ;;
+    direct-error:aleapp-gui) exit 1 ;;
+  esac
+  exit 3
+fi
 case "${LEAPP_TEST_MODE:-}:$2" in
+  direct-managed:aleapp-gui) [[ "$3" == 2026.4.4 ]] || exit 1; printf '2026.4.4\n'; exit 0 ;;
+  direct-newer:aleapp-gui) [[ "$3" == 2026.4.3 ]] || exit 1; printf '2026.4.4\n'; exit 10 ;;
   upstream-behind:aleapp-gui) printf '2026.4.4\n'; exit 10 ;;
   upstream-failed:aleapp-gui) printf 'GitHub unavailable\n' >&2; exit 1 ;;
 esac
@@ -319,6 +329,31 @@ events=1
 run_case --check
 expect 'GitHub lookup failure is not reported as current' test "$status" -eq 1
 expect 'GitHub lookup failure marks the app for attention' grep -Fq $'ULEAPP\tapp\taleapp-gui\tfailed\t' "$case_dir/output"
+
+new_case direct-managed
+mode=direct-managed
+events=1
+run_case --check
+expect 'a direct installation reports its recorded version instead of Homebrew' grep -Fq $'ULEAPP\tversion\taleapp-gui\t\t2026.4.4' "$case_dir/output"
+expect 'a current direct installation is recognized' grep -Fq $'ULEAPP\tapp\taleapp-gui\tcurrent\t' "$case_dir/output"
+run_case
+expect 'Homebrew does not replace or downgrade the direct copy' upgrade_count 6
+printf '%s\n' ileapp-gui > "$case_dir/installed"
+run_case --check
+expect 'direct installs remain managed without a Homebrew receipt' grep -Fq $'ULEAPP\tapp\taleapp-gui\tcurrent\t' "$case_dir/output"
+
+new_case direct-newer
+mode=direct-newer
+events=1
+run_case --check
+expect 'a newer release for a direct install is offered' grep -Fq $'ULEAPP\tapp\taleapp-gui\tpending\t' "$case_dir/output"
+
+new_case direct-error
+mode=direct-error
+events=1
+run_case --check
+expect 'an unreadable direct record is not called up to date' test "$status" -eq 1
+expect 'an unreadable direct record needs attention' grep -Fq $'ULEAPP\tapp\taleapp-gui\tfailed\t' "$case_dir/output"
 
 printf '\n%s passed; %s failed.\n' "$passed" "$failed"
 [[ "$failed" -eq 0 ]]

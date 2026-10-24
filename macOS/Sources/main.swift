@@ -35,6 +35,7 @@ struct ToolRow: View {
     let launchDisabled: Bool
     let launch: () -> Void
     let install: () -> Void
+    let directUpdate: () -> Void
     var stateColor: Color {
         switch tool.status {
         case "current": return Palette.green
@@ -79,9 +80,10 @@ struct ToolRow: View {
             .foregroundStyle(stateColor)
             .padding(.horizontal, 10).padding(.vertical, 7)
             .background(stateColor.opacity(0.09)).clipShape(Capsule())
-            if tool.status == "pending", let repository = UpstreamRelease.repositories[tool.id] {
-                Link("Get latest", destination: URL(string: "https://github.com/\(repository)/releases/latest")!)
-                    .font(.system(size: 12)).help("Official release \(tool.upstreamVersion)")
+            if tool.status == "pending" {
+                Button("Update") { directUpdate() }
+                    .controlSize(.small).tint(Palette.green).disabled(actionsDisabled)
+                    .help("Download, verify and install \(tool.name) \(tool.upstreamVersion)")
             }
             if tool.existingBundlePath != nil {
                 Button("Launch") { launch() }
@@ -115,7 +117,7 @@ struct UpdaterView: View {
                     Text("One place. Every LEAPP up to date.").font(.system(size: 14)).foregroundStyle(Palette.muted)
                 }
                 Spacer()
-                Text(model.demo ? "DEMO · 0.3.4" : "FOR macOS · 0.3.4")
+                Text(model.demo ? "DEMO · 0.3.5" : "FOR macOS · 0.3.5")
                     .font(.system(size: 10, weight: .semibold)).tracking(1.2)
                     .foregroundStyle(Palette.green).padding(.horizontal, 11).padding(.vertical, 7)
                     .overlay(Capsule().stroke(Palette.green.opacity(0.25)))
@@ -157,7 +159,7 @@ struct UpdaterView: View {
             HStack {
                 Text("YOUR LEAPP TOOLS").font(.system(size: 10, weight: .semibold)).tracking(1.3)
                 Spacer()
-                Text("\(model.installedCount) managed by Homebrew").font(.system(size: 11))
+                Text("\(model.installedCount) installed").font(.system(size: 11))
             }.foregroundStyle(Palette.muted).padding(.horizontal, 3)
 
             ScrollView {
@@ -167,7 +169,8 @@ struct UpdaterView: View {
                                 actionsDisabled: model.busy || model.loading || !model.brewFound,
                                 launchDisabled: model.busy || model.loading,
                                 launch: { model.launch(tool) },
-                                install: { model.start(.install, cask: tool.id) })
+                                install: { model.start(.install, cask: tool.id) },
+                                directUpdate: { model.updateDirect([tool]) })
                         if tool.id != model.tools.last?.id {
                             Rectangle().fill(Palette.border).frame(height: 1).padding(.leading, 76)
                         }
@@ -266,7 +269,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             credits.addAttribute(.link, value: notices, range: (text as NSString).range(of: "License notices"))
         }
         NSApp.orderFrontStandardAboutPanel(options: [
-            .applicationName: "uLEAPP", .applicationVersion: "0.3.4", .credits: credits
+            .applicationName: "uLEAPP", .applicationVersion: "0.3.5", .credits: credits
         ])
     }
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -311,9 +314,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 }
 
+if CommandLine.arguments.contains("--direct-tool-version") {
+    do {
+        guard CommandLine.arguments.count == 3, let tool = LEAPPTool.all.first(where: { $0.id == CommandLine.arguments[2] }) else { exit(1) }
+        guard let current = try DirectMacStore().current(tool) else { exit(3) }
+        print(current.0.version); exit(0)
+    } catch { FileHandle.standardError.write(Data((error.localizedDescription + "\n").utf8)); exit(1) }
+}
 if CommandLine.arguments.contains("--check-tool-release") { exit(UpstreamRelease.run(CommandLine.arguments)) }
 if CommandLine.arguments.contains("--askpass") { runAskpass() }
-if CommandLine.arguments.contains("--version") { print("uLEAPP 0.3.4"); exit(0) }
+if CommandLine.arguments.contains("--version") { print("uLEAPP 0.3.5"); exit(0) }
 if CommandLine.arguments.contains("--help") {
     print("uLEAPP for Mac\n--version     Report the app version\n--selfcheck   Check the packaged app without changing installed tools\n--demo        Preview the interface with simulated updates")
     exit(0)
@@ -339,6 +349,7 @@ if CommandLine.arguments.contains("--self-test") || CommandLine.arguments.contai
         }
     }
     UpstreamRelease.selfCheck()
+    DirectMacInstaller.selfCheck()
     let model = UpdaterModel()
     model.applyInstalled("lava 0.15.0\nleapps-org/leapps/ileapp-gui 2026.4.4\nopenscad 2021.01\n")
     precondition(model.installedCount == 2)

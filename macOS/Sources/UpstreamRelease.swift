@@ -33,11 +33,8 @@ enum UpstreamRelease {
         let current = try versions.map { try parts(String($0)) }.max { $0.lexicographicallyPrecedes($1) }!
         return (tag.hasPrefix("v") ? String(tag.dropFirst()) : tag, current.lexicographicallyPrecedes(latest))
     }
-    static func run(_ arguments: [String]) -> Int32 {
-        do {
-            guard arguments.count == 4, let repository = repositories[arguments[2]] else {
-                throw Failure(message: "Use --check-tool-release CASK INSTALLED_VERSION.")
-            }
+    static func fetch(_ cask: String) throws -> [String: Any] {
+        guard let repository = repositories[cask] else { throw Failure(message: "Unknown LEAPP tool.") }
             var request = URLRequest(url: URL(string: "https://api.github.com/repos/\(repository)/releases/latest")!)
             request.timeoutInterval = 15
             request.cachePolicy = .reloadIgnoringLocalCacheData
@@ -59,7 +56,14 @@ enum UpstreamRelease {
             guard ready.wait(timeout: .now() + 20) == .success else {
                 task.cancel(); throw Failure(message: "GitHub release check timed out. Update status is unknown.")
             }
-            let (version, newer) = try assess(try result!.get(), installed: arguments[3])
+            return try result!.get()
+    }
+    static func run(_ arguments: [String]) -> Int32 {
+        do {
+            guard arguments.count == 4, repositories[arguments[2]] != nil else {
+                throw Failure(message: "Use --check-tool-release CASK INSTALLED_VERSION.")
+            }
+            let (version, newer) = try assess(try fetch(arguments[2]), installed: arguments[3])
             print(version)
             return newer ? 10 : 0
         } catch {

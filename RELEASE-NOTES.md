@@ -1,9 +1,10 @@
-# uLEAPP 0.3.4 — Community Preview
+# uLEAPP 0.3.5 — Community Preview
 
-- Mac checks now verify GitHub releases before reporting an app as up to date. When Homebrew is behind, the app shows **Homebrew update pending** with a **Get latest** link to the publisher. Failed GitHub checks show **Needs attention**.
-- Windows can update installer-managed ALEAPP and iLEAPP copies using the official portable ZIP when the publisher no longer provides setup. The new version goes in the selected portable-app folder, with the older installation preserved. Available setup installers remain preferred.
-- Includes all previous fixes and automatic uLEAPP update notifications.
+- Mac can now install the publisher’s latest build directly when Homebrew is behind. **Update** downloads the correct Apple silicon/Intel disk image, checks its SHA-256, version, architecture and signature, and installs it in a versioned folder under `~/Applications/uLEAPP`. **Launch** opens that selected copy.
+- Direct installs are tracked separately so future checks use the version actually selected by uLEAPP. Older copies and Homebrew receipts are preserved. Download progress, Stop and errors are shown in the app.
+- **Update apps** uses this fallback for releases still pending after the Homebrew operation. Merely checking for updates does not download or install apps.
+- Includes the Windows portable-package fallback and all previous fixes.
 
-Download and extract the complete platform package. Mac supports Apple silicon and Intel, requires macOS 13+ and Homebrew, and is ad hoc signed without notarization. Windows x64/ARM64 packages include .NET and are unsigned. Linux requires Python 3.10+ and Tk.
+Mac requires macOS 13+ and Homebrew. The Mac build is ad hoc signed without notarization; Windows x64/ARM64 builds include .NET and are unsigned. Linux requires Python 3.10+ and Tk. Download and extract the complete platform package.
 
-SHA256SUMS-0.3.4.txt covers the downloads.
+SHA256SUMS-0.3.5.txt covers the downloads.
