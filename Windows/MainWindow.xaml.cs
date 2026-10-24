@@ -168,7 +168,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     {
                         row.Release = await releases.LatestAsync(row.Tool, Catalog.Architecture, row.Installed?.InstallerManaged ?? false, cancellation);
                         var release = row.Release;
+                        if (row.Installed?.InstallerManaged == true && !release.Asset.IsInstaller)
+                            WriteLog(row.Name + ": the publisher offers a portable ZIP instead of setup. The new copy will be placed in your portable-app folder; the old installation is preserved.");
                         row.Latest = "Latest " + release.Version + (release.Asset.Architecture != Catalog.Architecture ? " · x64 through Windows emulation" : "");
+                        if (row.Installed?.InstallerManaged == true && !release.Asset.IsInstaller)
+                            row.Latest += " · portable copy";
                         if (row.IsInstalled && !Installer.NeedsUpdate(row.Version, release.Version)) row.Status = "Up to date";
                         else if (check)
                         {

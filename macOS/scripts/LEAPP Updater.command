@@ -116,19 +116,38 @@ check_stop() {
   fi
 }
 report_version() {
-  if [[ "${ULEAPP_EVENTS:-0}" == 1 && "$preview" -eq 0 ]]; then
-    local version_lines token version
-    # Homebrew's version listing accepts bare tokens and may return prefix
-    # matches. Only report the exact cask requested by this operation.
-    if version_lines="$("$brew_bin" list --cask --versions "$cask")"; then
-      while read -r token version; do
-        if [[ "${token##*/}" == "$cask" && -n "$version" ]]; then
-          event version "$cask" '' "$version"
-          break
-        fi
-      done <<< "$version_lines"
-    fi
+  local version_lines token version
+  installed_version=''
+  if version_lines="$("$brew_bin" list --cask --versions "$cask")"; then
+    while read -r token version; do
+      if [[ "${token##*/}" == "$cask" && -n "$version" ]]; then
+        installed_version="$version"
+        event version "$cask" '' "$version"
+        break
+      fi
+    done <<< "$version_lines"
   fi
+}
+confirm_current() {
+  if [[ "$preview" -eq 1 ]]; then return 0; fi
+  local checker latest_version check_status
+  checker="${ULEAPP_RELEASE_CHECKER:-$(cd "$(dirname "$0")/.." && pwd)/uLEAPP.app/Contents/MacOS/uLEAPP}"
+  if [[ ! -x "$checker" ]]; then
+    printf 'Cannot verify the GitHub release. Run this worker from the complete uLEAPP app.\n'
+    return 1
+  fi
+  latest_version="$("$checker" --check-tool-release "$cask" "$installed_version")"
+  check_status=$?
+  case "$check_status" in
+    0) event app "$cask" current 'Up to date'; return 0 ;;
+    10)
+      pending_count=$((pending_count + 1))
+      event upstream "$cask" '' "$latest_version"
+      event app "$cask" pending 'Homebrew update pending'
+      printf '%s: GitHub release %s is newer than installed %s. Homebrew has not installed the latest release. Official download: https://github.com/%s/releases/latest\n' "$name" "$latest_version" "$installed_version" "$repository"
+      return 0 ;;
+    *) printf '%s: could not verify the latest GitHub release. Update status is unknown.\n' "$name"; return 1 ;;
+  esac
 }
 
 printf '\nLEAPP Updater\n=============\n'
@@ -191,6 +210,7 @@ is_managed() {
 
 success_count=0
 available_count=0
+pending_count=0
 failed_count=0
 skipped_count=0
 failed_apps=''
@@ -201,6 +221,7 @@ for target in "${targets[@]}"; do
     continue
   fi
   printf '\n--- %s ---\n' "$name"
+  if [[ "$cask" == lava ]]; then repository='leapps-org/LAVA-releases'; else repository="abrignoni/$name"; fi
   result=0
   if is_managed "$cask"; then
     report_version
@@ -221,8 +242,7 @@ for target in "${targets[@]}"; do
         event app "$cask" available 'Update available'
         printf '%s: update available.\n' "$name"
       elif [[ "$outdated_status" -eq 0 && -z "$outdated_output" ]]; then
-        event app "$cask" current 'Up to date'
-        printf '%s: up to date.\n' "$name"
+        confirm_current || result=$?
       else
         result=1
         if [[ -n "$outdated_output" ]]; then
@@ -234,7 +254,7 @@ for target in "${targets[@]}"; do
       run "$brew_bin" upgrade --cask --greedy "$tap/$cask" || result=$?
       if [[ "$result" -eq 0 ]]; then
         report_version
-        event app "$cask" current 'Up to date'
+        confirm_current || result=$?
       fi
     fi
   else
@@ -245,7 +265,7 @@ for target in "${targets[@]}"; do
       run "$brew_bin" install --cask --adopt "$tap/$cask" || result=$?
       if [[ "$result" -eq 0 ]]; then
         report_version
-        event app "$cask" current 'Installed'
+        confirm_current || result=$?
       fi
     else
       printf 'Not managed by Homebrew; skipping.\n'
@@ -269,6 +289,7 @@ for target in "${targets[@]}"; do
 done
 
 check_stop
+if [[ "$pending_count" -gt 0 ]]; then printf '%s new releases await Homebrew. Use the official download links above.\n' "$pending_count"; fi
 printf '\n=============\n'
 if [[ "$preview" -eq 1 ]]; then
   printf 'Preview finished: %s apps managed by Homebrew; %s skipped.\n' "$success_count" "$skipped_count"

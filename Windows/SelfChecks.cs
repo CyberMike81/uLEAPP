@@ -55,6 +55,13 @@ public static class SelfChecks
                     Check(selected.Asset.Architecture == architecture || architecture == "arm64" && selected.Asset.Architecture == "x64" &&
                           (tool.Id == "gleapp" || tool.Id == "lava" && selected.Version == "0.15.0"), tool.Name + " official asset for " + architecture);
                     Check(ReleaseClient.Select(tool,releaseFixture.RootElement,architecture,true).Asset.IsInstaller,tool.Name + " official setup for existing installer-managed copies");
+                    if (tool.Id is "aleapp" or "ileapp")
+                    {
+                        using var currentFixture = JsonDocument.Parse(File.ReadAllText(Path.Combine(fixtures,tool.Id + "-portable-only.json")));
+                        var currentRelease = ReleaseClient.Select(tool,currentFixture.RootElement,architecture,true);
+                        Check(!currentRelease.Asset.IsInstaller && currentRelease.Asset.Architecture == architecture,
+                            tool.Name + " October 24 portable-only release updates registered copies on " + architecture);
+                    }
                 }
             }
         }
@@ -80,6 +87,20 @@ public static class SelfChecks
         var lava = Catalog.All.Single(t => t.Id == "lava");
         using var metadata = JsonDocument.Parse(Metadata(ileapp, "arm64"));
         Check(ReleaseClient.Select(ileapp, metadata.RootElement, "arm64").Asset.Architecture == "arm64", "native Windows ARM package selection");
+        foreach (string id in new[] { "aleapp", "ileapp" })
+        foreach (string arch in new[] { "x64", "arm64" })
+        {
+            var tool = Catalog.All.Single(t => t.Id == id);
+            using var portableOnly = JsonDocument.Parse(Metadata(tool, arch));
+            var fallback = ReleaseClient.Select(tool, portableOnly.RootElement, arch, true);
+            Check(!fallback.Asset.IsInstaller && fallback.Asset.Architecture == arch,
+                tool.Name + " installer-managed copy falls back to official " + arch + " portable ZIP");
+            using var setup = JsonDocument.Parse(Metadata(tool, arch, true));
+            using var both = JsonDocument.Parse(JsonSerializer.Serialize(new { tag_name="v1.2.3", assets=new[] {
+                setup.RootElement.GetProperty("assets")[0], portableOnly.RootElement.GetProperty("assets")[0] } }));
+            Check(ReleaseClient.Select(tool, both.RootElement, arch, true).Asset.IsInstaller,
+                tool.Name + " still prefers setup when the publisher offers it");
+        }
         using var x64metadata = JsonDocument.Parse(Metadata(gleapp,"x64"));
         Check(ReleaseClient.Select(gleapp,x64metadata.RootElement,"arm64").Asset.Architecture == "x64", "GLEAPP explicitly uses its published x64 fallback");
         using var lavaMetadata = JsonDocument.Parse(Metadata(lava,"arm64",true));

@@ -40,7 +40,7 @@ public sealed class ReleaseClient : IDisposable
             throw new InvalidDataException("Only stable public releases are supported.");
         string wanted = tool.InstallerOnly || installerManaged ? "setup.exe" : "portable.zip";
         JsonElement[] assets = json.GetProperty("assets").EnumerateArray().ToArray();
-        JsonElement? Find(string arch)
+        JsonElement? Find(string arch, string kind)
         {
             var matches = assets.Where(a =>
             {
@@ -48,7 +48,7 @@ public sealed class ReleaseClient : IDisposable
                 return name.StartsWith(tool.Name + "-", StringComparison.OrdinalIgnoreCase) &&
                        name.Contains("Windows", StringComparison.OrdinalIgnoreCase) &&
                        name.Contains(arch, StringComparison.OrdinalIgnoreCase) &&
-                       name.EndsWith(wanted, StringComparison.OrdinalIgnoreCase);
+                       name.EndsWith(kind, StringComparison.OrdinalIgnoreCase);
             }).ToArray();
             if (matches.Length > 1)
                 throw new InvalidDataException($"{tool.Name} published more than one matching {arch} Windows package. Nothing was selected; please check the publisher's release.");
@@ -58,10 +58,17 @@ public sealed class ReleaseClient : IDisposable
         // in the Windows 11 ARM test VM. Use its official x64 compatibility
         // installer for this release; future releases prefer native ARM.
         string actualArchitecture = architecture == "arm64" && tool.Id == "lava" && tag.TrimStart('v') == "0.15.0" ? "x64" : architecture;
-        var match = Find(actualArchitecture);
+        var match = Find(actualArchitecture, wanted);
+        // Some publishers now ship portable ZIPs only. Preserve the old registered
+        // installation and let Installer create a separate, versioned portable copy.
+        if (match == null && installerManaged && !tool.InstallerOnly)
+        {
+            wanted = "portable.zip";
+            match = Find(actualArchitecture, wanted);
+        }
         if (match == null && architecture == "arm64" && tool.Id == "gleapp")
         {
-            match = Find("x64");
+            match = Find("x64", wanted);
             actualArchitecture = "x64";
         }
         var selected = match ?? throw new IOException($"No {actualArchitecture} Windows package is published for {tool.Name}.");

@@ -6,6 +6,7 @@ struct LEAPPTool: Identifiable {
     let name: String
     let description: String
     let bundle: String
+    var upstreamVersion = ""
     var version = ""
     var status = "unknown"
     static let all: [LEAPPTool] = [
@@ -28,6 +29,7 @@ struct LEAPPTool: Identifiable {
         case "installing": return "Installing"
         case "current": return "Up to date"
         case "available": return "Update available"
+        case "pending": return "Homebrew update pending"
         case "failed": return "Needs attention"
         case "skipped": return "Not managed by Homebrew"
         default: return "Not checked"
@@ -90,13 +92,14 @@ final class UpdaterModel: ObservableObject {
     private var cancelURL: URL?
     private var logHandle: FileHandle?
     private(set) var logURL: URL?
+    var pendingCount: Int { tools.filter { $0.status == "pending" }.count }
     var availableCount: Int { tools.filter { $0.status == "available" }.count }
     var installedCount: Int { tools.filter { !$0.version.isEmpty }.count }
     var missingCount: Int { tools.filter { $0.version.isEmpty }.count }
     var allInstalledCurrent: Bool { installedCount > 0 && tools.filter { !$0.version.isEmpty }.allSatisfy { $0.status == "current" } }
     var failedCount: Int { tools.filter { $0.status == "failed" }.count }
     var progressTotal: Int { activeIDs.count }
-    var completedCount: Int { tools.filter { activeIDs.contains($0.id) && ["installed", "current", "available", "failed", "skipped", "notInstalled", "unmanaged"].contains($0.status) }.count }
+    var completedCount: Int { tools.filter { activeIDs.contains($0.id) && ["installed", "current", "available", "pending", "failed", "skipped", "notInstalled", "unmanaged"].contains($0.status) }.count }
     var progress: Double { Double(completedCount) / Double(max(1, progressTotal)) }
 
     init(demo: Bool = false, demoMissing: Bool = false) {
@@ -263,6 +266,7 @@ final class UpdaterModel: ObservableObject {
         var environment = ProcessInfo.processInfo.environment
         environment["PATH"] = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:" + (environment["PATH"] ?? "")
         environment["ULEAPP_EVENTS"] = "1"
+        environment["ULEAPP_RELEASE_CHECKER"] = Bundle.main.executableURL?.path
         environment["ULEAPP_CANCEL_FILE"] = cancelURL?.path
         environment["SUDO_ASKPASS"] = askpass
         environment["HOMEBREW_NO_COLOR"] = "1"
@@ -328,6 +332,7 @@ final class UpdaterModel: ObservableObject {
                     tools[index].version = fields[4]
                     tools[index].refreshPresentation()
                 }
+                if fields[1] == "upstream" { tools[index].upstreamVersion = fields[4] }
                 if fields[1] == "app" {
                     tools[index].status = fields[3]
                     if fields[3] == "skipped" && tools[index].version.isEmpty {
@@ -393,6 +398,10 @@ final class UpdaterModel: ObservableObject {
         } else if installedCount == 0 {
             title = "No LEAPP apps managed by Homebrew"
             subtitle = "Install or register your apps with Homebrew first."
+        } else if pendingCount > 0 {
+            title = "New LEAPP releases are available"
+            subtitle = "\(pendingCount) awaiting Homebrew. Use Get latest for the official downloads. \(availableCount) other updates can be installed through Homebrew."
+            lastChecked = DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .short)
         } else if currentMode == .check && availableCount > 0 {
             title = "\(availableCount) \(availableCount == 1 ? "update is" : "updates are") ready"
             subtitle = "Close your LEAPP apps, then choose Update apps."

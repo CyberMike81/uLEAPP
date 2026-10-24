@@ -38,7 +38,7 @@ struct ToolRow: View {
     var stateColor: Color {
         switch tool.status {
         case "current": return Palette.green
-        case "available": return Palette.orange
+        case "available", "pending": return Palette.orange
         case "failed": return Palette.pink
         case "checking", "updating", "installing": return Palette.green
         default: return Palette.muted
@@ -79,6 +79,10 @@ struct ToolRow: View {
             .foregroundStyle(stateColor)
             .padding(.horizontal, 10).padding(.vertical, 7)
             .background(stateColor.opacity(0.09)).clipShape(Capsule())
+            if tool.status == "pending", let repository = UpstreamRelease.repositories[tool.id] {
+                Link("Get latest", destination: URL(string: "https://github.com/\(repository)/releases/latest")!)
+                    .font(.system(size: 12)).help("Official release \(tool.upstreamVersion)")
+            }
             if tool.existingBundlePath != nil {
                 Button("Launch") { launch() }
                     .controlSize(.small).tint(Palette.green)
@@ -111,7 +115,7 @@ struct UpdaterView: View {
                     Text("One place. Every LEAPP up to date.").font(.system(size: 14)).foregroundStyle(Palette.muted)
                 }
                 Spacer()
-                Text(model.demo ? "DEMO · 0.3.3" : "FOR macOS · 0.3.3")
+                Text(model.demo ? "DEMO · 0.3.4" : "FOR macOS · 0.3.4")
                     .font(.system(size: 10, weight: .semibold)).tracking(1.2)
                     .foregroundStyle(Palette.green).padding(.horizontal, 11).padding(.vertical, 7)
                     .overlay(Capsule().stroke(Palette.green.opacity(0.25)))
@@ -262,7 +266,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             credits.addAttribute(.link, value: notices, range: (text as NSString).range(of: "License notices"))
         }
         NSApp.orderFrontStandardAboutPanel(options: [
-            .applicationName: "uLEAPP", .applicationVersion: "0.3.3", .credits: credits
+            .applicationName: "uLEAPP", .applicationVersion: "0.3.4", .credits: credits
         ])
     }
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -307,8 +311,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 }
 
+if CommandLine.arguments.contains("--check-tool-release") { exit(UpstreamRelease.run(CommandLine.arguments)) }
 if CommandLine.arguments.contains("--askpass") { runAskpass() }
-if CommandLine.arguments.contains("--version") { print("uLEAPP 0.3.3"); exit(0) }
+if CommandLine.arguments.contains("--version") { print("uLEAPP 0.3.4"); exit(0) }
 if CommandLine.arguments.contains("--help") {
     print("uLEAPP for Mac\n--version     Report the app version\n--selfcheck   Check the packaged app without changing installed tools\n--demo        Preview the interface with simulated updates")
     exit(0)
@@ -333,6 +338,7 @@ if CommandLine.arguments.contains("--self-test") || CommandLine.arguments.contai
             precondition(NSImage(contentsOf: icon) != nil, "Catalog icon is not readable: \(name)")
         }
     }
+    UpstreamRelease.selfCheck()
     let model = UpdaterModel()
     model.applyInstalled("lava 0.15.0\nleapps-org/leapps/ileapp-gui 2026.4.4\nopenscad 2021.01\n")
     precondition(model.installedCount == 2)
@@ -358,6 +364,13 @@ if CommandLine.arguments.contains("--self-test") || CommandLine.arguments.contai
         model.handleLine("ULEAPP\tapp\t\(tool.id)\tcurrent\tUp to date")
     }
     precondition(model.allInstalledCurrent)
+    model.handleLine("ULEAPP\tupstream\tlava\t\t0.16.0")
+    model.handleLine("ULEAPP\tapp\tlava\tpending\tHomebrew update pending")
+    precondition(model.pendingCount == 1 && !model.allInstalledCurrent)
+    precondition(model.tools[0].upstreamVersion == "0.16.0")
+    model.finish(0)
+    precondition(model.title == "New LEAPP releases are available")
+    model.handleLine("ULEAPP\tapp\tlava\tcurrent\tUp to date")
     model.handleLine("ULEAPP\tapp\tileapp-gui\tavailable\tUpdate available")
     precondition(!model.allInstalledCurrent)
     model.log = ""

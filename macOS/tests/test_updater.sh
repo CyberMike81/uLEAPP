@@ -73,6 +73,16 @@ case "$1" in
 esac
 BREW
 chmod 755 "$scratch/bin/brew"
+cat > "$scratch/bin/release-checker" <<'CHECKER'
+#!/bin/bash
+case "${LEAPP_TEST_MODE:-}:$2" in
+  upstream-behind:aleapp-gui) printf '2026.4.4\n'; exit 10 ;;
+  upstream-failed:aleapp-gui) printf 'GitHub unavailable\n' >&2; exit 1 ;;
+esac
+printf '1.0.0\n'
+CHECKER
+chmod 755 "$scratch/bin/release-checker"
+
 
 passed=0
 failed=0
@@ -101,6 +111,7 @@ run_case() {
   status=0
   env PATH="$scratch/bin:$PATH" LEAPP_TEST_DIR="$case_dir" \
     LEAPP_TEST_MODE="$mode" LEAPP_TEST_FAIL="$failure" \
+    ULEAPP_RELEASE_CHECKER="$scratch/bin/release-checker" \
     ULEAPP_EVENTS="$events" ULEAPP_CANCEL_FILE="$cancel_file" \
     /bin/bash "$root/scripts/LEAPP Updater.command" "$@" \
     > "$case_dir/output" 2>&1 < /dev/null || status=$?
@@ -290,6 +301,24 @@ run_case --install-missing
 expect 'stop during installation is reported safely' test "$status" -eq 130
 expect 'the current installation finishes before stopping' install_count 1
 expect 'stop never starts app upgrades' upgrade_count 0
+
+new_case upstream-behind
+mode=upstream-behind
+events=1
+run_case --check
+expect 'stale Homebrew with a newer GitHub release is reported successfully' test "$status" -eq 0
+expect 'stale Homebrew is pending rather than current' grep -Fq $'ULEAPP\tapp\taleapp-gui\tpending\t' "$case_dir/output"
+expect 'pending upstream version is exposed to the interface' grep -Fq $'ULEAPP\tupstream\taleapp-gui\t\t2026.4.4' "$case_dir/output"
+expect 'pending release has an official download link' grep -Fq 'https://github.com/abrignoni/ALEAPP/releases/latest' "$case_dir/output"
+run_case
+expect 'a successful brew upgrade cannot hide a newer GitHub release' grep -Fq $'ULEAPP\tapp\taleapp-gui\tpending\t' "$case_dir/output"
+
+new_case upstream-failed
+mode=upstream-failed
+events=1
+run_case --check
+expect 'GitHub lookup failure is not reported as current' test "$status" -eq 1
+expect 'GitHub lookup failure marks the app for attention' grep -Fq $'ULEAPP\tapp\taleapp-gui\tfailed\t' "$case_dir/output"
 
 printf '\n%s passed; %s failed.\n' "$passed" "$failed"
 [[ "$failed" -eq 0 ]]
