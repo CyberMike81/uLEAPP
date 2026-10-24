@@ -15,7 +15,7 @@ bash tools/build.sh
 open uLEAPP.app
 ```
 
-Homebrew is optional. Close your LEAPP apps before choosing **Update apps**. Checking refreshes Homebrew's package metadata; updating changes only the named installed LEAPP casks and their required dependencies. Missing apps are installed only when you choose an installation action. Installation actions leave already-managed apps alone.
+Homebrew is optional. Close your LEAPP apps before choosing **Update apps**. When Homebrew is enabled, checking refreshes its package metadata; updating changes only the named installed LEAPP casks and their required dependencies. Missing apps are installed only when you choose an installation action. Installation actions leave already-managed apps alone.
 
 The standalone updater is in `scripts/LEAPP Updater.command`; it can also be double-clicked from Finder. `--dry-run` previews without changing Homebrew or apps. `--check` refreshes Homebrew and checks without upgrading. `--install lava` installs one supported cask; `--install-missing` installs the missing supported tools.
 
@@ -133,3 +133,6 @@ set quarantine on an existing app. The permission dialog now offers **Open
 Settings**, explains enabling uLEAPP and retrying, and does not bypass security.
 Already-present quarantine attributes are not rewritten on Launch. New staged
 installs still receive quarantine after publisher and Gatekeeper verification.
+
+The compact initial window shows all seven tools and the main controls together.
+Its size is bounded by the available screen; smaller screens retain scrolling.

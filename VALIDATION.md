@@ -9,7 +9,7 @@ Prepared October 24, 2026 for the Community Preview bug-fix release.
 | Windows ARM64 | Fresh build and 156 packaged self-checks on a native Windows 11 ARM GitHub runner | Full manual installer/portable GUI flow on a user computer |
 | Linux x64/ARM64 | 35 core tests; interface and extracted-package smoke checks on Ubuntu 24.04 runners; official GLEAPP archive checksum and layout checked | Actual LEAPP graphical launches on Linux hardware; WSL compatibility |
 
-Windows release builds: https://github.com/CyberMike81/uLEAPP/actions/runs/40132016104
+Windows release builds: https://github.com/CyberMike81/uLEAPP/actions/runs/40135325881
 
 The October 21 bug fixes move Windows installation work off the UI thread,
 throttle progress, add Windows/Linux download cancellation and stalled-transfer
@@ -95,3 +95,7 @@ user action in System Settings.
 Compact layouts use shorter tool rows and screen-bounded initial windows on all
 three platforms. Windows and Mac retain scrolling for smaller screens and enlarged
 text; Linux sizes to its requested content within the available screen height.
+
+Mac visual verification on the current display confirmed all seven installed
+tools, six direct-copy/Homebrew return controls and all footer actions visible
+without scrolling in the initial 1040 × 840 window.
