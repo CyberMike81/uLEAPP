@@ -48,13 +48,20 @@ The local build uses an ad hoc signature. Public distribution still needs a rele
 
 This build is for macOS. The separate Windows source is in `../Windows/`, with outputs in `../Windows-x64/` and `../Windows-ARM64/`. Windows uses verified official release downloads and preserves previous portable versions. Windows x64 and ARM64 package checks run on native GitHub runners; manual installation/UI coverage remains in VALIDATION.md.
 
-Installed versions follow Homebrew’s cask records. Before reporting a tool as
-current, uLEAPP also checks the publisher’s latest stable GitHub release. If GitHub
-is newer, **Homebrew update pending** and **Get latest** point to the official
-release. An unavailable GitHub check reports **Needs attention**, not success.
-A manually replaced app bundle may differ from Homebrew’s recorded version.
-The GUI casks also expose the CLI where supported; deprecated separate CLI
-formulae are not installation targets.
+Homebrew remains the first installation source. Before reporting an app as current,
+uLEAPP also checks the publisher’s latest stable GitHub release. If GitHub is newer,
+**Homebrew update pending** offers **Update** to download, verify and install the
+correct Apple silicon/Intel app directly. **Update apps** uses the same fallback
+for pending releases after Homebrew finishes. Checks alone never download apps.
+
+Direct copies live in versioned folders under `~/Applications/uLEAPP`, with selected
+version records in `~/Library/Application Support/uLEAPP/direct-installs`. Launch
+uses the selected direct copy; old copies and Homebrew’s bundles/receipts remain
+intact. Future checks use the direct version and do not downgrade it through
+Homebrew. Direct download cancellation and errors are shown in Details.
+The downloaded image’s SHA-256, app version, processor support and signature are
+verified before the selected-install record changes. The GUI casks remain the
+supported Homebrew targets; the deprecated separate CLI formulae are not used.
 
 Installed-app discovery can be stopped and has a 60-second deadline. Homebrew
 installation Stop still waits for the current operation to finish safely. Icons
@@ -68,3 +75,10 @@ and a **Release notes** link. Downloads open in your browser only when clicked;
 no automatic installation or replacement occurs. This is separate from LEAPP
 tool checks. Offline/rate-limit failures stay quiet and do not block normal use.
 Demo and automated smoke-test modes do not contact GitHub.
+
+Optional real-package integration check (downloads official ALEAPP and installs
+only in an automatically removed temporary home):
+
+```sh
+python3 tests/live_direct_install.py
+```
