@@ -70,6 +70,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public bool StopEnabled => busy && !stopping;
     public string StopLabel => stopping ? "Stopping…" : "Stop";
     public Visibility ProgressVisibility => busy ? Visibility.Visible : Visibility.Collapsed;
+    private DateTimeOffset? lastChecked;
+    public string FooterStatus => lastChecked is DateTimeOffset date ? "Last checked " + (date.LocalDateTime.Date == DateTime.Today ? "today, " + date.ToLocalTime().ToString("t") : date.ToLocalTime().ToString("g")) : "Only your installed LEAPP apps are updated.";
     public int InstalledCount => Rows.Count(r => r.IsInstalled);
     public string InstalledSummary => $"{InstalledCount} of {Rows.Count} installed";
     public string PrimaryLabel => InstalledCount == 0 ? "Install apps" : "Update apps";
@@ -83,7 +85,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void Changed([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new(name));
     private void RefreshControls()
     {
-        foreach (string name in new[] { nameof(ActionsEnabled), nameof(StopEnabled), nameof(StopLabel), nameof(ProgressVisibility), nameof(InstalledSummary), nameof(MissingCount), nameof(PrimaryLabel), nameof(PrimaryVisibility), nameof(MissingLabel), nameof(MissingVisibility), nameof(InstallMissingEnabled), nameof(InstallFolder) }) Changed(name);
+        foreach (string name in new[] { nameof(ActionsEnabled), nameof(StopEnabled), nameof(StopLabel), nameof(ProgressVisibility), nameof(InstalledSummary), nameof(FooterStatus), nameof(MissingCount), nameof(PrimaryLabel), nameof(PrimaryVisibility), nameof(MissingLabel), nameof(MissingVisibility), nameof(InstallMissingEnabled), nameof(InstallFolder) }) Changed(name);
     }
     public MainWindow(bool demo = false, bool demoInstalled = false)
     {
@@ -213,6 +215,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     else
                     {
                         row.Release = await releases.LatestAsync(row.Tool, Catalog.Architecture, row.Installed?.InstallerManaged ?? false, cancellation);
+                        row.CheckedAt = DateTimeOffset.Now;
                         var release = row.Release;
                         if (row.Installed?.InstallerManaged == true && !release.Asset.IsInstaller)
                             WriteLog(row.Name + ": the publisher offers a portable ZIP instead of setup. The new copy will be placed in your portable-app folder; the old installation is preserved.");
@@ -254,11 +257,24 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             else { StatusTitle = "Your LEAPP apps are ready"; StatusDetail = "Installed apps are current. Older portable versions and your case files have been kept."; }
         }
         catch (Exception error) { StatusTitle = "Could not finish this operation"; StatusDetail = error.Message; WriteLog(error.Message); }
-        finally { logWriter?.Dispose(); logWriter = null; operationCancellation?.Dispose(); operationCancellation = null; busy = false; RefreshControls(); }
+        finally { if (check && !cancellation.IsCancellationRequested) lastChecked = DateTimeOffset.Now; logWriter?.Dispose(); logWriter = null; operationCancellation?.Dispose(); operationCancellation = null; busy = false; RefreshControls(); }
     }
     private async void CheckClicked(object sender, RoutedEventArgs e) => await RunAsync(true, Rows);
     private async void PrimaryClicked(object sender, RoutedEventArgs e) => await RunAsync(false, InstalledCount == 0 ? Rows.Where(r => !r.IsInstalled) : Rows.Where(r => r.IsInstalled));
     private async void InstallMissingClicked(object sender, RoutedEventArgs e) => await RunAsync(false, Rows.Where(r => !r.IsInstalled));
+    private void RowMenuClicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button || button.Tag is not ToolRow row) return;
+        var menu = new ContextMenu();
+        if (row.Installed != null) {
+            var show = new MenuItem { Header = "Show in File Explorer" };
+            show.Click += (_, _) => { try { Process.Start(new ProcessStartInfo(Path.GetDirectoryName(row.Installed.Path)!) { UseShellExecute = true }); } catch (Exception error) { MessageBox.Show(this, error.Message, "Could not open folder"); } };
+            menu.Items.Add(show);
+        }
+        var notes = new MenuItem { Header = "Release notes" };
+        notes.Click += (_, _) => OpenUpdateLink(new Uri("https://github.com/" + row.Tool.Repository + "/releases/latest"));
+        menu.Items.Add(notes); menu.PlacementTarget = button; menu.IsOpen = true;
+    }
     private async void RowActionClicked(object sender, RoutedEventArgs e) { if ((sender as Button)?.Tag is ToolRow row) await RunAsync(false, [row]); }
     private void StopClicked(object sender, RoutedEventArgs e) { stopping = true; operationCancellation?.Cancel(); StatusDetail = "Cancelling downloads. An installer already running will finish safely."; RefreshControls(); }
     private void CopyLogClicked(object sender, RoutedEventArgs e) { try { Clipboard.SetText(Log); } catch (System.Runtime.InteropServices.COMException) { StatusDetail = "The clipboard is busy. Try copying the log again."; } }

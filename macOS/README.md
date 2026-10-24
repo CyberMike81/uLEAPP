@@ -137,7 +137,7 @@ installs still receive quarantine after publisher and Gatekeeper verification.
 The compact initial window shows the supported tools and the main controls together.
 Its size is bounded by the available screen; smaller screens retain scrolling.
 
-## Companion tools (0.3.11)
+## Companion tools (0.3.12)
 
 GLEAPP Map Downloader can be checked, installed, updated and launched on Mac,
 Windows and Linux, with native x64 and ARM64 packages where published. It downloads
@@ -153,3 +153,8 @@ so those platforms do not offer it. Companions use direct downloads, not Homebre
 
 Managed companion installs retain the current and previous versions and participate
 in **Remove old installs**. Manually installed Batch copies are outside that cleanup.
+
+0.3.12 groups preferences under Settings and logs under Details. Tool status
+pills include versions; hover for check evidence. Row menus reveal installed
+copies and open release notes. Mac Homebrew switching stays disabled until
+both the installed Homebrew version and its Applications copy have caught up.

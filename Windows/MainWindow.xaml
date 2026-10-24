@@ -63,19 +63,20 @@
           <ItemsControl.ItemTemplate><DataTemplate>
             <Border BorderBrush="#303C32" BorderThickness="0,0,0,1" Padding="12,6">
               <Grid>
-                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="40" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                 <Image Source="{Binding Icon}" Width="30" Height="30" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" VerticalAlignment="Center" HorizontalAlignment="Left" />
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="7,0,10,0">
-                  <StackPanel Orientation="Horizontal"><TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" /><TextBlock Text="{Binding Version}" Foreground="{StaticResource Muted}" FontSize="11" Margin="9,3,0,0" /></StackPanel>
-                  <TextBlock Text="{Binding Detail}" FontSize="10" Foreground="{StaticResource Muted}" TextTrimming="CharacterEllipsis" Margin="0,3,0,0" ToolTip="{Binding Description}" />
+                  <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" />
+                  <TextBlock Text="{Binding Detail}" FontSize="10" Foreground="{StaticResource Muted}" TextTrimming="CharacterEllipsis" Margin="0,3,0,0" ToolTip="{Binding Detail}" />
                 </StackPanel>
                 <Border Grid.Column="2" CornerRadius="12" Background="#29372B" Padding="9,6" VerticalAlignment="Center" Margin="0,0,12,0" MaxWidth="200">
-                  <TextBlock Text="{Binding Status}" Foreground="{Binding StatusColor}" FontSize="11" TextWrapping="Wrap" />
+                  <TextBlock Text="{Binding PillLabel}" ToolTip="{Binding StatusHelp}" Foreground="{Binding StatusColor}" FontSize="11" TextWrapping="Wrap" />
                 </Border>
                 <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
                   <Button Content="{Binding ActionLabel}" Visibility="{Binding ActionVisibility}" Tag="{Binding}" Click="RowActionClicked" Padding="9,5" FontSize="10" MinWidth="58" />
                   <Button Content="Launch" Tag="{Binding}" Click="LaunchClicked" Padding="5,3" FontSize="10" Background="Transparent" Foreground="{StaticResource Muted}" IsEnabled="{Binding IsInstalled}" Margin="6,0,0,0" />
                 </StackPanel>
+                <Button Grid.Column="4" Content="⋯" Tag="{Binding}" Click="RowMenuClicked" Background="Transparent" Foreground="{StaticResource Muted}" Padding="7,5" FontSize="14" AutomationProperties.Name="More tool actions" />
               </Grid>
             </Border>
           </DataTemplate></ItemsControl.ItemTemplate>
@@ -83,12 +84,19 @@
       </ScrollViewer>
     </Border>
     <StackPanel Grid.Row="4" Margin="0,10,0,10">
-      <CheckBox Content="Check for uLEAPP updates automatically" IsChecked="{Binding AutomaticUpdates}" IsEnabled="{Binding UpdatePreferenceEnabled}" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,0,0,8" />
-      <DockPanel>
-        <Button Content="Remove old installs" DockPanel.Dock="Right" Click="RemoveOldClicked" IsEnabled="{Binding ActionsEnabled}" Padding="8,5" FontSize="10" Background="Transparent" Foreground="{StaticResource Muted}" />
-        <Button Content="Choose folder" DockPanel.Dock="Right" Click="ChooseFolderClicked" IsEnabled="{Binding ActionsEnabled}" Padding="8,5" FontSize="10" Background="Transparent" Foreground="#8EE563" />
-        <TextBlock Text="{Binding InstallFolder}" TextTrimming="CharacterEllipsis" Foreground="{StaticResource Muted}" FontSize="10" VerticalAlignment="Center" ToolTip="{Binding InstallFolder}" />
-      </DockPanel>
+      <Expander Header="Settings" Foreground="{StaticResource Muted}" FontSize="12">
+        <StackPanel Margin="0,6,0,6">
+          <CheckBox Content="Check for uLEAPP updates automatically" IsChecked="{Binding AutomaticUpdates}" IsEnabled="{Binding UpdatePreferenceEnabled}" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,0,0,6" />
+          <TextBlock Text="Checks run at startup and once a day. Downloading an update is your choice." FontSize="10" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,6" />
+          <DockPanel>
+            <Button Content="Choose folder" DockPanel.Dock="Right" Click="ChooseFolderClicked" IsEnabled="{Binding ActionsEnabled}" Padding="8,5" FontSize="10" Background="Transparent" Foreground="#8EE563" />
+            <TextBlock Text="{Binding InstallFolder}" TextTrimming="CharacterEllipsis" Foreground="{StaticResource Muted}" FontSize="10" VerticalAlignment="Center" ToolTip="{Binding InstallFolder}" />
+          </DockPanel>
+        </StackPanel>
+      </Expander>
+      <Button Click="RemoveOldClicked" IsEnabled="{Binding ActionsEnabled}" Padding="8,5" FontSize="10" Background="Transparent" Foreground="{StaticResource Muted}" HorizontalAlignment="Right" AutomationProperties.Name="Remove old installs">
+        <StackPanel Orientation="Horizontal"><TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;" Margin="0,0,6,0" /><TextBlock Text="Remove old installs" /></StackPanel>
+      </Button>
       <Expander Header="Details" Foreground="{StaticResource Muted}" Margin="0,6,0,0" IsExpanded="{Binding DetailsExpanded}">
         <StackPanel>
           <TextBox Text="{Binding Log, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Height="100" Background="#0C100D" Foreground="{StaticResource Muted}" BorderThickness="0" FontFamily="Consolas" FontSize="10" Padding="10" />
@@ -106,6 +114,7 @@
             <Button Content="Release notes" Click="SelfUpdateNotes" Padding="7,4" FontSize="10" Margin="5,0,0,0" />
           </StackPanel>
         </StackPanel>
+        <TextBlock Text="{Binding FooterStatus}" Foreground="{StaticResource Muted}" FontSize="10" Margin="0,0,0,4" />
         <Button Content="{Binding MissingLabel}" Click="InstallMissingClicked" IsEnabled="{Binding InstallMissingEnabled}" Background="Transparent" Foreground="#8EE563" FontSize="11" Padding="0,5" HorizontalAlignment="Left" Visibility="{Binding MissingVisibility}" />
         <Button Content="{Binding StopLabel}" Click="StopClicked" IsEnabled="{Binding StopEnabled}" Background="Transparent" Foreground="{StaticResource Muted}" FontSize="11" Padding="0,5" HorizontalAlignment="Left" Visibility="{Binding ProgressVisibility}" />
       </StackPanel>

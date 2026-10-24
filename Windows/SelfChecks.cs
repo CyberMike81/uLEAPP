@@ -71,6 +71,17 @@ public static class SelfChecks
         Check(visibilityChanged && actionRow.ActionVisibility == System.Windows.Visibility.Collapsed,"an up-to-date app hides Update and notifies the interface");
         actionRow.Status = "Update available";
         Check(actionRow.ActionVisibility == System.Windows.Visibility.Visible,"an available update restores the Update button");
+        actionRow.Status = "Installed";
+        Check(actionRow.PillLabel == "Installed · 0.15.0" && actionRow.CheckedAt == null, "unchecked installed apps are not presented as current");
+        actionRow.Status = "Up to date"; actionRow.CheckedAt = DateTimeOffset.Now;
+        Check(actionRow.PillLabel == "Up to date · 0.15.0" && actionRow.StatusHelp.Contains("GitHub"), "current pill includes the selected version and check evidence");
+        using (var updateFixture = JsonDocument.Parse(Metadata(actionRow.Tool,"x64",true))) {
+            actionRow.Release = ReleaseClient.Select(actionRow.Tool, updateFixture.RootElement,"x64");
+            actionRow.Status = "Update available";
+            Check(actionRow.PillLabel == "Update 0.15.0 → 1.2.3", "update pill shows installed and available versions");
+        }
+        actionRow.Status = "Needs attention";
+        Check(actionRow.PillLabel == "Needs attention" && actionRow.StatusHelp.Contains("Last successful"), "a failed operation does not reuse an up-to-date label");
         Check(!Installer.NeedsUpdate("2026.4.4", "2026.4.3"), "newer installed releases are never downgraded");
         Check(!Installer.NeedsUpdate("v2026.4.4", "2026.4.4"), "matching versions are left alone");
         Check(Installer.NeedsUpdate("2026.4.3", "2026.4.4"), "an older version can be updated");

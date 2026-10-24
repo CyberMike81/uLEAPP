@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: MIT
 """uLEAPP Linux desktop interface. No app downloads occur on startup; optional release metadata is checked."""
 import argparse
+from datetime import datetime
+import subprocess
 from pathlib import Path
 import queue
 import sys
@@ -33,6 +35,9 @@ def main():
     style.configure('.', background='#18211c', foreground='#edf5ef', font=('Sans', 11))
     style.configure('TButton', padding=(10, 5), background='#2c4031')
     style.map('TButton', background=[('active', '#405c44')], foreground=[('disabled', '#89938b')])
+    style.configure('Primary.TButton', background='#8ee563', foreground='#15210f')
+    style.map('Primary.TButton', background=[('disabled', '#2c4031'), ('active', '#a7ef85')], foreground=[('disabled', '#89938b')])
+    style.configure('Pill.TLabel', padding=(8, 4), background='#263b27', foreground='#8ee563', font=('Sans', 10))
     style.configure('Heading.TLabel', font=('Sans', 22, 'bold'))
     root.configure(background='#18211c')
     store = Store()
@@ -41,6 +46,7 @@ def main():
     arch = architecture()
     events = queue.Queue()
     releases, records, row_status, actions, launches = {}, {}, {}, {}, {}
+    checked_at, status_widgets, source_labels, row_menus = {}, {}, {}, {}
     busy = False
     cancellation = threading.Event()
     title = tk.StringVar(value='One place. Every LEAPP up to date.')
@@ -56,7 +62,8 @@ def main():
         except Exception as error: append('Could not save update preference: ' + str(error))
         if automatic_updates.get(): check_self_update(schedule=False)
         else: update_banner.pack_forget()
-    preference = ttk.Checkbutton(frame, text='Check for uLEAPP updates automatically', variable=automatic_updates, command=set_automatic)
+    settings = ttk.Frame(frame)
+    preference = ttk.Checkbutton(settings, text='Check for uLEAPP updates automatically', variable=automatic_updates, command=set_automatic)
     preference.pack(anchor='w', pady=(0, 8))
     if args.no_update_check or args.demo: preference.configure(state='disabled')
 
@@ -65,11 +72,42 @@ def main():
     ttk.Label(update_banner, textvariable=app_update_text, foreground='#8ee563').pack(side='left')
     ttk.Button(update_banner, text='Download update', command=lambda: webbrowser.open(app_update['url'])).pack(side='right')
     ttk.Button(update_banner, text='Release notes', command=lambda: webbrowser.open(app_update['page'])).pack(side='right', padx=8)
+    tool_summary = tk.StringVar()
+    summary = ttk.Frame(frame); summary.pack(fill='x', pady=(0, 6))
+    ttk.Label(summary, text='YOUR LEAPP TOOLS', font=('Sans', 9, 'bold'), foreground='#a7b4ab').pack(side='left')
+    ttk.Label(summary, textvariable=tool_summary, font=('Sans', 9), foreground='#a7b4ab').pack(side='right')
     rows = ttk.Frame(frame)
     rows.pack(fill='x')
     rows.columnconfigure(0, weight=1)
     log = tk.Text(frame, height=4, background='#101712', foreground='#d6e6d9',
                   relief='flat', wrap='word', state='disabled')
+
+    def hover(widget, text):
+        popup = None
+        def hide(_event=None):
+            nonlocal popup
+            if popup is not None: popup.destroy(); popup = None
+        def show(_event=None):
+            nonlocal popup
+            hide()
+            popup = tk.Toplevel(root); popup.wm_overrideredirect(True)
+            popup.wm_geometry(f'+{widget.winfo_rootx()}+{widget.winfo_rooty() + widget.winfo_height() + 4}')
+            ttk.Label(popup, text=text(), wraplength=460, padding=8).pack()
+        widget.bind('<Enter>', show); widget.bind('<Leave>', hide)
+        widget.bind('<ButtonPress>', hide); widget.bind('<Destroy>', hide)
+
+    def check_evidence(tid):
+        date = checked_at.get(tid)
+        text = 'Not checked against GitHub in this session.' if date is None else 'Checked against GitHub ' + friendly_time(date)
+        return ('Open Details for the error. Last successful check: ' + text) if row_status[tid].get().startswith(('Needs attention', 'Unavailable')) else text
+
+    def friendly_time(date):
+        return ('today, ' + date.strftime('%I:%M %p').lstrip('0')) if date.date() == datetime.now().date() else date.strftime('%b %d, %I:%M %p')
+
+    def set_status(tid, text):
+        row_status[tid].set(text)
+        color = '#ff9c38' if text.startswith('Update ') else '#fa3b6a' if text.startswith(('Needs attention', 'Unavailable')) else '#8ee563' if text.startswith('Up to date') else '#a7b4ab'
+        status_widgets[tid].configure(foreground=color)
 
     def append(text):
         log.configure(state='normal')
@@ -78,12 +116,15 @@ def main():
         log.configure(state='disabled')
 
     def refresh_buttons():
+        available_count = sum(1 for t in TOOLS if t.id in records and t.id in releases and needs_update(records[t.id]['version'], releases[t.id].version))
+        tool_summary.set(f'{len(records)} of {len(TOOLS)} installed' + (f' · {available_count} update(s) available' if available_count else ''))
         for tool in TOOLS:
             record, release = records.get(tool.id), releases.get(tool.id)
             available = release and (not record or needs_update(record['version'], release.version))
             actions[tool.id].configure(text='Update' if record else 'Install',
                                       state='normal' if available and not busy else 'disabled')
             launches[tool.id].configure(state='normal' if record and not busy else 'disabled')
+            row_menus[tool.id].configure(state='disabled' if busy else 'normal')
         check.configure(state='disabled' if busy else 'normal')
         cleanup.configure(state='disabled' if busy or args.demo else 'normal')
         stop.configure(state='normal' if busy and not cancellation.is_set() else 'disabled')
@@ -118,6 +159,7 @@ def main():
                 except Cancelled: raise
                 except Exception as error:
                     events.put(('unavailable', (tool.id, str(error))))
+            events.put(('checked', datetime.now()))
         run(work)
 
     def install_tools(tools):
@@ -211,17 +253,39 @@ def main():
         try:
             record = None if args.demo else store.installed(tool)
             if record: records[tool.id] = record
-            status = record['version'] + ' · Installed' if record else 'Not installed'
+            status = 'Installed · ' + record['version'] if record else 'Not installed'
         except Exception as error: status = 'Needs attention: ' + str(error)
-        ttk.Label(rows, text=tool.name, font=('Sans', 13, 'bold')).grid(row=index, column=0, sticky='w', pady=5)
+        title_frame = ttk.Frame(rows)
+        title_frame.grid(row=index, column=0, sticky='w', pady=4)
+        ttk.Label(title_frame, text=tool.name, font=('Sans', 12, 'bold')).pack(anchor='w')
+        source_labels[tool.id] = ttk.Label(title_frame, text='Installed by uLEAPP' if record else 'Official publisher download', font=('Sans', 9), foreground='#a7b4ab')
+        source_labels[tool.id].pack(anchor='w')
         row_status[tool.id] = tk.StringVar(value=status)
-        ttk.Label(rows, textvariable=row_status[tool.id], wraplength=380).grid(row=index, column=1, padx=12)
+        status_widgets[tool.id] = ttk.Label(rows, textvariable=row_status[tool.id], style='Pill.TLabel')
+        status_widgets[tool.id].grid(row=index, column=1, padx=12)
+        set_status(tool.id, status)
+        hover(status_widgets[tool.id], lambda tid=tool.id: check_evidence(tid))
         launches[tool.id] = ttk.Button(rows, text='Launch', command=lambda t=tool: launch(t))
         launches[tool.id].grid(row=index, column=2, padx=4)
         actions[tool.id] = ttk.Button(rows, text='Install', command=lambda t=tool: install_tools([t]))
         actions[tool.id].grid(row=index, column=3, padx=4)
+        menu_button = ttk.Menubutton(rows, text='⋯', width=2)
+        menu_button.grid(row=index, column=4, padx=(2, 0))
+        row_menus[tool.id] = menu_button
+        menu = tk.Menu(menu_button, tearoff=False)
+        def show_folder(t=tool):
+            try:
+                record = records.get(t.id)
+                if record: subprocess.Popen(['xdg-open', str((store.tool_root(t) / record['path']).parent)], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except Exception as error: messagebox.showerror('Could not open folder', str(error), parent=root)
+        menu.add_command(label='Show in file manager', command=show_folder, state='normal' if record else 'disabled')
+        menu.add_command(label='Release notes', command=lambda t=tool: webbrowser.open('https://github.com/' + t.repo + '/releases/latest'))
+        menu_button['menu'] = menu
+        # Refresh the folder action when a tool is installed during this session.
+        menu.configure(postcommand=lambda m=menu, tid=tool.id: m.entryconfigure(0, state='normal' if tid in records else 'disabled'))
+
     controls = ttk.Frame(frame)
-    controls.pack(fill='x', pady=10)
+    controls.pack(side='bottom', fill='x', pady=10)
     def request_stop():
         cancellation.set()
         subtitle.set('Stopping downloads; completed installations are kept.')
@@ -230,16 +294,27 @@ def main():
     stop.pack(side='right', padx=4)
     check = ttk.Button(controls, text='Check for updates', command=check_releases)
     check.pack(side='right')
-    update = ttk.Button(controls, text='Update installed apps', command=lambda: install_tools(
+    update = ttk.Button(controls, text='Update apps', style='Primary.TButton', command=lambda: install_tools(
         t for t in TOOLS if t.id in records and t.id in releases and needs_update(records[t.id]['version'], releases[t.id].version)))
     update.pack(side='right', padx=8)
-    ttk.Button(controls, text='LAVA license', command=lambda: webbrowser.open(
-        'https://github.com/leapps-org/LAVA-releases/blob/main/LICENSE')).pack(side='left')
-    cleanup = ttk.Button(frame, text='Remove old installs', command=scan_old_installs)
-    cleanup.pack(anchor='w', pady=(0, 8))
-    ttk.Label(frame, text='Close LEAPP apps before updating. Older versions and case files are kept.',
-              wraplength=850).pack(anchor='w', pady=(0, 8))
-    log.pack(fill='both', expand=True)
+    footer = tk.StringVar(value='Only your installed LEAPP apps are updated.')
+    ttk.Label(frame, textvariable=footer, foreground='#a7b4ab', font=('Sans', 9)).pack(side='bottom', anchor='w')
+    disclosures = ttk.Frame(frame)
+    disclosures.pack(fill='x', pady=(5, 4))
+    def toggle_settings():
+        if settings.winfo_manager(): settings.pack_forget(); settings_button.configure(text='› Settings')
+        else: settings.pack(fill='x', pady=6); settings_button.configure(text='⌄ Settings')
+    settings_button = ttk.Button(disclosures, text='› Settings', command=toggle_settings)
+    settings_button.pack(side='left')
+    ttk.Label(settings, text='Checks run at startup and once a day. Downloads start only when you choose them.', font=('Sans', 9), foreground='#a7b4ab', wraplength=850).pack(anchor='w', pady=4)
+    ttk.Button(settings, text='LAVA license', command=lambda: webbrowser.open('https://github.com/leapps-org/LAVA-releases/blob/main/LICENSE')).pack(anchor='w')
+    def toggle_details():
+        if log.winfo_manager(): log.pack_forget(); details_button.configure(text='› Details')
+        else: log.pack(fill='both', expand=True, pady=6); details_button.configure(text='⌄ Details')
+    details_button = ttk.Button(disclosures, text='› Details', command=toggle_details)
+    details_button.pack(side='left', padx=6)
+    cleanup = ttk.Button(disclosures, text='🗑 Remove old installs', command=scan_old_installs)
+    cleanup.pack(side='right')
     append('Demo mode · no downloads or apps will run.' if args.demo else 'Apps: ' + str(store.root / 'apps'))
 
     def poll():
@@ -250,6 +325,7 @@ def main():
             if kind == 'done':
                 busy = False
                 subtitle.set('Stopped. Completed installations have been kept.' if cancellation.is_set() else 'Finished. Review the app statuses and details below.')
+            elif kind == 'checked': footer.set('Last checked ' + friendly_time(value))
             elif kind == 'cleanup_review': root.after_idle(lambda candidates=value: review_cleanup(candidates))
             elif kind == 'cleanup_log': append(value)
             elif kind == 'stopped': append('Stopped at your request.')
@@ -258,24 +334,29 @@ def main():
                     app_update.update(value)
                     app_update_text.set('uLEAPP ' + value['version'] + ' is available')
                     update_banner.pack(fill='x', pady=(0, 10), before=rows)
-            elif kind == 'error': append(value)
+            elif kind == 'error':
+                append(value)
+                if not log.winfo_manager(): toggle_details()
             elif kind in ('status', 'unavailable'):
                 tid, text = value
-                row_status[tid].set(text if kind == 'status' else 'Unavailable · see details')
+                set_status(tid, text if kind == 'status' else 'Unavailable · see details')
                 if kind == 'unavailable':
                     releases.pop(tid, None)
                     append(tid + ': ' + text)
+                    if not log.winfo_manager(): toggle_details()
             elif kind == 'release':
                 tid, release = value
                 releases[tid] = release
                 record = records.get(tid)
-                text = ('Update available · ' if record and needs_update(record['version'], release.version)
-                        else 'Up to date · ' if record else 'Available · ')
-                row_status[tid].set(text + release.version)
+                checked_at[tid] = datetime.now()
+                text = ('Update ' + record['version'] + ' → ' + release.version if record and needs_update(record['version'], release.version)
+                        else 'Up to date · ' + record['version'] if record else 'Available · ' + release.version)
+                set_status(tid, text)
             elif kind == 'installed':
                 tid, record = value
                 records[tid] = record
-                row_status[tid].set(record['version'] + ' · Installed')
+                set_status(tid, 'Up to date · ' + record['version'])
+                source_labels[tid].configure(text='Installed by uLEAPP')
                 append(tid + ': installed and verified')
         refresh_buttons()
         root.after(100, poll)
@@ -302,7 +383,8 @@ def main():
     root.after(100, poll)
     if args.smoke_test:
         assert len(actions) == len(TOOLS) and len(launches) == len(TOOLS)
-        assert cleanup.cget('text') == 'Remove old installs'
+        assert cleanup.cget('text').endswith('Remove old installs')
+        assert not settings.winfo_manager() and not log.winfo_manager()
         if args.demo: assert cleanup.instate(['disabled'])
         root.update_idletasks()
         sample = 'The app exited with exit code 7.\n\nUnable to load libexample.so\n\nLaunch log: /tmp/example.log'

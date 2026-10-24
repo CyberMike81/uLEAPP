@@ -1,12 +1,12 @@
-# uLEAPP 0.3.11 validation
+# uLEAPP 0.3.12 validation
 
 Prepared October 24, 2026 for the Community Preview bug-fix release.
 
 | Platform | Completed checks | Remaining manual coverage |
 | --- | --- | --- |
 | macOS 13+ | Universal Apple silicon/Intel build; native and Rosetta self-checks; archive extraction, resources, version and ad hoc signature verified; 101 Homebrew worker tests | Physical Intel Mac on macOS 13; clean installation; real password-helper flow and cancellation |
-| Windows x64 | Fresh build and 183 packaged self-checks on a native GitHub x64 runner | Full manual installer/portable GUI flow on a user computer |
-| Windows ARM64 | Fresh build and 183 packaged self-checks on a native Windows 11 ARM GitHub runner | Full manual installer/portable GUI flow on a user computer |
+| Windows x64 | Fresh build and 187 packaged self-checks on a native GitHub x64 runner | Full manual installer/portable GUI flow on a user computer |
+| Windows ARM64 | Fresh build and 187 packaged self-checks on a native Windows 11 ARM GitHub runner | Full manual installer/portable GUI flow on a user computer |
 | Linux x64/ARM64 | 36 core tests; interface and extracted-package smoke checks on Ubuntu 24.04 runners; official GLEAPP archive checksum and layout checked | Actual LEAPP graphical launches on Linux hardware; WSL compatibility |
 
 Windows release builds: https://github.com/CyberMike81/uLEAPP/actions/runs/40138032107
@@ -85,7 +85,7 @@ copy and removed only the selected record. Read-only live Homebrew evidence was
 regenerated successfully with LAVA as the controlled minimum-version target;
 all seven installed-version and final-status events were verified in both runs.
 
-0.3.11 Mac coverage includes Homebrew-free discovery and all seven direct release
+0.3.12 Mac coverage includes Homebrew-free discovery and all seven direct release
 checks using injected release metadata, with no Homebrew executable or network.
 Quarantine tests verify that an existing value is preserved. Native direct
 installation still validates publisher identity, Gatekeeper and quarantine.
@@ -101,7 +101,7 @@ tools, six direct-copy/Homebrew return controls and all footer actions visible
 without scrolling in the initial 1040 × 840 window.
 
 
-0.3.11 companion coverage:
+0.3.12 companion coverage:
 - Windows recorded official Batch v1.2.0 and Map Downloader v0.2.0 metadata covers both architectures, Batch x64 emulation fallback and GUI executable priority over the neighboring CLI.
 - Linux recorded Map Downloader metadata covers both native architectures and duplicate rejection. A real official x64 archive passed digest verification, safe extraction, executable discovery and isolated installation recording on the build Mac; Linux execution is checked separately by platform CI smoke checks for uLEAPP.
 - Mac selector tests cover both Map Downloader architectures, the Batch Apple silicon ZIP, refusal of Intel Batch selection and refusal of automatic Batch installation. The release download is manual for Batch; no Gatekeeper or publisher checks are disabled.
@@ -114,15 +114,25 @@ and selected record. Real user applications were unchanged.
 Final Mac visual check confirmed all nine tool rows and footer controls fit at
 1040 × 840 while a real combined update check displayed its progress controls.
 
-0.3.11 replaces only Batch identifying artwork and attribution, alongside the
+0.3.12 replaces only Batch identifying artwork and attribution, alongside the
 release version. The icon comes from the official v1.2.0 Mac GUI release, is
 converted to 256px PNG, and is embedded in both Mac and Windows packages.
 
 
-0.3.11 audit D6 regression coverage constructs the actual Windows window in demo
+0.3.12 audit D6 regression coverage constructs the actual Windows window in demo
 mode without showing it or invoking its Loaded/network handler. States with 0,
 5, 7 and 9 installed tools verify the displayed total, missing label, enabled state
 and visibility. A tenth row verifies that counts follow the row collection rather
 than a fixed catalog size. This is automated WPF property coverage, not a manual
 click-through on user hardware. The independent audit's Intel Mac, Windows GUI,
 Recycle Bin refusal and Batch ARM execution uncertainties remain open.
+
+
+0.3.12 presentation coverage verifies that an unchecked installed app is not
+called current, current pills carry the selected version, update pills carry both
+versions, and failure pills retain failure state with separately labeled previous
+check evidence. Mac self-checks also refuse switching with an older Homebrew
+receipt, an older Applications copy, missing/invalid versions or a direct-only
+companion. These menu preconditions supplement the existing install-time publisher,
+Gatekeeper and version checks; they do not replace them. Linux smoke coverage
+checks that Settings and Details start collapsed and all tool actions remain.

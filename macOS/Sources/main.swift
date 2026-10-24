@@ -55,26 +55,17 @@ struct ToolRow: View {
                 Image(systemName: "app.dashed").font(.system(size: 24)).foregroundStyle(Palette.muted).frame(width: 32, height: 32).accessibilityHidden(true)
             }
             VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 7) {
-                    Text(tool.name).font(.system(size: 13, weight: .semibold)).foregroundStyle(.white)
-                    if !tool.version.isEmpty { Text(tool.version).font(.system(size: 10, design: .monospaced)).foregroundStyle(Palette.muted) }
-                }
-                if !tool.directVersion.isEmpty {
-                    Text("Direct \(tool.directVersion) · Applications \(tool.applicationVersion.isEmpty ? "none" : tool.applicationVersion)")
-                        .font(.system(size: 10)).foregroundStyle(Palette.orange).lineLimit(1)
-                        .help("Launch uses the direct copy. Finder/Dock may open the Applications copy. " + tool.description)
-                } else { Text(tool.description).font(.system(size: 11)).foregroundStyle(Palette.muted).lineLimit(1) }
+                Text(tool.name).font(.system(size: 13, weight: .semibold)).foregroundStyle(.white)
+                Text(tool.sourceLine(usesHomebrew: usesHomebrew))
+                    .font(.system(size: 10)).foregroundStyle(Palette.muted).lineLimit(1)
+                    .help(tool.sourceLine(usesHomebrew: usesHomebrew))
             }
             Spacer(minLength: 8)
             HStack(spacing: 5) {
                 if ["checking", "updating", "installing"].contains(tool.status) { ProgressView().controlSize(.mini).frame(width: 12, height: 12) }
-                Text(tool.statusLabel).font(.system(size: 10, weight: .medium))
+                Text(tool.pillLabel).font(.system(size: 10, weight: .medium))
             }.foregroundStyle(stateColor).padding(.horizontal, 8).padding(.vertical, 5)
-                .background(stateColor.opacity(0.09)).clipShape(Capsule())
-            if !tool.directVersion.isEmpty && usesHomebrew && !tool.directOnly {
-                Button("Return to Homebrew") { returnHomebrew() }.controlSize(.small).font(.system(size: 11))
-                    .disabled(actionsDisabled).help("Switch only after Homebrew catches up; direct copies are retained")
-            }
+                .background(stateColor.opacity(0.09)).clipShape(Capsule()).help(tool.statusHelp)
             if tool.status == "pending" || ((!usesHomebrew || tool.directOnly) && !tool.manualDownload && tool.status == "available" && !tool.version.isEmpty) {
                 Button("Update") { directUpdate() }.controlSize(.small).tint(Palette.green).disabled(actionsDisabled)
             }
@@ -83,12 +74,26 @@ struct ToolRow: View {
                     .help("Open \(tool.name)").accessibilityLabel("Launch \(tool.name)")
             }
             if tool.manualDownload {
-                Button("Download") { install() }.controlSize(.small).disabled(actionsDisabled)
+                Button("Get latest") { install() }.controlSize(.small).disabled(actionsDisabled)
             } else if tool.version.isEmpty {
                 Button(tool.existingBundlePath == nil || !usesHomebrew || tool.directOnly ? "Install" : "Add") { install() }
                     .controlSize(.small).tint(Palette.green).disabled(actionsDisabled)
                     .help(usesHomebrew && !tool.directOnly ? "Install or register through Homebrew" : "Download and install the official Mac build")
             }
+            Menu {
+                if let path = tool.existingBundlePath {
+                    Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)]) }
+                }
+                if !tool.directVersion.isEmpty && usesHomebrew && !tool.directOnly {
+                    Button("Return to Homebrew…") { returnHomebrew() }.disabled(!tool.canReturnToHomebrew).help(tool.returnHomebrewHelp)
+                    if !tool.canReturnToHomebrew { Text(tool.returnHomebrewHelp) }
+                }
+                if let repository = UpstreamRelease.repositories[tool.id] {
+                    Link("Release notes", destination: URL(string: "https://github.com/" + repository + "/releases/latest")!)
+                }
+            } label: { Image(systemName: "ellipsis").frame(width: 18, height: 18).foregroundStyle(Palette.muted) }
+                .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize().disabled(actionsDisabled)
+                .accessibilityLabel("More actions for " + tool.name)
         }.padding(.horizontal, 12).padding(.vertical, 5).accessibilityElement(children: .contain)
     }
 
@@ -107,7 +112,7 @@ struct UpdaterView: View {
                     Text("One place. Every LEAPP up to date.").font(.system(size: 12)).foregroundStyle(Palette.muted)
                 }
                 Spacer()
-                Text(model.demo ? "DEMO · 0.3.11" : "FOR macOS · 0.3.11")
+                Text(model.demo ? "DEMO · 0.3.12" : "FOR macOS · 0.3.12")
                     .font(.system(size: 10, weight: .semibold)).tracking(1.2)
                     .foregroundStyle(Palette.green).padding(.horizontal, 11).padding(.vertical, 7)
                     .overlay(Capsule().stroke(Palette.green.opacity(0.25)))
@@ -122,7 +127,7 @@ struct UpdaterView: View {
             }
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .top, spacing: 13) {
-                    Image(systemName: model.busy ? "arrow.triangle.2.circlepath" : (model.failedCount > 0 ? "exclamationmark.circle" : (model.lastChecked.isEmpty ? "sparkle" : "checkmark.circle")))
+                    Image(systemName: model.busy ? "arrow.triangle.2.circlepath" : (model.failedCount > 0 ? "exclamationmark.circle" : (model.lastChecked == nil ? "sparkle" : "checkmark.circle")))
                         .font(.system(size: 25, weight: .medium))
                         .foregroundStyle(model.failedCount > 0 ? Palette.pink : Palette.green).frame(width: 30)
                     VStack(alignment: .leading, spacing: 5) {
@@ -149,7 +154,7 @@ struct UpdaterView: View {
             HStack {
                 Text("YOUR LEAPP TOOLS").font(.system(size: 10, weight: .semibold)).tracking(1.3)
                 Spacer()
-                Text("\(model.installedCount) installed").font(.system(size: 11))
+                Text("\(model.installedCount) of \(model.tools.count) installed" + (model.availableCount + model.pendingCount > 0 ? " · \(model.availableCount + model.pendingCount) available" : "")).font(.system(size: 11))
             }.foregroundStyle(Palette.muted).padding(.horizontal, 3)
 
             ScrollView {
@@ -172,10 +177,6 @@ struct UpdaterView: View {
             .background(Palette.card).clipShape(RoundedRectangle(cornerRadius: 14))
             .overlay(RoundedRectangle(cornerRadius: 14).stroke(Palette.border))
 
-            Toggle("Use Homebrew when available", isOn: Binding(get: { model.usesHomebrew }, set: { model.setUseHomebrew($0) }))
-                .font(.system(size: 11)).foregroundStyle(Palette.muted).disabled(!model.brewFound || model.busy || model.loading || model.demo || !model.homebrewPreferenceEnabled)
-            Toggle("Check for uLEAPP updates automatically", isOn: Binding(get: { model.automaticUpdates }, set: { model.setAutomaticUpdates($0) }))
-                .font(.system(size: 11)).foregroundStyle(Palette.muted).disabled(!model.updatePreferenceEnabled || model.demo)
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     Button {
@@ -183,6 +184,9 @@ struct UpdaterView: View {
                     } label: {
                         Label("Details", systemImage: model.detailsExpanded ? "chevron.down" : "chevron.right")
                             .font(.system(size: 12)).foregroundStyle(Palette.muted)
+                    }.buttonStyle(.plain)
+                    Button { withAnimation(.easeInOut(duration: 0.15)) { model.settingsExpanded.toggle() } } label: {
+                        Label("Settings", systemImage: model.settingsExpanded ? "chevron.down" : "chevron.right").font(.system(size: 12)).foregroundStyle(Palette.muted)
                     }.buttonStyle(.plain)
                     Spacer()
                     if model.detailsExpanded && !model.log.isEmpty {
@@ -196,7 +200,20 @@ struct UpdaterView: View {
                         }
                     }
                 }
+                if model.settingsExpanded {
+                    VStack(alignment: .leading, spacing: 7) {
+            Toggle("Use Homebrew when available", isOn: Binding(get: { model.usesHomebrew }, set: { model.setUseHomebrew($0) }))
+                .font(.system(size: 11)).foregroundStyle(Palette.muted).disabled(!model.brewFound || model.busy || model.loading || model.demo || !model.homebrewPreferenceEnabled)
+            Toggle("Check for uLEAPP updates automatically", isOn: Binding(get: { model.automaticUpdates }, set: { model.setAutomaticUpdates($0) }))
+                .font(.system(size: 11)).foregroundStyle(Palette.muted).disabled(!model.updatePreferenceEnabled || model.demo)
+                        Text("Automatic checks look for uLEAPP updates at startup and once a day. Downloads start only when you choose them.").font(.system(size: 10)).foregroundStyle(Palette.muted)
+                    }.padding(.vertical, 4)
+                }
                 if model.detailsExpanded {
+                    if model.tools.contains(where: { $0.manualDownload }) {
+                        Text("Batch LEAPP’s current Mac build is not notarized and reports version 0.0.0. Install it manually from the publisher; macOS may block first launch. uLEAPP cannot confirm that copy is current and does not bypass security checks.")
+                            .font(.system(size: 10)).foregroundStyle(Palette.muted).textSelection(.enabled)
+                    }
                     ScrollViewReader { proxy in
                         ScrollView {
                             Text(model.log.isEmpty ? "Update details will appear here." : model.log)
@@ -211,20 +228,19 @@ struct UpdaterView: View {
                 }
             }
             HStack(spacing: 10) {
-                if model.busy || model.loading {
-                    Button(model.stopRequested ? "Stopping…" : (model.loading ? "Stop" : "Stop after this operation")) { model.requestStop() }
-                        .buttonStyle(.plain).font(.system(size: 11)).foregroundStyle(Palette.muted)
-                        .disabled(model.stopRequested)
-                } else if model.missingCount > 0 && !model.loading {
-                    Button("Install missing apps (\(model.missingCount))") { model.start(.install) }
-                        .buttonStyle(.plain).font(.system(size: 11)).foregroundStyle(Palette.green)
-                        .disabled(model.busy || model.loading)
-                } else {
-                    Text(model.lastChecked.isEmpty ? "Only your installed LEAPP apps are updated." : "Last checked \(model.lastChecked)")
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(model.lastChecked.map { "Last checked " + LEAPPTool.friendlyTime($0) } ?? "Only your installed LEAPP apps are updated.")
                         .font(.system(size: 10)).foregroundStyle(Palette.muted)
+                    if model.busy || model.loading {
+                        Button(model.stopRequested ? "Stopping…" : (model.loading ? "Stop" : "Stop after this operation")) { model.requestStop() }
+                            .buttonStyle(.plain).font(.system(size: 11)).foregroundStyle(Palette.muted).disabled(model.stopRequested)
+                    } else if model.missingCount > 0 {
+                        Button("Install missing apps (\(model.missingCount))") { model.start(.install) }
+                            .buttonStyle(.plain).font(.system(size: 11)).foregroundStyle(Palette.green).disabled(model.busy || model.loading)
+                    }
                 }
                 Spacer(minLength: 4)
-                Button("Remove old installs") { model.removeOldInstalls() }
+                Button { model.removeOldInstalls() } label: { Label("Remove old installs", systemImage: "trash") }
                     .buttonStyle(.plain).font(.system(size: 11)).foregroundStyle(Palette.muted)
                     .disabled(model.busy || model.loading || model.demo)
                     .help("Keep the current and previous direct installs; review older copies before moving them to Trash")
@@ -269,7 +285,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             credits.addAttribute(.link, value: notices, range: (text as NSString).range(of: "License notices"))
         }
         NSApp.orderFrontStandardAboutPanel(options: [
-            .applicationName: "uLEAPP", .applicationVersion: "0.3.11", .credits: credits
+            .applicationName: "uLEAPP", .applicationVersion: "0.3.12", .credits: credits
         ])
     }
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -340,7 +356,7 @@ if CommandLine.arguments.contains("--direct-tool-version") {
 }
 if CommandLine.arguments.contains("--check-tool-release") { exit(UpstreamRelease.run(CommandLine.arguments)) }
 if CommandLine.arguments.contains("--askpass") { runAskpass() }
-if CommandLine.arguments.contains("--version") { print("uLEAPP 0.3.11"); exit(0) }
+if CommandLine.arguments.contains("--version") { print("uLEAPP 0.3.12"); exit(0) }
 if CommandLine.arguments.contains("--help") {
     print("uLEAPP for Mac\n--no-homebrew  Use direct Mac downloads for this run\n--no-update-check Disable automatic update requests for this run\n--version     Report the app version\n--selfcheck   Check the packaged app without changing installed tools\n--demo        Preview the interface with simulated updates")
     exit(0)
@@ -368,6 +384,25 @@ if CommandLine.arguments.contains("--self-test") || CommandLine.arguments.contai
     GitHubMetadata.selfCheck()
     UpstreamRelease.selfCheck()
     DirectMacInstaller.selfCheck()
+    var presentation = LEAPPTool.all.first { $0.id == "aleapp-gui" }!
+    presentation.version = "2026.4.4"; presentation.directVersion = "2026.4.4"
+    presentation.homebrewVersion = "2026.4.3"; presentation.applicationVersion = "2026.4.3"
+    precondition(!presentation.canReturnToHomebrew, "An older Homebrew copy cannot be selected")
+    presentation.homebrewVersion = "2026.4.4"
+    precondition(!presentation.canReturnToHomebrew, "A caught-up receipt cannot hide an older app")
+    presentation.applicationVersion = "2026.4.4"
+    precondition(presentation.canReturnToHomebrew)
+    presentation.homebrewVersion = "unknown"
+    precondition(!presentation.canReturnToHomebrew, "An unreadable Homebrew version must keep switching disabled")
+    presentation.status = "installed"
+    precondition(presentation.pillLabel == "Installed · 2026.4.4" && presentation.checkedAt == nil)
+    presentation.status = "current"; presentation.checkedAt = Date()
+    precondition(presentation.pillLabel == "Up to date · 2026.4.4" && presentation.statusHelp.contains("GitHub"))
+    presentation.status = "available"; presentation.upstreamVersion = "2026.4.5"
+    precondition(presentation.pillLabel == "Update 2026.4.4 → 2026.4.5")
+    var companion = LEAPPTool.all.first { $0.id == "mapdownloader" }!
+    companion.directVersion = "0.2.0"
+    precondition(!companion.canReturnToHomebrew && !companion.sourceLine(usesHomebrew: true).contains("none"))
     let directOnly = UpdaterModel(directStore: nil, brewResolver: { nil }, fetchRelease: { cask in
         let tool = LEAPPTool.all.first { $0.id == cask }!
         let arch = DirectMacInstaller.architecture
