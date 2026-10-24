@@ -137,7 +137,7 @@ installs still receive quarantine after publisher and Gatekeeper verification.
 The compact initial window shows the supported tools and the main controls together.
 Its size is bounded by the available screen; smaller screens retain scrolling.
 
-## Companion tools (0.3.10)
+## Companion tools (0.3.11)
 
 GLEAPP Map Downloader can be checked, installed, updated and launched on Mac,
 Windows and Linux, with native x64 and ARM64 packages where published. It downloads

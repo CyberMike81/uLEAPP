@@ -124,7 +124,7 @@ result. GitHub’s unauthenticated limit is shared by source IP (typically 60/ho
 conditional requests are not exempt without authentication. Details show the
 remaining quota and reset timestamp on HTTP 403/429. No GitHub token is stored.
 
-## Companion tools (0.3.10)
+## Companion tools (0.3.11)
 
 GLEAPP Map Downloader can be checked, installed, updated and launched on Mac,
 Windows and Linux, with native x64 and ARM64 packages where published. It downloads

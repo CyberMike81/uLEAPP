@@ -30,6 +30,21 @@ public static class SelfChecks
             var icon = ToolIcons.Load(tool.Id);
             Check(icon.IsFrozen && icon.PixelWidth == 256 && icon.PixelHeight == 256,tool.Name + " actual catalog icon is embedded and decodes without an installed app");
         }
+        // Construct the real window on the entry thread (STA), before any awaits.
+        // Demo mode uses isolated settings; never show it or trigger Loaded/network.
+        var countsWindow = new MainWindow(demo: true);
+        try {
+            foreach (int installed in new[] { 0, 5, 7, 9 }) {
+                for (int i = 0; i < countsWindow.Rows.Count; i++) countsWindow.Rows[i].Version = i < installed ? "1.0.0" : "";
+                Check(countsWindow.InstalledSummary == $"{installed} of 9 installed", $"actual window summary counts {installed} installed apps against nine rows");
+                Check(countsWindow.MissingLabel == $"Install missing apps ({9 - installed})", $"actual window missing label counts all companions with {installed} installed");
+                Check(countsWindow.InstallMissingEnabled == (installed < 9) && countsWindow.MissingVisibility == (installed < 9 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed), $"bulk install visibility and enabled state match {9 - installed} missing apps");
+            }
+            countsWindow.Rows.Add(new ToolRow(Catalog.All[0]));
+            Check(countsWindow.InstalledSummary == "9 of 10 installed", "window summary follows a growing row collection");
+            Check(countsWindow.MissingLabel == "Install missing apps (1)", "missing label follows a growing row collection");
+            Check(countsWindow.InstallMissingEnabled && countsWindow.MissingVisibility == System.Windows.Visibility.Visible, "a newly added missing row restores bulk installation");
+        } finally { countsWindow.Close(); }
         var confirmation = new WindowsTrash.RecycleConfirmation();
         confirmation.PostDeleteItem(0,IntPtr.Zero,0,IntPtr.Zero);
         Check(!confirmation.Recycled,"a missing Recycle Bin destination is never confirmed as recycled");

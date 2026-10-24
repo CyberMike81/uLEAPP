@@ -24,7 +24,7 @@ public static class Catalog
         new("mapdownloader", "Map Downloader", "Download offline maps for GLEAPP", "abrignoni/GLEAPP-MapDownloader", PackageName: "GLEAPP-MapDownloader")
     ];
     public static string Architecture => RuntimeInformation.OSArchitecture == System.Runtime.InteropServices.Architecture.Arm64 ? "arm64" : "x64";
-    public static string Version => "0.3.10";
+    public static string Version => "0.3.11";
 }
 
 public sealed class ToolRow(Tool tool) : INotifyPropertyChanged

@@ -71,18 +71,19 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public string StopLabel => stopping ? "Stopping…" : "Stop";
     public Visibility ProgressVisibility => busy ? Visibility.Visible : Visibility.Collapsed;
     public int InstalledCount => Rows.Count(r => r.IsInstalled);
-    public string InstalledSummary => $"{InstalledCount} of 7 installed";
+    public string InstalledSummary => $"{InstalledCount} of {Rows.Count} installed";
     public string PrimaryLabel => InstalledCount == 0 ? "Install apps" : "Update apps";
     public Visibility PrimaryVisibility => !busy && InstalledCount > 0 && Rows.Where(r => r.IsInstalled).All(r => r.Status == "Up to date") ? Visibility.Collapsed : Visibility.Visible;
-    public string MissingLabel => $"Install missing apps ({7 - InstalledCount})";
-    public Visibility MissingVisibility => !busy && InstalledCount < 7 ? Visibility.Visible : Visibility.Collapsed;
-    public bool InstallMissingEnabled => !busy && InstalledCount < 7;
+    public int MissingCount => Rows.Count - InstalledCount;
+    public string MissingLabel => $"Install missing apps ({MissingCount})";
+    public Visibility MissingVisibility => !busy && MissingCount > 0 ? Visibility.Visible : Visibility.Collapsed;
+    public bool InstallMissingEnabled => !busy && MissingCount > 0;
     public string InstallFolder => "Portable apps: " + store.Root;
     public event PropertyChangedEventHandler? PropertyChanged;
     private void Changed([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new(name));
     private void RefreshControls()
     {
-        foreach (string name in new[] { nameof(ActionsEnabled), nameof(StopEnabled), nameof(StopLabel), nameof(ProgressVisibility), nameof(InstalledSummary), nameof(PrimaryLabel), nameof(PrimaryVisibility), nameof(MissingLabel), nameof(MissingVisibility), nameof(InstallMissingEnabled), nameof(InstallFolder) }) Changed(name);
+        foreach (string name in new[] { nameof(ActionsEnabled), nameof(StopEnabled), nameof(StopLabel), nameof(ProgressVisibility), nameof(InstalledSummary), nameof(MissingCount), nameof(PrimaryLabel), nameof(PrimaryVisibility), nameof(MissingLabel), nameof(MissingVisibility), nameof(InstallMissingEnabled), nameof(InstallFolder) }) Changed(name);
     }
     public MainWindow(bool demo = false, bool demoInstalled = false)
     {
