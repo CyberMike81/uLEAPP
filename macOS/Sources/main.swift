@@ -107,7 +107,7 @@ struct UpdaterView: View {
                     Text("One place. Every LEAPP up to date.").font(.system(size: 12)).foregroundStyle(Palette.muted)
                 }
                 Spacer()
-                Text(model.demo ? "DEMO · 0.3.9" : "FOR macOS · 0.3.9")
+                Text(model.demo ? "DEMO · 0.3.10" : "FOR macOS · 0.3.10")
                     .font(.system(size: 10, weight: .semibold)).tracking(1.2)
                     .foregroundStyle(Palette.green).padding(.horizontal, 11).padding(.vertical, 7)
                     .overlay(Capsule().stroke(Palette.green.opacity(0.25)))
@@ -269,7 +269,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             credits.addAttribute(.link, value: notices, range: (text as NSString).range(of: "License notices"))
         }
         NSApp.orderFrontStandardAboutPanel(options: [
-            .applicationName: "uLEAPP", .applicationVersion: "0.3.9", .credits: credits
+            .applicationName: "uLEAPP", .applicationVersion: "0.3.10", .credits: credits
         ])
     }
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -340,7 +340,7 @@ if CommandLine.arguments.contains("--direct-tool-version") {
 }
 if CommandLine.arguments.contains("--check-tool-release") { exit(UpstreamRelease.run(CommandLine.arguments)) }
 if CommandLine.arguments.contains("--askpass") { runAskpass() }
-if CommandLine.arguments.contains("--version") { print("uLEAPP 0.3.9"); exit(0) }
+if CommandLine.arguments.contains("--version") { print("uLEAPP 0.3.10"); exit(0) }
 if CommandLine.arguments.contains("--help") {
     print("uLEAPP for Mac\n--no-homebrew  Use direct Mac downloads for this run\n--no-update-check Disable automatic update requests for this run\n--version     Report the app version\n--selfcheck   Check the packaged app without changing installed tools\n--demo        Preview the interface with simulated updates")
     exit(0)

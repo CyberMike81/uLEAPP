@@ -1,4 +1,4 @@
-# uLEAPP 0.3.9 validation
+# uLEAPP 0.3.10 validation
 
 Prepared October 24, 2026 for the Community Preview bug-fix release.
 
@@ -85,7 +85,7 @@ copy and removed only the selected record. Read-only live Homebrew evidence was
 regenerated successfully with LAVA as the controlled minimum-version target;
 all seven installed-version and final-status events were verified in both runs.
 
-0.3.9 Mac coverage includes Homebrew-free discovery and all seven direct release
+0.3.10 Mac coverage includes Homebrew-free discovery and all seven direct release
 checks using injected release metadata, with no Homebrew executable or network.
 Quarantine tests verify that an existing value is preserved. Native direct
 installation still validates publisher identity, Gatekeeper and quarantine.
@@ -101,7 +101,7 @@ tools, six direct-copy/Homebrew return controls and all footer actions visible
 without scrolling in the initial 1040 × 840 window.
 
 
-0.3.9 companion coverage:
+0.3.10 companion coverage:
 - Windows recorded official Batch v1.2.0 and Map Downloader v0.2.0 metadata covers both architectures, Batch x64 emulation fallback and GUI executable priority over the neighboring CLI.
 - Linux recorded Map Downloader metadata covers both native architectures and duplicate rejection. A real official x64 archive passed digest verification, safe extraction, executable discovery and isolated installation recording on the build Mac; Linux execution is checked separately by platform CI smoke checks for uLEAPP.
 - Mac selector tests cover both Map Downloader architectures, the Batch Apple silicon ZIP, refusal of Intel Batch selection and refusal of automatic Batch installation. The release download is manual for Batch; no Gatekeeper or publisher checks are disabled.
@@ -113,3 +113,7 @@ and selected record. Real user applications were unchanged.
 
 Final Mac visual check confirmed all nine tool rows and footer controls fit at
 1040 × 840 while a real combined update check displayed its progress controls.
+
+0.3.10 replaces only Batch identifying artwork and attribution, alongside the
+release version. The icon comes from the official v1.2.0 Mac GUI release, is
+converted to 256px PNG, and is embedded in both Mac and Windows packages.

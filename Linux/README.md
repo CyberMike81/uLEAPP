@@ -1,4 +1,4 @@
-# uLEAPP for Linux · 0.3.9 preview
+# uLEAPP for Linux · 0.3.10 preview
 
 Install, update and launch LEAPP apps and Map Downloader from their official GitHub releases.
 This Linux preview uses Python 3.10+ and Tk; no Python packages from pip are needed.
@@ -79,7 +79,7 @@ result. GitHub’s unauthenticated limit is shared by source IP (typically 60/ho
 conditional requests are not exempt without authentication. Details show the
 remaining quota and reset timestamp on HTTP 403/429. No GitHub token is stored.
 
-## Companion tools (0.3.9)
+## Companion tools (0.3.10)
 
 GLEAPP Map Downloader can be checked, installed, updated and launched on Mac,
 Windows and Linux, with native x64 and ARM64 packages where published. It downloads
