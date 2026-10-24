@@ -1,4 +1,4 @@
-uLEAPP 0.3.5 self-check
+uLEAPP 0.3.6 self-check
 ok - seven supported tools; no extra applications
 ok - LAVA actual catalog icon is embedded and decodes without an installed app
 ok - ALEAPP actual catalog icon is embedded and decodes without an installed app
@@ -139,5 +139,15 @@ ok - verified portable installation is recorded and discoverable
 ok - installation preserves previous versions and case files
 ok - installed app retains upstream license files
 ok - failed replacement keeps the working app and state
-uLEAPP self-check passed: 140 checks. No installed apps were changed.
+ok - cleanup keeps the current and previous version and reviews only older installs
+ok - cleanup review does not remove anything
+ok - cleanup preserves an older app folder with added case data
+ok - cleanup rechecks changed contents after review
+ok - cleanup preserves modified binaries
+ok - cleanup rechecks the current selection before recycling
+ok - cancelled cleanup leaves app folders in place
+ok - untracked folders and forged cleanup paths are preserved
+ok - eligible old app moves to the Windows Recycle Bin
+ok - recycling keeps the current and previous app plus untracked case data
+uLEAPP self-check passed: 150 checks. No installed apps were changed.
 

@@ -100,3 +100,12 @@ be updated using its official portable ZIP for the same architecture. The new
 copy is installed in the selected portable-app folder and becomes uLEAPP’s
 launch target. The older registered copy is preserved. Setup remains preferred
 when published; LAVA continues to require its official installer.
+
+## Remove old installs
+
+**Remove old installs** reviews eligible older uLEAPP-managed app folders before
+moving them to Recycle Bin/Trash. It keeps the current version and one previous
+version per tool. Cleanup is manual; checking or installing never removes old
+versions automatically. A file inventory saved by new installs protects added
+case/report files, changed app files and links. Older folders without this
+inventory are preserved. Eligibility is checked again after review.
