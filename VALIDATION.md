@@ -9,7 +9,7 @@ Prepared October 24, 2026 for the Community Preview bug-fix release.
 | Windows ARM64 | Fresh build and 156 packaged self-checks on a native Windows 11 ARM GitHub runner | Full manual installer/portable GUI flow on a user computer |
 | Linux x64/ARM64 | 35 core tests; interface and extracted-package smoke checks on Ubuntu 24.04 runners; official GLEAPP archive checksum and layout checked | Actual LEAPP graphical launches on Linux hardware; WSL compatibility |
 
-Windows release builds: https://github.com/CyberMike81/uLEAPP/actions/runs/40125038437
+Windows release builds: https://github.com/CyberMike81/uLEAPP/actions/runs/40132016104
 
 The October 21 bug fixes move Windows installation work off the UI thread,
 throttle progress, add Windows/Linux download cancellation and stalled-transfer
@@ -77,3 +77,10 @@ cases still need dedicated manual hardware coverage; no system policy is changed
 by the automated tests. The Mac live Homebrew check dynamically selects a cask
 whose decisions are still Homebrew-managed and explicitly skips the controlled
 minimum-version assertion if none exists.
+
+Completed native follow-up: a real ALEAPP direct-install test passed publisher
+team verification, Gatekeeper assessment and explicit quarantine. The isolated
+return-to-Homebrew test refused an older version, accepted a verified current
+copy and removed only the selected record. Read-only live Homebrew evidence was
+regenerated successfully with LAVA as the controlled minimum-version target;
+all seven installed-version and final-status events were verified in both runs.

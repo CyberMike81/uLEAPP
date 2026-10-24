@@ -11,46 +11,46 @@ ULEAPP	phase		preparing	Preparing Homebrew
 ULEAPP	phase		refreshing	Refreshing Homebrew
 
 --- LAVA ---
+ULEAPP	homebrew	lava		v0.15.0
 ULEAPP	version	lava		v0.15.0
 ULEAPP	app	lava	checking	Checking for updates
 ULEAPP	app	lava	current	Up to date
-LAVA: up to date.
 
 --- ALEAPP ---
-ULEAPP	version	aleapp-gui		v2026.4.3
-ULEAPP	app	aleapp-gui	checking	Checking for updates
+ULEAPP	homebrew	aleapp-gui		v2026.4.3
+ULEAPP	version	aleapp-gui		2026.4.4
+ULEAPP	app	aleapp-gui	checking	Checking official releases
 ULEAPP	app	aleapp-gui	current	Up to date
-ALEAPP: up to date.
 
 --- iLEAPP ---
-ULEAPP	version	ileapp-gui		v2026.4.4
-ULEAPP	app	ileapp-gui	checking	Checking for updates
+ULEAPP	homebrew	ileapp-gui		v2026.4.4
+ULEAPP	version	ileapp-gui		2026.4.5
+ULEAPP	app	ileapp-gui	checking	Checking official releases
 ULEAPP	app	ileapp-gui	current	Up to date
-iLEAPP: up to date.
 
 --- RLEAPP ---
-ULEAPP	version	rleapp-gui		v2026.4.3
-ULEAPP	app	rleapp-gui	checking	Checking for updates
+ULEAPP	homebrew	rleapp-gui		v2026.4.3
+ULEAPP	version	rleapp-gui		2026.4.4
+ULEAPP	app	rleapp-gui	checking	Checking official releases
 ULEAPP	app	rleapp-gui	current	Up to date
-RLEAPP: up to date.
 
 --- VLEAPP ---
-ULEAPP	version	vleapp-gui		v2026.4.3
-ULEAPP	app	vleapp-gui	checking	Checking for updates
+ULEAPP	homebrew	vleapp-gui		v2026.4.3
+ULEAPP	version	vleapp-gui		2026.4.4
+ULEAPP	app	vleapp-gui	checking	Checking official releases
 ULEAPP	app	vleapp-gui	current	Up to date
-VLEAPP: up to date.
 
 --- DLEAPP ---
-ULEAPP	version	dleapp-gui		v2026.4.3
-ULEAPP	app	dleapp-gui	checking	Checking for updates
+ULEAPP	homebrew	dleapp-gui		v2026.4.3
+ULEAPP	version	dleapp-gui		2026.4.4
+ULEAPP	app	dleapp-gui	checking	Checking official releases
 ULEAPP	app	dleapp-gui	current	Up to date
-DLEAPP: up to date.
 
 --- GLEAPP ---
-ULEAPP	version	gleapp		v2026.5.4
-ULEAPP	app	gleapp	checking	Checking for updates
+ULEAPP	homebrew	gleapp		v2026.5.4
+ULEAPP	version	gleapp		2026.5.5
+ULEAPP	app	gleapp	checking	Checking official releases
 ULEAPP	app	gleapp	current	Up to date
-GLEAPP: up to date.
 
 =============
 Checked: 7 apps; 0 updates available; 0 failed; 0 skipped.
@@ -59,7 +59,7 @@ Read-only integration: skipped Homebrew preparation (tap).
 Read-only integration: skipped Homebrew preparation (update).
 Verified: 7 installed versions and 7 final statuses; exit 0.
 
-Controlled minimum-version query for iLEAPP (not a published update)
+Controlled minimum-version query for lava (not a published update)
 
 LEAPP Updater
 =============
@@ -70,46 +70,47 @@ ULEAPP	phase		preparing	Preparing Homebrew
 ULEAPP	phase		refreshing	Refreshing Homebrew
 
 --- LAVA ---
+ULEAPP	homebrew	lava		v0.15.0
 ULEAPP	version	lava		v0.15.0
 ULEAPP	app	lava	checking	Checking for updates
-ULEAPP	app	lava	current	Up to date
-LAVA: up to date.
+ULEAPP	app	lava	available	Update available
+LAVA: update available.
 
 --- ALEAPP ---
-ULEAPP	version	aleapp-gui		v2026.4.3
-ULEAPP	app	aleapp-gui	checking	Checking for updates
+ULEAPP	homebrew	aleapp-gui		v2026.4.3
+ULEAPP	version	aleapp-gui		2026.4.4
+ULEAPP	app	aleapp-gui	checking	Checking official releases
 ULEAPP	app	aleapp-gui	current	Up to date
-ALEAPP: up to date.
 
 --- iLEAPP ---
-ULEAPP	version	ileapp-gui		v2026.4.4
-ULEAPP	app	ileapp-gui	checking	Checking for updates
-ULEAPP	app	ileapp-gui	available	Update available
-iLEAPP: update available.
+ULEAPP	homebrew	ileapp-gui		v2026.4.4
+ULEAPP	version	ileapp-gui		2026.4.5
+ULEAPP	app	ileapp-gui	checking	Checking official releases
+ULEAPP	app	ileapp-gui	current	Up to date
 
 --- RLEAPP ---
-ULEAPP	version	rleapp-gui		v2026.4.3
-ULEAPP	app	rleapp-gui	checking	Checking for updates
+ULEAPP	homebrew	rleapp-gui		v2026.4.3
+ULEAPP	version	rleapp-gui		2026.4.4
+ULEAPP	app	rleapp-gui	checking	Checking official releases
 ULEAPP	app	rleapp-gui	current	Up to date
-RLEAPP: up to date.
 
 --- VLEAPP ---
-ULEAPP	version	vleapp-gui		v2026.4.3
-ULEAPP	app	vleapp-gui	checking	Checking for updates
+ULEAPP	homebrew	vleapp-gui		v2026.4.3
+ULEAPP	version	vleapp-gui		2026.4.4
+ULEAPP	app	vleapp-gui	checking	Checking official releases
 ULEAPP	app	vleapp-gui	current	Up to date
-VLEAPP: up to date.
 
 --- DLEAPP ---
-ULEAPP	version	dleapp-gui		v2026.4.3
-ULEAPP	app	dleapp-gui	checking	Checking for updates
+ULEAPP	homebrew	dleapp-gui		v2026.4.3
+ULEAPP	version	dleapp-gui		2026.4.4
+ULEAPP	app	dleapp-gui	checking	Checking official releases
 ULEAPP	app	dleapp-gui	current	Up to date
-DLEAPP: up to date.
 
 --- GLEAPP ---
-ULEAPP	version	gleapp		v2026.5.4
-ULEAPP	app	gleapp	checking	Checking for updates
+ULEAPP	homebrew	gleapp		v2026.5.4
+ULEAPP	version	gleapp		2026.5.5
+ULEAPP	app	gleapp	checking	Checking official releases
 ULEAPP	app	gleapp	current	Up to date
-GLEAPP: up to date.
 
 =============
 Checked: 7 apps; 1 updates available; 0 failed; 0 skipped.
