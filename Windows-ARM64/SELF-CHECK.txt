@@ -1,4 +1,4 @@
-uLEAPP 0.3.12 self-check
+uLEAPP 0.3.13 self-check
 ok - nine supported tools including both companions
 ok - LAVA actual catalog icon is embedded and decodes without an installed app
 ok - ALEAPP actual catalog icon is embedded and decodes without an installed app
@@ -24,6 +24,15 @@ ok - bulk install visibility and enabled state match 0 missing apps
 ok - window summary follows a growing row collection
 ok - missing label follows a growing row collection
 ok - a newly added missing row restores bulk installation
+ok - Start menu shortcuts default on for new users
+ok - existing preferences default the new shortcut option on
+ok - shortcut opt-out persists without changing automatic update opt-out
+ok - saving automatic checks preserves shortcut opt-out
+ok - real Start menu link targets the existing custom location with its working directory
+ok - successful update replaces the owned shortcut without duplicates
+ok - missing target preserves the working shortcut byte for byte
+ok - user-created shortcut is never replaced
+ok - shortcut creation never moves or changes the installed apps
 ok - a missing Recycle Bin destination is never confirmed as recycled
 ok - a failed delete callback is never confirmed as recycled
 ok - the shell must report a successful Recycle Bin destination
@@ -186,5 +195,5 @@ ok - cancelled cleanup leaves app folders in place
 ok - untracked folders and forged cleanup paths are preserved
 ok - eligible old app moves to the Windows Recycle Bin
 ok - recycling keeps the current and previous app plus untracked case data
-uLEAPP self-check passed: 187 checks. No installed apps were changed.
+uLEAPP self-check passed: 196 checks. No installed apps were changed.
 

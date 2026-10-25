@@ -124,7 +124,7 @@ result. GitHub’s unauthenticated limit is shared by source IP (typically 60/ho
 conditional requests are not exempt without authentication. Details show the
 remaining quota and reset timestamp on HTTP 403/429. No GitHub token is stored.
 
-## Companion tools (0.3.12)
+## Companion tools (0.3.13)
 
 GLEAPP Map Downloader can be checked, installed, updated and launched on Mac,
 Windows and Linux, with native x64 and ARM64 packages where published. It downloads
@@ -141,7 +141,20 @@ so those platforms do not offer it. All tools use their publishers’ official r
 Managed companion installs retain the current and previous versions and participate
 in **Remove old installs**. Manually installed Batch copies are outside that cleanup.
 
-0.3.12 groups preferences under Settings and logs under Details. Tool status
+0.3.13 groups preferences under Settings and logs under Details. Tool status
 pills include versions; hover for check evidence. Row menus reveal installed
 copies and open release notes. All platforms use official publisher releases;
 there is no update-method choice.
+
+## Start menu shortcuts (0.3.13)
+
+“Create Start menu shortcuts” in Settings is enabled by default. After a successful
+install or update, uLEAPP creates or refreshes a shortcut under your own Start menu
+in the uLEAPP folder. This also works when Update apps finds an installed tool is
+already current. Apps stay in their existing install locations; no administrator
+permission is needed for shortcuts. Only shortcuts marked as created by uLEAPP
+are replaced. Custom and publisher shortcuts are left alone.
+
+Failed installations leave working shortcuts intact. A shortcut failure does not
+undo an app update: Details explains the problem and you can still use Launch.
+Turning the setting off stops future shortcut changes and keeps existing entries.
