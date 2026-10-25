@@ -45,6 +45,7 @@ public static class SelfChecks
             Check(countsWindow.MissingLabel == "Install missing apps (1)", "missing label follows a growing row collection");
             Check(countsWindow.InstallMissingEnabled && countsWindow.MissingVisibility == System.Windows.Visibility.Visible, "a newly added missing row restores bulk installation");
         } finally { countsWindow.Close(); }
+        CheckStartMenuShortcuts();
         var confirmation = new WindowsTrash.RecycleConfirmation();
         confirmation.PostDeleteItem(0,IntPtr.Zero,0,IntPtr.Zero);
         Check(!confirmation.Recycled,"a missing Recycle Bin destination is never confirmed as recycled");
@@ -392,6 +393,44 @@ public static class SelfChecks
         public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
         public override void SetLength(long value) => throw new NotSupportedException();
         public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
+    private static void CheckStartMenuShortcuts()
+    {
+        string root = Path.Combine(Path.GetTempPath(), "uleapp-shortcuts-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        try {
+            string preferences = Path.Combine(root,"preferences.json");
+            Check(UpdatePreferences.LoadOption("CreateStartMenuShortcuts",preferences),"Start menu shortcuts default on for new users");
+            UpdatePreferences.SaveOption("AutomaticUpdateChecks",false,preferences);
+            Check(UpdatePreferences.LoadOption("CreateStartMenuShortcuts",preferences),"existing preferences default the new shortcut option on");
+            UpdatePreferences.SaveOption("CreateStartMenuShortcuts",false,preferences);
+            Check(!UpdatePreferences.LoadOption("AutomaticUpdateChecks",preferences) && !UpdatePreferences.LoadOption("CreateStartMenuShortcuts",preferences),"shortcut opt-out persists without changing automatic update opt-out");
+            UpdatePreferences.SaveOption("AutomaticUpdateChecks",true,preferences);
+            Check(!UpdatePreferences.LoadOption("CreateStartMenuShortcuts",preferences),"saving automatic checks preserves shortcut opt-out");
+            string apps = Path.Combine(root,"Existing custom app location");
+            Directory.CreateDirectory(apps);
+            string first = Path.Combine(apps,"first.exe"), second = Path.Combine(apps,"second.exe");
+            File.Copy(Environment.ProcessPath!,first); File.Copy(Environment.ProcessPath!,second);
+            var tool = Catalog.All.First(t => t.Id == "aleapp");
+            string programs = Path.Combine(root,"Programs");
+            var installed = new Installation(tool.Id,"1.0.0",first,"x64");
+            StartMenuShortcuts.Refresh(tool,installed,programs);
+            string shortcut = Path.Combine(programs,"uLEAPP",tool.Name + ".lnk");
+            var link = StartMenuShortcuts.ReadForCheck(shortcut);
+            Check(link.Target.Equals(first,StringComparison.OrdinalIgnoreCase) && link.WorkingDirectory.Equals(apps,StringComparison.OrdinalIgnoreCase),"real Start menu link targets the existing custom location with its working directory");
+            StartMenuShortcuts.Refresh(tool,installed with { Version = "2.0.0", Path = second },programs);
+            Check(StartMenuShortcuts.ReadForCheck(shortcut).Target.Equals(second,StringComparison.OrdinalIgnoreCase) && Directory.GetFiles(Path.GetDirectoryName(shortcut)!).Length == 1,"successful update replaces the owned shortcut without duplicates");
+            byte[] working = File.ReadAllBytes(shortcut);
+            try { StartMenuShortcuts.Refresh(tool,installed with { Path = Path.Combine(apps,"missing.exe") },programs); throw new Exception("Missing target accepted"); }
+            catch (IOException) { Check(working.SequenceEqual(File.ReadAllBytes(shortcut)),"missing target preserves the working shortcut byte for byte"); }
+            File.WriteAllText(shortcut,"user-created shortcut");
+            byte[] custom = File.ReadAllBytes(shortcut);
+            try { StartMenuShortcuts.Refresh(tool,installed,programs); throw new Exception("Custom shortcut overwritten"); }
+            catch (Exception error) when (error is IOException or System.Runtime.InteropServices.COMException) {
+                Check(custom.SequenceEqual(File.ReadAllBytes(shortcut)),"user-created shortcut is never replaced");
+            }
+            Check(File.Exists(first) && File.Exists(second) && Directory.GetFiles(apps).Length == 2,"shortcut creation never moves or changes the installed apps");
+        } finally { Directory.Delete(root,true); }
     }
     private sealed class FakeHandler(byte[] data, bool redirect = false) : HttpMessageHandler
     {

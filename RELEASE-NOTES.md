@@ -1,12 +1,12 @@
-# uLEAPP 0.3.12 — Community Preview
+# uLEAPP 0.3.13 — Community Preview
 
-- One update method everywhere: uLEAPP now uses each tool’s official releases on Mac, Windows and Linux. No package-manager setup, toggle or fallback choice.
-- Mac detects existing Applications copies and preserves them when installing an update. Earlier uLEAPP-selected installs keep working. Launch reads the selected record again and opens the latest successfully installed copy; a failed update keeps the working selection.
-- Quieter rows combine status and version in one pill. Source text stays gray; orange marks available updates. Row menus reveal installed copies and open release notes.
-- Settings folds away automatic uLEAPP checks; Details holds logs and the manual Mac Batch explanation. The footer shows the last check time and cleanup has a trash icon.
-- Retired the Mac package-manager worker and password helper from the app. Download checksum, publisher, Gatekeeper, quarantine and safe-cleanup checks remain required.
-- Includes the Windows installed/missing count fix and the official Batch LEAPP icon.
+- Windows now creates Start menu shortcuts after successful app installs and updates, and refreshes them to open the current working version.
+- “Create Start menu shortcuts” is enabled by default in Settings. Shortcuts are added for your account in the uLEAPP Start menu folder, with no administrator permission required.
+- Apps stay in their existing install locations. Only shortcuts created by uLEAPP are replaced; custom and publisher shortcuts are preserved. Failed installs keep working shortcuts.
+- Shortcut errors appear in Details without treating a successful app update as failed. Existing automatic-update preferences are preserved.
+
+Mac and Linux are rebuilt at the same version; their functionality is unchanged.
 
 Mac requires macOS 13+. Mac Batch installation remains manual; no Batch binaries are published for Intel Mac or Linux. uLEAPP Mac builds are ad hoc signed; Windows builds are unsigned. Linux requires Python 3.10+ and Tk. Tool downloads remain subject to the publishers’ platform requirements.
 
-SHA256SUMS-0.3.12.txt covers all downloads.
+SHA256SUMS-0.3.13.txt covers all downloads.

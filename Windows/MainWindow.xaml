@@ -97,6 +97,8 @@
         <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding IsExpanded, ElementName=SettingsToggle}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style></StackPanel.Style>
         <CheckBox Content="Check for uLEAPP updates automatically" IsChecked="{Binding AutomaticUpdates}" IsEnabled="{Binding UpdatePreferenceEnabled}" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,0,0,6" />
         <TextBlock Text="Checks run at startup and once a day. Downloading an update is your choice." FontSize="10" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,6" />
+        <CheckBox Content="Create Start menu shortcuts" IsChecked="{Binding CreateStartMenuShortcuts}" IsEnabled="{Binding ShortcutPreferenceEnabled}" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,0,0,6" />
+        <TextBlock Text="Adds shortcuts after successful installs and updates. Your own shortcuts are kept." FontSize="10" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,6" />
         <DockPanel>
           <Button Content="Choose folder" DockPanel.Dock="Right" Click="ChooseFolderClicked" IsEnabled="{Binding ActionsEnabled}" Padding="8,5" FontSize="10" Background="Transparent" Foreground="#8EE563" />
           <TextBlock Text="{Binding InstallFolder}" TextTrimming="CharacterEllipsis" Foreground="{StaticResource Muted}" FontSize="10" VerticalAlignment="Center" ToolTip="{Binding InstallFolder}" />

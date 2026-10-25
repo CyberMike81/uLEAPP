@@ -29,6 +29,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             } catch (Exception error) { StatusDetail = error.Message; Changed(); }
         }
     }
+    private bool createStartMenuShortcuts = UpdatePreferences.LoadOption("CreateStartMenuShortcuts");
+    public bool CreateStartMenuShortcuts {
+        get => createStartMenuShortcuts;
+        set {
+            if (demo || busy) return;
+            try { UpdatePreferences.SaveOption("CreateStartMenuShortcuts", value); createStartMenuShortcuts = value; Changed(); }
+            catch (Exception error) { StatusDetail = "Could not save shortcut preference: " + error.Message; Changed(); }
+        }
+    }
+    public bool ShortcutPreferenceEnabled => !busy && !demo;
     public bool UpdatePreferenceEnabled => !noUpdateCheck && !demo;
     private System.Windows.Threading.DispatcherTimer? selfUpdateTimer;
     public string AppUpdateLabel => appUpdate == null ? "" : "uLEAPP " + appUpdate.Version + " is available";
@@ -85,7 +95,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void Changed([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new(name));
     private void RefreshControls()
     {
-        foreach (string name in new[] { nameof(ActionsEnabled), nameof(StopEnabled), nameof(StopLabel), nameof(ProgressVisibility), nameof(InstalledSummary), nameof(FooterStatus), nameof(MissingCount), nameof(PrimaryLabel), nameof(PrimaryVisibility), nameof(MissingLabel), nameof(MissingVisibility), nameof(InstallMissingEnabled), nameof(InstallFolder) }) Changed(name);
+        foreach (string name in new[] { nameof(ActionsEnabled), nameof(ShortcutPreferenceEnabled), nameof(StopEnabled), nameof(StopLabel), nameof(ProgressVisibility), nameof(InstalledSummary), nameof(FooterStatus), nameof(MissingCount), nameof(PrimaryLabel), nameof(PrimaryVisibility), nameof(MissingLabel), nameof(MissingVisibility), nameof(InstallMissingEnabled), nameof(InstallFolder) }) Changed(name);
     }
     public MainWindow(bool demo = false, bool demoInstalled = false)
     {
@@ -189,7 +199,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         busy = true; stopping = false; Log = ""; Progress = 0; RefreshControls();
         StatusTitle = check ? "Looking for the latest LEAPPs" : "Keeping your LEAPPs current";
         StatusDetail = check ? "Checking official releases for your Windows architecture." : "Keep your LEAPP apps closed. Official setup windows may ask you to finish installation.";
-        int failures = 0, complete = 0, available = 0;
+        int failures = 0, complete = 0, available = 0, shortcutWarnings = 0;
         try
         {
             if (!demo)
@@ -238,6 +248,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                                 fraction => Dispatcher.Invoke(() => { Progress = (complete + fraction * 0.7) / targets.Length; }), cancellation));
                             ApplyInstalled(row, installed); row.Status = "Up to date";
                         }
+                        if (!check && CreateStartMenuShortcuts && row.Installed != null) {
+                            try {
+                                var shortcutInstall = row.Installed;
+                                await Task.Run(() => StartMenuShortcuts.Refresh(row.Tool, shortcutInstall));
+                                WriteLog(row.Name + ": Start menu shortcut refreshed.");
+                            } catch (Exception error) {
+                                shortcutWarnings++;
+                                WriteLog(row.Name + ": app is ready, but its Start menu shortcut was not changed: " + error.Message);
+                            }
+                        }
                         WriteLog(row.Name + ": " + row.Status);
                     }
                 }
@@ -254,6 +274,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (stopping) { StatusTitle = "Stopped safely"; StatusDetail = "Completed work has been kept. Continue whenever you're ready."; }
             else if (failures > 0) { StatusTitle = "A few things need attention"; StatusDetail = "Open Details to see what happened, then try again."; DetailsExpanded = true; Changed(nameof(DetailsExpanded)); }
             else if (check) { StatusTitle = available > 0 ? $"{available} updates are ready" : "Your check is complete"; StatusDetail = InstalledCount == 0 ? "Choose Install beside an app, or install your missing apps together." : "Your installed tools have been checked. Missing tools are available to install."; }
+            else if (shortcutWarnings > 0) { StatusTitle = "Your LEAPP apps are ready"; StatusDetail = "Apps are current, but some Start menu shortcuts could not be created. Open Details for the reason."; DetailsExpanded = true; Changed(nameof(DetailsExpanded)); }
             else { StatusTitle = "Your LEAPP apps are ready"; StatusDetail = "Installed apps are current. Older portable versions and your case files have been kept."; }
         }
         catch (Exception error) { StatusTitle = "Could not finish this operation"; StatusDetail = error.Message; WriteLog(error.Message); }

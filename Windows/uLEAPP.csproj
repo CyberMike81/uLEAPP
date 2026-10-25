@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>uLEAPP</AssemblyName>
-    <Version>0.3.12</Version>
+    <Version>0.3.13</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <ApplicationIcon>../assets/uLEAPP.ico</ApplicationIcon>
     <SelfContained>true</SelfContained>
