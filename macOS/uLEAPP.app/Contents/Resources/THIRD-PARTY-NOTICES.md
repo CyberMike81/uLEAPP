@@ -18,7 +18,7 @@ archives are bundled. Publisher identification icons are described below.
 | --- | --- | --- | --- |
 | Swift compiler and standard library | Apache-2.0 with Runtime Library Exception | Mac compiler; system runtime and compiler-generated compatibility code | `licenses/Swift.txt`; exception applies to compiler-embedded runtime portions |
 | Homebrew 7.0.9 | BSD-2-Clause | Retired source-only implementation; not invoked or bundled by the current app | Not bundled; reference notice in `licenses/Homebrew.txt` |
-| .NET runtime and WPF 10.0.13 | MIT, with separately licensed third-party portions | Windows GUI and self-contained runtime | Exact runtime-pack licenses and notices included under `runtime-notices/`; WPF's matching source-tag third-party notice is included separately |
+| .NET runtime and WPF 10.0.14 | MIT, with separately licensed third-party portions | Windows GUI and self-contained runtime | Exact runtime-pack licenses and notices included under `runtime-notices/`; WPF's matching source-tag third-party notice is included separately |
 | .NET SDK | MIT with third-party notices | Build only, downloaded from Microsoft with SHA-512 verification | Not bundled; SDK's notices retained in task-local SDK installation |
 | Apple AppKit, SwiftUI, Foundation, Combine, macOS SDK and Apple build utilities | Apple platform/SDK terms, not open source as a whole | Mac system frameworks and development tools | System-provided; no Apple SDK, system framework, font or SF Symbol artwork redistributed |
 | Windows OS APIs, Windows SDK/reference assemblies | Microsoft platform/SDK terms, not open source as a whole | Native Windows execution and build targeting | Not bundled as standalone OS/SDK components; runtime-pack notices govern shipped runtime files |
@@ -31,11 +31,11 @@ terms. Calling an external executable does not copy it into uLEAPP. The inventor
 does not claim that every part of macOS, Windows or the development workstation
 is open source.
 
-The Windows 0.3.13 builds use Microsoft .NET SDK 10.0.402 and runtime packs
-10.0.13. `BUILD-INFO.json` in each Windows platform folder records the actual
+The Windows 0.3.14 builds use Microsoft .NET SDK 10.0.403 and runtime packs
+10.0.14. `BUILD-INFO.json` in each Windows platform folder records the actual
 SDK, architecture and runtime versions. The desktop pack supplies a MIT
 `LICENSE` file; its additional notices are taken from the matching
-[WPF v10.0.13 source notice](https://github.com/dotnet/wpf/blob/v10.0.13/THIRD-PARTY-NOTICES.TXT).
+[WPF v10.0.14 source notice](https://github.com/dotnet/wpf/blob/v10.0.14/THIRD-PARTY-NOTICES.TXT).
 
 ## Separately downloaded LEAPP applications
 

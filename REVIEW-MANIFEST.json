@@ -1,59 +1,59 @@
 {
-  "version": "0.3.13",
+  "version": "0.3.14",
   "publication": "community preview",
   "artifacts": {
     "macOS": {
-      "version": "0.3.13",
+      "version": "0.3.14",
       "executable": "macOS/uLEAPP.app/Contents/MacOS/uLEAPP",
-      "sha256": "23c12de743b0755415917dffd9d252e32be9ee70ad6d02b3be4af3b47fb8c37c",
+      "sha256": "add8acfd577793d1a4486ce9a58dea458c7b5d70eda2dbb4e4061b5098431349",
       "architectures": [
         "arm64",
         "x86_64"
       ]
     },
     "Windows-ARM64": {
-      "version": "0.3.13",
+      "version": "0.3.14",
       "executable": "Windows-ARM64/uLEAPP.exe",
-      "sha256": "07d8d43059449b1e39c86fc6151def3781a78c9bff0afbf4396ad358021afff5",
+      "sha256": "c760756cbc36162c101d1cfb375f997cbc5c4c7c1e8e396fb8f1ae600b264ff8",
       "build": {
-        "Architecture": "win-arm64",
-        "Sdk": "10.0.402",
         "RuntimePacks": [
-          "runtimepack.Microsoft.NETCore.App.Runtime.win-arm64/10.0.13",
-          "runtimepack.Microsoft.WindowsDesktop.App.Runtime.win-arm64/10.0.13"
+          "runtimepack.Microsoft.NETCore.App.Runtime.win-arm64/10.0.14",
+          "runtimepack.Microsoft.WindowsDesktop.App.Runtime.win-arm64/10.0.14"
         ],
-        "AppVersion": "0.3.13"
+        "Sdk": "10.0.403",
+        "Architecture": "win-arm64",
+        "AppVersion": "0.3.14"
       },
-      "self_checks": 196,
+      "self_checks": 211,
       "test_environment": "Native GitHub-hosted Windows 11 ARM64"
     },
     "Windows-x64": {
-      "version": "0.3.13",
+      "version": "0.3.14",
       "executable": "Windows-x64/uLEAPP.exe",
-      "sha256": "2c77a9bcf68d23be265d9db5bfc95b194dbb99028b03af8623d5c97fe7f46e5b",
+      "sha256": "1869cf59e743c97b404922286c067c79f8fc79cb3dfc56d939da67b0c1b57f22",
       "build": {
         "Architecture": "win-x64",
+        "Sdk": "10.0.403",
         "RuntimePacks": [
-          "runtimepack.Microsoft.NETCore.App.Runtime.win-x64/10.0.13",
-          "runtimepack.Microsoft.WindowsDesktop.App.Runtime.win-x64/10.0.13"
+          "runtimepack.Microsoft.NETCore.App.Runtime.win-x64/10.0.14",
+          "runtimepack.Microsoft.WindowsDesktop.App.Runtime.win-x64/10.0.14"
         ],
-        "AppVersion": "0.3.13",
-        "Sdk": "10.0.402"
+        "AppVersion": "0.3.14"
       },
-      "self_checks": 196,
+      "self_checks": 211,
       "test_environment": "Native GitHub-hosted Windows x64"
     },
     "Linux": {
-      "version": "0.3.13",
+      "version": "0.3.14",
       "distribution": "portable Python/Tk source",
       "architectures": [
         "x64",
         "arm64"
       ],
       "core_tests": 36,
-      "archive_sha256": "9617ad9c0ab25305e887ab49b5cab3ae9bb2933703af113328677a80e89e3fd5"
+      "archive_sha256": "73c0b891fa2f127a0c8e06957cbb3ba4b10007472f33ee55f35c52533ed976c8"
     }
   },
   "audited_updater_source_unchanged": false,
-  "release_build_run": "https://github.com/CyberMike81/uLEAPP/actions/runs/40220934046"
+  "release_build_run": "https://github.com/CyberMike81/uLEAPP/actions/runs/40599230996"
 }

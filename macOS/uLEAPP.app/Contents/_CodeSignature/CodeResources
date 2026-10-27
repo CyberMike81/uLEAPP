@@ -14,7 +14,7 @@
 		</data>
 		<key>Resources/THIRD-PARTY-NOTICES.md</key>
 		<data>
-		TWGRPayLmPGJGk+eDwQbStczpXg=
+		Fs1DuwLBRNDN2CeRcIWnL2LLzFs=
 		</data>
 		<key>Resources/licenses/ALEAPP.txt</key>
 		<data>
@@ -61,6 +61,10 @@
 		KNTqbC+JX2zjca7lqYtsnEAQWzo=
 		</data>
 		<key>Resources/licenses/dotnet-wpf-thirdparty-10.0.13.txt</key>
+		<data>
+		eggjedLcpxRsrefP1Fv/+QXQaKA=
+		</data>
+		<key>Resources/licenses/dotnet-wpf-thirdparty-10.0.14.txt</key>
 		<data>
 		eggjedLcpxRsrefP1Fv/+QXQaKA=
 		</data>
@@ -137,7 +141,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			yZVlhfGbCleIj/dBuSkEW6Yu0wLyWiDtRPVBL7iYQCU=
+			LDmGPyJ/VJ650Z7blJlL9wOmG6LSfPq81gNRIV1LkCM=
 			</data>
 		</dict>
 		<key>Resources/licenses/ALEAPP.txt</key>
@@ -218,6 +222,13 @@
 			</data>
 		</dict>
 		<key>Resources/licenses/dotnet-wpf-thirdparty-10.0.13.txt</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			0j26L+4gxrWdj3CI7p7TckWclSoxm3ypDz7sNwzHbrk=
+			</data>
+		</dict>
+		<key>Resources/licenses/dotnet-wpf-thirdparty-10.0.14.txt</key>
 		<dict>
 			<key>hash2</key>
 			<data>

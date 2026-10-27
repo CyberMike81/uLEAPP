@@ -31,16 +31,32 @@ ARM setup left the main executable and DLLs missing in the test VM. This excepti
 applies only to 0.15.0; later releases prefer a native ARM package. Downloads keep
 the publisher's checksum verification and normal interactive setup.
 
-Portable apps default to `%LOCALAPPDATA%\LEAPPs`. **Choose folder** can change
-the location on a Windows drive. Existing setup-installed apps are found
-through their Windows installation records; portable apps in the selected
-folder are also detected. Apps elsewhere can be placed under the selected
-folder. uLEAPP does not search case/evidence drives or modify forensic data.
+Windows updates now keep the selected app's existing folder and executable path.
+Portable downloads are checksum-verified and prepared in a staging folder beside
+the app, with its original folder retained as a `.uleapp-previous-...` rollback
+copy. Unknown files and reports are copied into the replacement; rollback copies
+are kept for manual review because they can contain case data. Extra disk space
+is needed to stage the complete folder. Existing case files should be stored
+outside app folders where possible. Do not edit the app folder during an update.
 
-Portable updates use a new version folder and keep older versions and files.
-Use **Launch** beside an app to open the selected version. Setup-installed
-copies update through the publisher's interactive setup. A failed download
-or checksum blocks installation; other requested apps can still finish.
+For a first portable installation, uLEAPP asks you to choose an empty, dedicated
+app folder. Cancelling skips that app. Settings → Choose folder only changes the
+suggested location, not existing apps. The default suggestion is a LEAPPs folder
+under your user profile. uLEAPP keeps its settings and logs in AppData.
+
+Existing Windows installer records and saved selections are detected. The row's
+⋯ menu → **Use existing installation…** lets you select an app elsewhere, including
+an original copy if an earlier uLEAPP version selected a separate portable copy.
+Selection does not move, remove or update either copy. A portable update to a
+previous installer location is tracked by uLEAPP; the old Windows uninstall record
+is left unchanged. Full publisher installers still control their own setup.
+
+Program Files updates require Windows permission: if access is denied, reopen
+uLEAPP as administrator and retry. No fallback copy is installed in AppData.
+Linked or shared app folders are refused. Failed checksums, cancellation or saving
+selection leave the working installation in place; an interrupted folder swap is
+recovered on the next start. Start menu shortcuts refresh after success.
+
 **Stop** cancels checks and active downloads. An official installer already running finishes safely.
 
 Logs are under `%LOCALAPPDATA%\uLEAPP\Logs`; state is in that app's
@@ -95,13 +111,16 @@ no automatic installation or replacement occurs. This is separate from LEAPP
 tool checks. Offline/rate-limit failures stay quiet and do not block normal use.
 Demo and automated smoke-test modes do not contact GitHub.
 
-When a publisher stops offering setup installers, an installer-managed copy can
-be updated using its official portable ZIP for the same architecture. The new
-copy is installed in the selected portable-app folder and becomes uLEAPP’s
-launch target. The older registered copy is preserved. Setup remains preferred
-when published; LAVA continues to require its official installer.
+When a publisher stops offering setup installers, its official portable ZIP can
+update the selected copy in the same app folder. The original folder is retained
+as a rollback copy; no separate portable-app location is selected automatically.
+Setup remains preferred when published; LAVA requires its official installer.
 
 ## Remove old installs
+
+This action covers the older version-folder layout. The same-location update's
+`.uleapp-previous-...` rollback folders are retained for manual review and are not
+automatically removed, because they can include files from the original install.
 
 **Remove old installs** reviews eligible older uLEAPP-managed app folders before
 moving them to Recycle Bin/Trash. It keeps the current version and one previous
@@ -124,7 +143,7 @@ result. GitHub’s unauthenticated limit is shared by source IP (typically 60/ho
 conditional requests are not exempt without authentication. Details show the
 remaining quota and reset timestamp on HTTP 403/429. No GitHub token is stored.
 
-## Companion tools (0.3.13)
+## Companion tools (0.3.14)
 
 GLEAPP Map Downloader can be checked, installed, updated and launched on Mac,
 Windows and Linux, with native x64 and ARM64 packages where published. It downloads
@@ -138,15 +157,16 @@ can launch an existing Applications copy; it does not disable Gatekeeper or clai
 that copy is up to date. No Linux or Intel Mac Batch package is currently published,
 so those platforms do not offer it. All tools use their publishers’ official release downloads.
 
-Managed companion installs retain the current and previous versions and participate
-in **Remove old installs**. Manually installed Batch copies are outside that cleanup.
+Companion updates use the same location and rollback-copy rules as other Windows
+tools. Cleanup of older version-folder installs remains available. Manually selected
+external app folders and the new rollback copies are outside automatic cleanup.
 
-0.3.13 groups preferences under Settings and logs under Details. Tool status
+0.3.14 groups preferences under Settings and logs under Details. Tool status
 pills include versions; hover for check evidence. Row menus reveal installed
 copies and open release notes. All platforms use official publisher releases;
 there is no update-method choice.
 
-## Start menu shortcuts (0.3.13)
+## Start menu shortcuts (0.3.14)
 
 “Create Start menu shortcuts” in Settings is enabled by default. After a successful
 install or update, uLEAPP creates or refreshes a shortcut under your own Start menu

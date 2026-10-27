@@ -1,4 +1,4 @@
-uLEAPP 0.3.13 self-check
+uLEAPP 0.3.14 self-check
 ok - nine supported tools including both companions
 ok - LAVA actual catalog icon is embedded and decodes without an installed app
 ok - ALEAPP actual catalog icon is embedded and decodes without an installed app
@@ -185,6 +185,21 @@ ok - verified portable installation is recorded and discoverable
 ok - installation preserves previous versions and case files
 ok - installed app retains upstream license files
 ok - failed replacement keeps the working app and state
+ok - updates keep the exact chosen executable path instead of creating AppData copies
+ok - each successful replacement keeps its original folder as a rollback copy
+ok - untracked case files stay in the same location across an update
+ok - an installer-to-portable transition updates the existing location and records its version independently
+ok - state-write failure retains working files and selected version
+ok - first installs refuse an occupied folder without changing its contents
+ok - first portable installs require an explicit folder choice
+ok - cancelled update keeps the existing working installation
+ok - startup restores the original app folder after an interrupted swap
+ok - a failure saving selection rolls back a published replacement folder
+ok - shared user folders cannot become an app replacement target
+ok - dedicated Program Files app locations are supported when Windows grants access
+ok - startup adopts a completely published update if recording its selection was interrupted
+ok - recovery retains its journal until the recovered selection is saved successfully
+ok - unreadable recovery records block updates with an explanation and keep app files
 ok - cleanup keeps the current and previous version and reviews only older installs
 ok - cleanup review does not remove anything
 ok - cleanup preserves an older app folder with added case data
@@ -195,5 +210,5 @@ ok - cancelled cleanup leaves app folders in place
 ok - untracked folders and forged cleanup paths are preserved
 ok - eligible old app moves to the Windows Recycle Bin
 ok - recycling keeps the current and previous app plus untracked case data
-uLEAPP self-check passed: 196 checks. No installed apps were changed.
+uLEAPP self-check passed: 211 checks. No installed apps were changed.
 

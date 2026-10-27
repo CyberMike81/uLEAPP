@@ -111,13 +111,16 @@ no automatic installation or replacement occurs. This is separate from LEAPP
 tool checks. Offline/rate-limit failures stay quiet and do not block normal use.
 Demo and automated smoke-test modes do not contact GitHub.
 
-When a publisher stops offering setup installers, an installer-managed copy can
-be updated using its official portable ZIP for the same architecture. The new
-copy is installed in the selected portable-app folder and becomes uLEAPP’s
-launch target. The older registered copy is preserved. Setup remains preferred
-when published; LAVA continues to require its official installer.
+When a publisher stops offering setup installers, its official portable ZIP can
+update the selected copy in the same app folder. The original folder is retained
+as a rollback copy; no separate portable-app location is selected automatically.
+Setup remains preferred when published; LAVA requires its official installer.
 
 ## Remove old installs
+
+This action covers the older version-folder layout. The same-location update's
+`.uleapp-previous-...` rollback folders are retained for manual review and are not
+automatically removed, because they can include files from the original install.
 
 **Remove old installs** reviews eligible older uLEAPP-managed app folders before
 moving them to Recycle Bin/Trash. It keeps the current version and one previous
@@ -154,8 +157,9 @@ can launch an existing Applications copy; it does not disable Gatekeeper or clai
 that copy is up to date. No Linux or Intel Mac Batch package is currently published,
 so those platforms do not offer it. All tools use their publishers’ official release downloads.
 
-Managed companion installs retain the current and previous versions and participate
-in **Remove old installs**. Manually installed Batch copies are outside that cleanup.
+Companion updates use the same location and rollback-copy rules as other Windows
+tools. Cleanup of older version-folder installs remains available. Manually selected
+external app folders and the new rollback copies are outside automatic cleanup.
 
 0.3.14 groups preferences under Settings and logs under Details. Tool status
 pills include versions; hover for check evidence. Row menus reveal installed

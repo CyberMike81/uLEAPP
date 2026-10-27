@@ -28,6 +28,7 @@ notarized. Publisher tools retain their own signing and platform requirements.
 - **Install** adds a missing tool; **Install missing apps** adds the available missing tools together.
 - **Update apps** downloads and installs newer releases after you choose it. Close LEAPP apps first.
 - **Launch** opens the latest successfully installed, selected copy. A failed update keeps the previous selection working.
+- On Windows, updates keep the selected app's folder. First portable installs ask for a location; use the row menu's **Use existing installation…** to select a copy elsewhere. Program Files may require administrator permission. Same-location rollback copies are kept for manual review.
 - **Remove old installs** reviews eligible old managed copies before moving them to Trash or Recycle Bin. The current and one previous version are kept; unknown or changed folders and case data are preserved.
 
 A row’s pill shows its status and version. Hover for check evidence. The row’s

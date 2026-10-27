@@ -1,39 +1,48 @@
-# uLEAPP 0.3.13 validation
+# uLEAPP 0.3.14 validation
 
-Prepared October 25, 2026. This release adds Windows Start menu shortcuts; Mac
-and Linux changes are version metadata only. The independent 0.3.12 audit is
-historical evidence for the unchanged paths, not an audit of this new feature.
+Prepared October 27, 2026. This release changes Windows portable install locations
+and recovery; Mac and Linux changes are version metadata only. Earlier independent
+audits do not cover this new installation path.
 
-Windows native x64 and ARM64 release builds run 196 packaged self-checks,
-including real WPF properties and real Windows shell shortcut creation in isolated
-temporary directories. Shortcut regressions cover default-on settings, migration
-from older preferences, preserving automatic-check and shortcut opt-outs, custom
-app locations and working directories, replacing an owned link without duplicates,
-retaining a working shortcut for a missing target, preserving a user-created
-shortcut, and leaving app files in place. No tests write to the real Start menu.
+Windows builds use .NET SDK 10.0.403 and runtime packs 10.0.14 with matching
+licenses and notices. Windows native x64 and ARM64 builds run 211 packaged self-checks, including real
+WPF properties, isolated Start menu shell links, installation integration and
+legacy cleanup. New location checks cover explicit first-install folder choice,
+exact executable-path preservation across updates, original rollback folders,
+case-file preservation, installer-to-portable migration, checksum and selection-
+write failures, rejecting occupied/shared folders, cancellation, interrupted swaps,
+completed publication before selection recording, unreadable recovery records,
+and retaining recovery journals until selection is successfully persisted.
 
-Shortcut integration runs only after a successful install or when Update apps
-finds the selected version is already current. It is skipped for checks, demos,
-opt-out and failed installations. A separate warning preserves the successful app
-result when the Start menu is inaccessible. Links use the current user's Programs
-folder, an ownership marker, and a staged file before replacement. Reparse-point
-locations are refused. No elevation, desktop shortcut, relocation, or publisher
-shortcut modification is introduced. Disabling the setting retains existing links.
+Staging is beside the selected app on the same volume. The original tree is copied
+with unknown files intact; content hashes detect changes during preparation. Linked
+paths and shared/system root folders are refused. After verification, a journal is
+flushed before swapping directories. Selection-save failure rolls the swap back;
+startup recovery restores a missing original folder or records a fully published
+replacement. No fallback AppData installation occurs. Original rollback folders
+are kept for manual review and are excluded from legacy automatic cleanup.
+
+Program Files subfolders are valid targets but remain subject to Windows access
+checks. Denied access explains that the user should reopen uLEAPP as administrator
+or fix permissions. This feature does not introduce an elevated background helper.
+Publisher setup installers still control their own installation flow. Existing
+Windows uninstall records are preserved and may continue showing the old version
+after a portable transition; uLEAPP tracks the selected version independently.
 
 Native Windows build evidence:
-https://github.com/CyberMike81/uLEAPP/actions/runs/40220934046
+https://github.com/CyberMike81/uLEAPP/actions/runs/40599230996
 Linux x64/ARM64 test and package evidence:
-https://github.com/CyberMike81/uLEAPP/actions/runs/40220935790
+https://github.com/CyberMike81/uLEAPP/actions/runs/40598726358
 
-Mac verification includes a universal arm64/x86_64 build, native and Rosetta
-self-checks, strict signature verification and resource/version smoke checks.
-Linux runs 36 core tests and native CI desktop/extracted-package smoke tests.
-Published package digests, executable versions and architectures are checked
-before publication; public release digests are compared to local packages.
+Mac verification includes a universal build, native and Rosetta self-checks, strict
+signature and resource/version smoke checks. Linux runs 36 core tests and native
+CI desktop/extracted-package smoke checks. All public package digests, executable
+versions and architectures are verified before publication.
 
-Remaining manual coverage: actual Windows Start menu search and clicking shortcuts
-on user hardware, folder/policy restrictions, full publisher installer GUIs,
-Windows ARM x64 emulation, physical Intel Mac/macOS 13, actual Mac App Management
-denial, and Linux publisher GUI/WSL behavior. Existing Batch artwork permission
-remains unresolved; no new license grant is asserted. Mac builds are ad hoc signed
-and not notarized; Windows builds are unsigned.
+Remaining manual coverage: real Windows folder-picker and UAC/permission flows,
+Start menu search/click-through, locked files and unusual NTFS ACLs, large folders
+and disk exhaustion, real publisher upgrades in Program Files, registry uninstall
+behavior after a portable transition, and full GUI/installer behavior on hardware.
+Intel Mac/macOS 13, actual App Management denial, Linux publisher GUI/WSL and Batch
+under Windows ARM emulation remain hardware gaps. Existing Batch artwork permission
+is unresolved. Mac builds are ad hoc signed, Windows builds unsigned.
