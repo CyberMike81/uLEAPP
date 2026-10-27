@@ -93,6 +93,7 @@ public static class InPlaceUpdate
     {
         string folder = Path.GetFullPath(existing == null ? chosenFolder : Path.GetDirectoryName(existing.Path)!);
         ValidateFolder(folder);
+        if (existing != null && existing.Id != tool.Id) throw new IOException("The selected installation does not match this tool.");
         if (existing == null && Directory.Exists(folder) && Directory.EnumerateFileSystemEntries(folder).Any())
             throw new IOException("That folder is not empty. Use 'Use existing installation' for an installed copy, or choose an empty app folder.");
         string executable = PortablePackage.FindExecutable(extracted,tool) ?? throw new InvalidDataException("The official archive has no recognized app executable.");
@@ -103,7 +104,7 @@ public static class InPlaceUpdate
         string suffix = Guid.NewGuid().ToString("N");
         string staging = Path.Combine(parent,".uleapp-staging-" + tool.Id + "-" + suffix);
         string backup = Path.Combine(parent,".uleapp-previous-" + tool.Id + "-" + suffix);
-        bool movedOriginal = false, published = false;
+        bool movedOriginal = false, published = false, wroteJournal = false;
         Dictionary<string,string>? originalSnapshot = null;
         string journal = Path.Combine(store.DataDirectory,"pending-location-" + tool.Id + ".json");
         try {
@@ -146,6 +147,7 @@ public static class InPlaceUpdate
                 throw new IOException("The chosen folder is no longer empty. Nothing was replaced.");
             Directory.CreateDirectory(store.DataDirectory);
             using (var stream = new FileStream(journal,FileMode.CreateNew,FileAccess.Write,FileShare.None)) {
+                wroteJournal = true;
                 JsonSerializer.Serialize(stream,new Journal(tool.Id,folder,staging,backup,result)); stream.Flush(true);
             }
             PlainParents(folder);
@@ -167,7 +169,7 @@ public static class InPlaceUpdate
         finally {
             // Never remove the original rollback copy, including after a failed
             // rollback. It can contain case files and manually installed content.
-            if (Directory.Exists(folder) && !published) { try { File.Delete(journal); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
+            if (wroteJournal && Directory.Exists(folder) && !published) { try { File.Delete(journal); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
             if (Directory.Exists(staging)) { try { Directory.Delete(staging,true); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
         }
     }

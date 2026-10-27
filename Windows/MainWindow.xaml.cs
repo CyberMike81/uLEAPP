@@ -323,6 +323,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 throw new IOException("Choose the recognized " + row.Name + " app executable.");
             var registered = InstallationStore.FindRegistered(row.Tool);
             string version = FileVersionInfo.GetVersionInfo(picker.FileName).ProductVersion ?? "unknown";
+            if (string.IsNullOrWhiteSpace(version)) version = "unknown";
             var selected = registered != null && registered.Path.Equals(picker.FileName,StringComparison.OrdinalIgnoreCase) ? registered : new Installation(row.Tool.Id,version,picker.FileName,Catalog.Architecture);
             store.Record(selected); ApplyInstalled(row,selected); RefreshControls();
             StatusDetail = row.Name + " will launch and update from " + directory + ".";
