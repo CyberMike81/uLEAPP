@@ -328,6 +328,13 @@ public static class SelfChecks
                 File.WriteAllText(Path.Combine(store.DataDirectory,"pending-location-vleapp.json"),JsonSerializer.Serialize(new { ToolId=tool.Id, Folder=chosen, Staging=interruptedStage, Backup=interrupted, Result=completedResult }));
                 var completedStore = new InstallationStore(store.DataDirectory);
                 Check(completedStore.Find(tool)?.Version == "1.2.8","startup adopts a completely published update if recording its selection was interrupted");
+                string pendingCompleted = Path.Combine(store.DataDirectory,"pending-location-vleapp.json");
+                File.WriteAllText(pendingCompleted,JsonSerializer.Serialize(new { ToolId=tool.Id, Folder=chosen, Staging=interruptedStage, Backup=interrupted, Result=completedResult }));
+                File.Move(stateFile,savedState); Directory.CreateDirectory(stateFile);
+                try {
+                    var blockedSave = new InstallationStore(store.DataDirectory);
+                    Check(File.Exists(pendingCompleted) && File.Exists(completedResult.Path),"recovery retains its journal until the recovered selection is saved successfully");
+                } finally { Directory.Delete(stateFile); File.Move(savedState,stateFile); File.Delete(pendingCompleted); }
                 string invalidJournal = Path.Combine(store.DataDirectory,"pending-location-vleapp.json");
                 File.WriteAllText(invalidJournal,"{invalid");
                 var blockedRecovery = new InstallationStore(store.DataDirectory);

@@ -14,7 +14,7 @@ public static class InPlaceUpdate
         if (!Directory.Exists(dataDirectory)) return recovered;
         foreach (string file in Directory.EnumerateFiles(dataDirectory,"pending-location-*.json")) {
             var journal = JsonSerializer.Deserialize<Journal>(File.ReadAllText(file)) ?? throw new IOException("An interrupted update record is unreadable.");
-            if (journal.Result == null || !Catalog.All.Any(t => t.Id == journal.ToolId)) throw new IOException("An interrupted update names an unknown app.");
+            if (journal.Result == null || Path.GetFileName(file) != "pending-location-" + journal.ToolId + ".json" || !Catalog.All.Any(t => t.Id == journal.ToolId)) throw new IOException("An interrupted update names an unknown app.");
             ValidateFolder(journal.Folder);
             string parent = Path.GetDirectoryName(Path.GetFullPath(journal.Folder))!;
             foreach (string path in new[] {journal.Staging,journal.Backup}) {
@@ -28,7 +28,7 @@ public static class InPlaceUpdate
             if (File.Exists(marker)) {
                 var record = JsonSerializer.Deserialize<Installation>(File.ReadAllText(marker));
                 if (record == journal.Result && record.Id == journal.ToolId &&
-                    Path.GetDirectoryName(Path.GetFullPath(record.Path))!.Equals(Path.GetFullPath(journal.Folder),StringComparison.OrdinalIgnoreCase) && File.Exists(record.Path)) recovered.Add(record);
+                    Path.GetDirectoryName(Path.GetFullPath(record.Path))!.Equals(Path.GetFullPath(journal.Folder),StringComparison.OrdinalIgnoreCase) && File.Exists(record.Path)) { recovered.Add(record); continue; }
             }
             // A present destination is a complete published tree. Its marker is
             // read by discovery, even if saving selected state was interrupted.

@@ -46,7 +46,7 @@ public sealed class InstallationStore
         catch (Exception error) when (error is JsonException or InvalidDataException or IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
         { RecoverSettings(); }
         if (!settingsWriteBlocked) foreach (var item in recovered) {
-            try { Record(item); } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
+            try { Record(item); File.Delete(Path.Combine(data,"pending-location-" + item.Id + ".json")); } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
                 settingsWriteBlocked = true; RecoveryMessage = "Recovered app files, but could not save their selection: " + error.Message;
             }
         }
