@@ -14,7 +14,7 @@ public static class InPlaceUpdate
         if (!Directory.Exists(dataDirectory)) return recovered;
         foreach (string file in Directory.EnumerateFiles(dataDirectory,"pending-location-*.json")) {
             var journal = JsonSerializer.Deserialize<Journal>(File.ReadAllText(file)) ?? throw new IOException("An interrupted update record is unreadable.");
-            if (!Catalog.All.Any(t => t.Id == journal.ToolId)) throw new IOException("An interrupted update names an unknown app.");
+            if (journal.Result == null || !Catalog.All.Any(t => t.Id == journal.ToolId)) throw new IOException("An interrupted update names an unknown app.");
             ValidateFolder(journal.Folder);
             string parent = Path.GetDirectoryName(Path.GetFullPath(journal.Folder))!;
             foreach (string path in new[] {journal.Staging,journal.Backup}) {
@@ -46,7 +46,8 @@ public static class InPlaceUpdate
             Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
             Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) };
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Path.GetTempPath(),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),"Downloads") };
         string windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
         if (forbidden.Any(p => !string.IsNullOrEmpty(p) && full.Equals(Path.TrimEndingDirectorySeparator(p),StringComparison.OrdinalIgnoreCase)) ||
             (!string.IsNullOrEmpty(windows) && full.StartsWith(windows + Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase)))
@@ -116,6 +117,17 @@ public static class InPlaceUpdate
                 CopyTree(folder,staging,cancellation);
             } else Directory.CreateDirectory(staging);
             CopyTree(payload,staging,cancellation);
+            // Preserve legal/readme files outside a publisher's wrapper directory.
+            int noticeLevel = 0;
+            for (string? ancestor = Path.GetDirectoryName(payload); ancestor != null && (ancestor.Equals(extracted,StringComparison.OrdinalIgnoreCase) || ancestor.StartsWith(extracted + Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase)); ancestor = Path.GetDirectoryName(ancestor)) {
+                foreach (string notice in Directory.EnumerateFiles(ancestor)) {
+                    string name = Path.GetFileName(notice);
+                    if (!new[] {"LICENSE","COPYING","NOTICE","THIRD-PARTY","README"}.Any(prefix => name.StartsWith(prefix,StringComparison.OrdinalIgnoreCase))) continue;
+                    string notices = Path.Combine(staging,".uleapp-publisher-notices",noticeLevel.ToString());
+                    Directory.CreateDirectory(notices); File.Copy(notice,Path.Combine(notices,name),true);
+                }
+                noticeLevel++;
+            }
             string executableName = existing == null ? Path.GetFileName(executable) : Path.GetFileName(existing.Path);
             if (!executableName.Equals(Path.GetFileName(executable),StringComparison.OrdinalIgnoreCase))
                 File.Copy(executable,Path.Combine(staging,executableName),true);
@@ -130,6 +142,8 @@ public static class InPlaceUpdate
                 if (latest.Count != originalSnapshot.Count || originalSnapshot.Any(item => !latest.TryGetValue(item.Key,out var hash) || hash != item.Value))
                     throw new IOException("Files in the app folder changed while preparing the update. Nothing was replaced; close the app and try again.");
             }
+            if (existing == null && Directory.Exists(folder) && Directory.EnumerateFileSystemEntries(folder).Any())
+                throw new IOException("The chosen folder is no longer empty. Nothing was replaced.");
             Directory.CreateDirectory(store.DataDirectory);
             using (var stream = new FileStream(journal,FileMode.CreateNew,FileAccess.Write,FileShare.None)) {
                 JsonSerializer.Serialize(stream,new Journal(tool.Id,folder,staging,backup,result)); stream.Flush(true);
@@ -140,7 +154,7 @@ public static class InPlaceUpdate
                 Directory.Move(staging,folder); published = true;
                 store.Record(result);
             } catch {
-                if (published) Directory.Move(folder,staging);
+                if (published) { Directory.Move(folder,staging); published = false; }
                 if (movedOriginal) { Directory.Move(backup,folder); movedOriginal = false; }
                 throw;
             }

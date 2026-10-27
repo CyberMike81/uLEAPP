@@ -323,6 +323,17 @@ public static class SelfChecks
                 catch (IOException) { Check(true,"shared user folders cannot become an app replacement target"); }
                 InPlaceUpdate.ValidateFolder(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),"ALEAPP"));
                 Check(true,"dedicated Program Files app locations are supported when Windows grants access");
+                var completedResult = fifth with { Version="1.2.8" };
+                File.WriteAllText(Path.Combine(chosen,".uleapp-release.json"),JsonSerializer.Serialize(completedResult));
+                File.WriteAllText(Path.Combine(store.DataDirectory,"pending-location-vleapp.json"),JsonSerializer.Serialize(new { ToolId=tool.Id, Folder=chosen, Staging=interruptedStage, Backup=interrupted, Result=completedResult }));
+                var completedStore = new InstallationStore(store.DataDirectory);
+                Check(completedStore.Find(tool)?.Version == "1.2.8","startup adopts a completely published update if recording its selection was interrupted");
+                string invalidJournal = Path.Combine(store.DataDirectory,"pending-location-vleapp.json");
+                File.WriteAllText(invalidJournal,"{invalid");
+                var blockedRecovery = new InstallationStore(store.DataDirectory);
+                try { blockedRecovery.EnsureSettingsWritable(); throw new Exception("Broken recovery ignored"); }
+                catch (IOException) { Check(blockedRecovery.RecoveryMessage?.Contains("interrupted") == true && File.Exists(completedResult.Path),"unreadable recovery records block updates with an explanation and keep app files"); }
+                File.Delete(invalidJournal);
                 // Keep legacy cleanup coverage independent of the new same-location installer.
                 Installation Legacy(string version) {
                     string folder = Path.Combine(store.Root,tool.Name,version + "-arm64");

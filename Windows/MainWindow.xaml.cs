@@ -199,7 +199,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         busy = true; stopping = false; Log = ""; Progress = 0; RefreshControls();
         StatusTitle = check ? "Looking for the latest LEAPPs" : "Keeping your LEAPPs current";
         StatusDetail = check ? "Checking official releases for your Windows architecture." : "Keep your LEAPP apps closed. Official setup windows may ask you to finish installation.";
-        int failures = 0, complete = 0, available = 0, shortcutWarnings = 0;
+        int failures = 0, complete = 0, available = 0, shortcutWarnings = 0, skipped = 0;
         try
         {
             if (!demo)
@@ -247,7 +247,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                             if (existing == null && !release.Asset.IsInstaller) {
                                 var picker = new OpenFolderDialog { Title = "Choose an empty installation folder for " + row.Name, InitialDirectory = Directory.Exists(store.Root) ? store.Root : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) };
                                 if (picker.ShowDialog(this) != true) {
-                                    row.Status = "Not installed";
+                                    row.Status = "Not installed"; skipped++;
                                     WriteLog(row.Name + ": installation skipped; no folder chosen.");
                                     continue;
                                 }
@@ -284,6 +284,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (stopping) { StatusTitle = "Stopped safely"; StatusDetail = "Completed work has been kept. Continue whenever you're ready."; }
             else if (failures > 0) { StatusTitle = "A few things need attention"; StatusDetail = "Open Details to see what happened, then try again."; DetailsExpanded = true; Changed(nameof(DetailsExpanded)); }
             else if (check) { StatusTitle = available > 0 ? $"{available} updates are ready" : "Your check is complete"; StatusDetail = InstalledCount == 0 ? "Choose Install beside an app, or install your missing apps together." : "Your installed tools have been checked. Missing tools are available to install."; }
+            else if (skipped > 0) { StatusTitle = "Some installations were skipped"; StatusDetail = "No folder was chosen for " + skipped + (skipped == 1 ? " app. " : " apps. ") + "Other completed work has been kept. Open Details for the results."; DetailsExpanded = true; Changed(nameof(DetailsExpanded)); }
             else if (shortcutWarnings > 0) { StatusTitle = "Your LEAPP apps are ready"; StatusDetail = "Apps are current, but some Start menu shortcuts could not be created. Open Details for the reason."; DetailsExpanded = true; Changed(nameof(DetailsExpanded)); }
             else { StatusTitle = "Your LEAPP apps are ready"; StatusDetail = "Installed apps are current. Existing locations and rollback copies have been kept."; }
         }
