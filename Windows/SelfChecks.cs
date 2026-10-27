@@ -270,7 +270,8 @@ public static class SelfChecks
                 using var installClient = new ReleaseClient(new FakeHandler(package));
                 var installer = new Installer(installClient,store);
                 var release = new Release("1.2.3",new("VLEAPP-1.2.3-windows-arm64-portable.zip",new Uri("https://github.com/abrignoni/VLEAPP/releases/download/v1.2.3/test.zip"),Convert.ToHexString(SHA256.HashData(package)),package.Length,false,"arm64"),"https://github.com/abrignoni/VLEAPP/releases/tag/v1.2.3");
-                var installed = await installer.InstallAsync(tool,release,null,_ => { },_ => { },CancellationToken.None);
+                string chosen = Path.Combine(integrationRoot,"Chosen existing drive location",tool.Name);
+                var installed = await installer.InstallAsync(tool,release,null,_ => { },_ => { },CancellationToken.None,chosen);
                 Check(File.Exists(installed.Path) && store.Find(tool)?.Version == "1.2.3","verified portable installation is recorded and discoverable");
                 Check(File.ReadAllText(evidence) == "keep this case","installation preserves previous versions and case files");
                 Check(File.Exists(Path.Combine(Path.GetDirectoryName(installed.Path)!,"LICENSE.txt")),"installed app retains upstream license files");
@@ -280,6 +281,57 @@ public static class SelfChecks
                 Check(failed && store.Find(tool)?.Version == "1.2.3" && File.Exists(installed.Path),"failed replacement keeps the working app and state");
                 var second = await installer.InstallAsync(tool,release with { Version="1.2.4" },installed,_ => { },_ => { },CancellationToken.None);
                 var third = await installer.InstallAsync(tool,release with { Version="1.2.5" },second,_ => { },_ => { },CancellationToken.None);
+                Check(installed.Path == second.Path && second.Path == third.Path && installed.Path.StartsWith(chosen + Path.DirectorySeparatorChar),"updates keep the exact chosen executable path instead of creating AppData copies");
+                Check(Directory.EnumerateDirectories(Path.GetDirectoryName(chosen)!,".uleapp-previous-*").Count() == 2,"each successful replacement keeps its original folder as a rollback copy");
+                string report = Path.Combine(chosen,"my-case-report.txt"); File.WriteAllText(report,"keep my report");
+                var fourth = await installer.InstallAsync(tool,release with { Version="1.2.6" },third,_ => { },_ => { },CancellationToken.None);
+                Check(File.ReadAllText(report) == "keep my report" && fourth.Path == third.Path,"untracked case files stay in the same location across an update");
+                var registeredStyle = fourth with { InstallerManaged = true };
+                var fifth = await installer.InstallAsync(tool,release with { Version="1.2.7" },registeredStyle,_ => { },_ => { },CancellationToken.None);
+                Check(fifth.Path == registeredStyle.Path && !fifth.InstallerManaged,"an installer-to-portable transition updates the existing location and records its version independently");
+                string stateFile = Path.Combine(store.DataDirectory,"settings.json"), savedState = stateFile + ".saved";
+                File.Move(stateFile,savedState); Directory.CreateDirectory(stateFile);
+                try {
+                    await installer.InstallAsync(tool,release with { Version="1.2.8" },fifth,_ => { },_ => { },CancellationToken.None);
+                    throw new Exception("Unwritable state accepted");
+                } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
+                    Check(store.Find(tool)?.Version == "1.2.7" && File.ReadAllText(report) == "keep my report","state-write failure retains working files and selected version");
+                } finally { Directory.Delete(stateFile); File.Move(savedState,stateFile); }
+                string nonempty = Path.Combine(integrationRoot,"occupied"); Directory.CreateDirectory(nonempty); File.WriteAllText(Path.Combine(nonempty,"case.txt"),"keep");
+                try { await installer.InstallAsync(tool,release,null,_ => { },_ => { },CancellationToken.None,nonempty); throw new Exception("Occupied folder accepted"); }
+                catch (IOException) { Check(File.ReadAllText(Path.Combine(nonempty,"case.txt")) == "keep","first installs refuse an occupied folder without changing its contents"); }
+                try { await installer.InstallAsync(tool,release,null,_ => { },_ => { },CancellationToken.None); throw new Exception("Implicit folder accepted"); }
+                catch (IOException) { Check(true,"first portable installs require an explicit folder choice"); }
+                var cancelledInstall = new CancellationTokenSource(); cancelledInstall.Cancel();
+                try { await installer.InstallAsync(tool,release with { Version="1.2.8" },fifth,_ => { },_ => { },cancelledInstall.Token); throw new Exception("Cancelled update accepted"); }
+                catch (OperationCanceledException) { Check(store.Find(tool)?.Version == "1.2.7" && File.Exists(fifth.Path),"cancelled update keeps the existing working installation"); }
+                string interrupted = Path.Combine(Path.GetDirectoryName(chosen)!,".uleapp-previous-vleapp-" + new string('a',32));
+                string interruptedStage = Path.Combine(Path.GetDirectoryName(chosen)!,".uleapp-staging-vleapp-" + new string('a',32));
+                File.WriteAllText(Path.Combine(store.DataDirectory,"pending-location-vleapp.json"),JsonSerializer.Serialize(new { ToolId=tool.Id, Folder=chosen, Staging=interruptedStage, Backup=interrupted, Result=fifth }));
+                Directory.Move(chosen,interrupted);
+                var recoveredStore = new InstallationStore(store.DataDirectory);
+                Check(recoveredStore.Find(tool)?.Path == fifth.Path && File.ReadAllText(report) == "keep my report","startup restores the original app folder after an interrupted swap");
+                string failedFirst = Path.Combine(integrationRoot,"Failed first install"); Directory.CreateDirectory(failedFirst);
+                File.Move(stateFile,savedState); Directory.CreateDirectory(stateFile);
+                try {
+                    await installer.InstallAsync(tool,release,null,_ => { },_ => { },CancellationToken.None,failedFirst);
+                    throw new Exception("Commit failure accepted");
+                } catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
+                    Check(Directory.Exists(failedFirst) && !Directory.EnumerateFileSystemEntries(failedFirst).Any(),"a failure saving selection rolls back a published replacement folder");
+                } finally { Directory.Delete(stateFile); File.Move(savedState,stateFile); }
+                try { InPlaceUpdate.ValidateFolder(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)); throw new Exception("Shared profile accepted"); }
+                catch (IOException) { Check(true,"shared user folders cannot become an app replacement target"); }
+                InPlaceUpdate.ValidateFolder(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),"ALEAPP"));
+                Check(true,"dedicated Program Files app locations are supported when Windows grants access");
+                // Keep legacy cleanup coverage independent of the new same-location installer.
+                Installation Legacy(string version) {
+                    string folder = Path.Combine(store.Root,tool.Name,version + "-arm64");
+                    PortablePackage.Extract(valid,folder);
+                    var item = new Installation(tool.Id,version,PortablePackage.FindExecutable(folder,tool)!,"arm64");
+                    File.WriteAllText(Path.Combine(folder,".uleapp-release.json"),JsonSerializer.Serialize(item));
+                    OldInstalls.RecordFiles(folder,tool,version,CancellationToken.None); return item;
+                }
+                installed = Legacy("1.2.3"); second = Legacy("1.2.4"); third = Legacy("1.2.5"); store.Record(third);
                 var cleanup = OldInstalls.Scan(store,CancellationToken.None);
                 Check(cleanup.Count == 1 && cleanup[0].Label == "VLEAPP 1.2.3","cleanup keeps the current and previous version and reviews only older installs");
                 Check(File.Exists(installed.Path),"cleanup review does not remove anything");

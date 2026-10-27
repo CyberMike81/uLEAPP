@@ -6,18 +6,18 @@ One place to install, update and launch the LEAPP tools on Mac, Windows and Linu
 Every platform checks the tools’ official GitHub releases and chooses the matching
 published package. There is no package-manager setup or update-method choice.
 
-**Community Preview 0.3.13** is available for testing and feedback.
+**Community Preview 0.3.14** is available for testing and feedback.
 
 ## Download
 
-Get the matching package from the [Community Preview release](https://github.com/CyberMike81/uLEAPP/releases/tag/v0.3.13), extract it, and open uLEAPP. Keep its included notices.
+Get the matching package from the [Community Preview release](https://github.com/CyberMike81/uLEAPP/releases/tag/v0.3.14), extract it, and open uLEAPP. Keep its included notices.
 
 | Platform | Download | Requirements |
 | --- | --- | --- |
-| Mac | `uLEAPP-0.3.13-macOS.zip` | macOS 13+; Apple silicon or Intel |
-| Windows x64 | `uLEAPP-0.3.13-Windows-x64.zip` | 64-bit Intel/AMD Windows; runtime included |
-| Windows ARM64 | `uLEAPP-0.3.13-Windows-ARM64.zip` | Windows 11 ARM; runtime included |
-| Linux | `uLEAPP-0.3.13-Linux.tar.gz` | Python 3.10+ and Tk; x64 or ARM64 |
+| Mac | `uLEAPP-0.3.14-macOS.zip` | macOS 13+; Apple silicon or Intel |
+| Windows x64 | `uLEAPP-0.3.14-Windows-x64.zip` | 64-bit Intel/AMD Windows; runtime included |
+| Windows ARM64 | `uLEAPP-0.3.14-Windows-ARM64.zip` | Windows 11 ARM; runtime included |
+| Linux | `uLEAPP-0.3.14-Linux.tar.gz` | Python 3.10+ and Tk; x64 or ARM64 |
 
 uLEAPP is ad hoc signed on Mac and unsigned on Windows. This preview is not
 notarized. Publisher tools retain their own signing and platform requirements.

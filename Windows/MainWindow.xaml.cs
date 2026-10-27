@@ -90,7 +90,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public string MissingLabel => $"Install missing apps ({MissingCount})";
     public Visibility MissingVisibility => !busy && MissingCount > 0 ? Visibility.Visible : Visibility.Collapsed;
     public bool InstallMissingEnabled => !busy && MissingCount > 0;
-    public string InstallFolder => "Portable apps: " + store.Root;
+    public string InstallFolder => "Suggested location for new apps: " + store.Root;
     public event PropertyChangedEventHandler? PropertyChanged;
     private void Changed([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new(name));
     private void RefreshControls()
@@ -228,7 +228,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                         row.CheckedAt = DateTimeOffset.Now;
                         var release = row.Release;
                         if (row.Installed?.InstallerManaged == true && !release.Asset.IsInstaller)
-                            WriteLog(row.Name + ": the publisher offers a portable ZIP instead of setup. The new copy will be placed in your portable-app folder; the old installation is preserved.");
+                            WriteLog(row.Name + ": the publisher now offers a portable ZIP. Updating the existing app folder with a rollback copy; no separate AppData install.");
                         row.Latest = "Latest " + release.Version + (release.Asset.Architecture != Catalog.Architecture ? " · x64 through Windows emulation" : "");
                         if (row.Installed?.InstallerManaged == true && !release.Asset.IsInstaller)
                             row.Latest += " · portable copy";
@@ -243,9 +243,19 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                             row.Status = row.IsInstalled ? "Updating" : "Installing";
                             WriteLog($"{row.Name}: official {release.Asset.Name}; SHA-256 {release.Asset.Sha256}");
                             var existing = row.Installed;
+                            string? newFolder = null;
+                            if (existing == null && !release.Asset.IsInstaller) {
+                                var picker = new OpenFolderDialog { Title = "Choose an empty installation folder for " + row.Name, InitialDirectory = Directory.Exists(store.Root) ? store.Root : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) };
+                                if (picker.ShowDialog(this) != true) {
+                                    row.Status = "Not installed";
+                                    WriteLog(row.Name + ": installation skipped; no folder chosen.");
+                                    continue;
+                                }
+                                newFolder = picker.FolderName;
+                            }
                             var installed = await Task.Run(() => installer.InstallAsync(row.Tool, release, existing,
                                 text => Dispatcher.Invoke(() => { Phase = text; row.Status = text.StartsWith("Downloading") ? "Downloading" : text.StartsWith("Complete") ? "Finish setup" : "Installing"; }),
-                                fraction => Dispatcher.Invoke(() => { Progress = (complete + fraction * 0.7) / targets.Length; }), cancellation));
+                                fraction => Dispatcher.Invoke(() => { Progress = (complete + fraction * 0.7) / targets.Length; }), cancellation, newFolder));
                             ApplyInstalled(row, installed); row.Status = "Up to date";
                         }
                         if (!check && CreateStartMenuShortcuts && row.Installed != null) {
@@ -275,7 +285,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             else if (failures > 0) { StatusTitle = "A few things need attention"; StatusDetail = "Open Details to see what happened, then try again."; DetailsExpanded = true; Changed(nameof(DetailsExpanded)); }
             else if (check) { StatusTitle = available > 0 ? $"{available} updates are ready" : "Your check is complete"; StatusDetail = InstalledCount == 0 ? "Choose Install beside an app, or install your missing apps together." : "Your installed tools have been checked. Missing tools are available to install."; }
             else if (shortcutWarnings > 0) { StatusTitle = "Your LEAPP apps are ready"; StatusDetail = "Apps are current, but some Start menu shortcuts could not be created. Open Details for the reason."; DetailsExpanded = true; Changed(nameof(DetailsExpanded)); }
-            else { StatusTitle = "Your LEAPP apps are ready"; StatusDetail = "Installed apps are current. Older portable versions and your case files have been kept."; }
+            else { StatusTitle = "Your LEAPP apps are ready"; StatusDetail = "Installed apps are current. Existing locations and rollback copies have been kept."; }
         }
         catch (Exception error) { StatusTitle = "Could not finish this operation"; StatusDetail = error.Message; WriteLog(error.Message); }
         finally { if (check && !cancellation.IsCancellationRequested) lastChecked = DateTimeOffset.Now; logWriter?.Dispose(); logWriter = null; operationCancellation?.Dispose(); operationCancellation = null; busy = false; RefreshControls(); }
@@ -287,6 +297,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         if (sender is not Button button || button.Tag is not ToolRow row) return;
         var menu = new ContextMenu();
+        var locate = new MenuItem { Header = "Use existing installation…" };
+        locate.Click += (_, _) => UseExistingInstallation(row);
+        menu.Items.Add(locate);
         if (row.Installed != null) {
             var show = new MenuItem { Header = "Show in File Explorer" };
             show.Click += (_, _) => { try { Process.Start(new ProcessStartInfo(Path.GetDirectoryName(row.Installed.Path)!) { UseShellExecute = true }); } catch (Exception error) { MessageBox.Show(this, error.Message, "Could not open folder"); } };
@@ -295,6 +308,24 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var notes = new MenuItem { Header = "Release notes" };
         notes.Click += (_, _) => OpenUpdateLink(new Uri("https://github.com/" + row.Tool.Repository + "/releases/latest"));
         menu.Items.Add(notes); menu.PlacementTarget = button; menu.IsOpen = true;
+    }
+    private void UseExistingInstallation(ToolRow row)
+    {
+        if (busy || demo) return;
+        var picker = new OpenFileDialog { Title = "Select the existing " + row.Name + " application", Filter = "Windows applications (*.exe)|*.exe", CheckFileExists = true };
+        if (picker.ShowDialog(this) != true) return;
+        try {
+            string directory = Path.GetDirectoryName(picker.FileName)!;
+            InPlaceUpdate.ValidateFolder(directory);
+            string? expected = PortablePackage.FindExecutable(directory,row.Tool);
+            if (expected == null || !Path.GetFullPath(expected).Equals(Path.GetFullPath(picker.FileName),StringComparison.OrdinalIgnoreCase))
+                throw new IOException("Choose the recognized " + row.Name + " app executable.");
+            var registered = InstallationStore.FindRegistered(row.Tool);
+            string version = FileVersionInfo.GetVersionInfo(picker.FileName).ProductVersion ?? "unknown";
+            var selected = registered != null && registered.Path.Equals(picker.FileName,StringComparison.OrdinalIgnoreCase) ? registered : new Installation(row.Tool.Id,version,picker.FileName,Catalog.Architecture);
+            store.Record(selected); ApplyInstalled(row,selected); RefreshControls();
+            StatusDetail = row.Name + " will launch and update from " + directory + ".";
+        } catch (Exception error) { StatusDetail = error.Message; }
     }
     private async void RowActionClicked(object sender, RoutedEventArgs e) { if ((sender as Button)?.Tag is ToolRow row) await RunAsync(false, [row]); }
     private void StopClicked(object sender, RoutedEventArgs e) { stopping = true; operationCancellation?.Cancel(); StatusDetail = "Cancelling downloads. An installer already running will finish safely."; RefreshControls(); }

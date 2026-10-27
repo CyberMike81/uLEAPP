@@ -21,14 +21,15 @@ public sealed class Installer(ReleaseClient releases, InstallationStore store)
     }
 
     public async Task<Installation> InstallAsync(Tool tool, Release release, Installation? existing,
-        Action<string> status, Action<double> progress, CancellationToken cancellation)
+        Action<string> status, Action<double> progress, CancellationToken cancellation, string? newFolder = null)
     {
         if (existing != null) EnsureClosed(existing.Path);
         store.EnsureSettingsWritable();
-        InstallationStore.ValidateRoot(store.Root);
-        Directory.CreateDirectory(store.Root);
-        if ((File.GetAttributes(store.Root) & FileAttributes.ReparsePoint) != 0)
-            throw new IOException("The installation folder must not be a symbolic link.");
+        if (!release.Asset.IsInstaller) {
+            if (existing == null && string.IsNullOrWhiteSpace(newFolder))
+                throw new IOException("Choose an installation folder for this app first.");
+            InPlaceUpdate.ValidateFolder(existing == null ? newFolder! : Path.GetDirectoryName(existing.Path)!);
+        }
         string temporary = Path.Combine(Path.GetTempPath(), "uLEAPP", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(temporary);
         try
@@ -53,25 +54,10 @@ public sealed class Installer(ReleaseClient releases, InstallationStore store)
             else
             {
                 status($"Preparing {tool.Name}");
-                // A fresh version folder preserves older binaries, case folders and reports.
-                string toolRoot = Path.Combine(store.Root, tool.Name);
-                Directory.CreateDirectory(toolRoot);
-                if ((File.GetAttributes(toolRoot) & FileAttributes.ReparsePoint) != 0) throw new IOException("The app folder must not be a symbolic link.");
-                string destination = Path.Combine(toolRoot, release.Version + "-" + release.Asset.Architecture);
-                if (Directory.Exists(destination)) throw new IOException("This version folder already exists. Refresh or choose a new installation folder; no files were replaced.");
-                string staging = Path.Combine(toolRoot, ".uleapp-staging-" + Guid.NewGuid().ToString("N"));
-                try
-                {
-                    await Task.Run(() => PortablePackage.Extract(package, staging), cancellation).ConfigureAwait(false);
-                    string executable = PortablePackage.FindExecutable(staging, tool) ?? throw new InvalidDataException("The official archive has no recognized app executable.");
-                    string finalExecutable = Path.Combine(destination, Path.GetRelativePath(staging, executable));
-                    result = new(tool.Id, release.Version, finalExecutable, release.Asset.Architecture);
-                    File.WriteAllText(Path.Combine(staging, ".uleapp-release.json"), JsonSerializer.Serialize(result));
-                    OldInstalls.RecordFiles(staging,tool,release.Version,cancellation);
-                    cancellation.ThrowIfCancellationRequested();
-                    Directory.Move(staging, destination);
-                }
-                finally { if (Directory.Exists(staging)) Directory.Delete(staging, true); }
+                string extracted = Path.Combine(temporary,"extracted");
+                await Task.Run(() => PortablePackage.Extract(package,extracted),cancellation).ConfigureAwait(false);
+                status("Preparing update in the existing app location");
+                return await Task.Run(() => InPlaceUpdate.Apply(tool,release,existing,extracted,newFolder ?? "",store,cancellation),cancellation).ConfigureAwait(false);
             }
             store.Record(result);
             status("Ready");
