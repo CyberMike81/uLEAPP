@@ -95,7 +95,7 @@ def verify(project: Path) -> tuple[str, dict[str, dict]]:
             raise ValueError(f"Missing runtime third-party notices in {platform}.")
         transcript = (folder / "SELF-CHECK.txt").read_text(errors="replace")
         check_result = re.search(r"self-check passed: (\d+) checks\. No installed apps were changed\.", transcript)
-        if f"uLEAPP {version} self-check" not in transcript or check_result is None or int(check_result[1]) < 211:
+        if f"uLEAPP {version} self-check" not in transcript or check_result is None or int(check_result[1]) < 222:
             raise ValueError(f"The recorded Windows self-check is missing in {platform}.")
         artifacts[platform] = {"version": version, "executable": f"{platform}/uLEAPP.exe",
                                "sha256": sha256(binary), "build": build,

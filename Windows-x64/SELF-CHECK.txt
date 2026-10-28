@@ -1,4 +1,4 @@
-uLEAPP 0.3.14 self-check
+uLEAPP 0.3.15 self-check
 ok - nine supported tools including both companions
 ok - LAVA actual catalog icon is embedded and decodes without an installed app
 ok - ALEAPP actual catalog icon is embedded and decodes without an installed app
@@ -154,6 +154,17 @@ ok - unreadable locked settings open with temporary defaults
 ok - blocked settings saves preserve the original root
 ok - installation is refused when original settings cannot be backed up
 ok - inaccessible settings are left byte-for-byte unchanged
+ok - administrator restart requests the Windows runas UAC flow with the exact executable path
+ok - administrator handoff preserves opt-out, identifies the parent/account and never retries an update automatically
+ok - cancelled UAC is distinguished from permission failure
+ok - wrapped access denial offers administrator restart but cancelled UAC does not
+ok - ordinary launches do not enter the elevation handoff
+ok - new users default to the per-user AppData LEAPPs folder
+ok - a new portable install uses the saved Choose folder destination without another question
+ok - Choose folder persists across restart and preserves existing selected app locations
+ok - changing the new-install folder does not relocate an existing app update
+ok - a different missing tool installs under the newly saved destination
+ok - Choose folder can save Program Files as a parent while Windows retains its access checks
 ok - unsafe archive path is refused: ../outside.exe
 ok - unsafe archive is rejected before extraction
 ok - unsafe archive path is refused: ..\outside.exe
@@ -191,7 +202,7 @@ ok - untracked case files stay in the same location across an update
 ok - an installer-to-portable transition updates the existing location and records its version independently
 ok - state-write failure retains working files and selected version
 ok - first installs refuse an occupied folder without changing its contents
-ok - first portable installs require an explicit folder choice
+ok - automatic installs rediscover an existing copy without relocating or downgrading it
 ok - cancelled update keeps the existing working installation
 ok - startup restores the original app folder after an interrupted swap
 ok - a failure saving selection rolls back a published replacement folder
@@ -210,5 +221,5 @@ ok - cancelled cleanup leaves app folders in place
 ok - untracked folders and forged cleanup paths are preserved
 ok - eligible old app moves to the Windows Recycle Bin
 ok - recycling keeps the current and previous app plus untracked case data
-uLEAPP self-check passed: 211 checks. No installed apps were changed.
+uLEAPP self-check passed: 222 checks. No installed apps were changed.
 
