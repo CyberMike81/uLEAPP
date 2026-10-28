@@ -31,7 +31,7 @@ terms. Calling an external executable does not copy it into uLEAPP. The inventor
 does not claim that every part of macOS, Windows or the development workstation
 is open source.
 
-The Windows 0.3.14 builds use Microsoft .NET SDK 10.0.403 and runtime packs
+The Windows 0.3.15 builds use Microsoft .NET SDK 10.0.403 and runtime packs
 10.0.14. `BUILD-INFO.json` in each Windows platform folder records the actual
 SDK, architecture and runtime versions. The desktop pack supplies a MIT
 `LICENSE` file; its additional notices are taken from the matching

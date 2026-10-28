@@ -38,7 +38,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             catch (Exception error) { StatusDetail = "Could not save shortcut preference: " + error.Message; Changed(); }
         }
     }
-    public bool ShortcutPreferenceEnabled => !busy && !demo;
+    public bool ShortcutPreferenceEnabled => !busy && !restarting && !demo;
     public bool UpdatePreferenceEnabled => !noUpdateCheck && !demo;
     private System.Windows.Threading.DispatcherTimer? selfUpdateTimer;
     public string AppUpdateLabel => appUpdate == null ? "" : "uLEAPP " + appUpdate.Version + " is available";
@@ -64,7 +64,23 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         try { Process.Start(new ProcessStartInfo(url.AbsoluteUri) { UseShellExecute = true }); }
         catch (Exception error) { MessageBox.Show(this, error.Message, "Could not open your browser"); }
     }
-    private bool busy, stopping;
+    private bool busy, stopping, restarting, administratorSuggested;
+    public Visibility AdministratorOptionVisibility => !demo && !AdministratorRestart.IsAdministrator ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility AdministratorRestartVisibility => administratorSuggested ? AdministratorOptionVisibility : Visibility.Collapsed;
+    private async void RestartAdministratorClicked(object sender, RoutedEventArgs e)
+    {
+        if (busy || restarting || demo || AdministratorRestart.IsAdministrator) return;
+        restarting = true; RefreshControls();
+        try {
+            if (await AdministratorRestart.RequestAsync(noUpdateCheck)) { restarting = false; Close(); return; }
+            StatusDetail = "Administrator restart cancelled. This window is still open; no update was retried.";
+        } catch (Exception error) { StatusDetail = error.Message; }
+        finally { restarting = false; RefreshControls(); }
+    }
+    private void SuggestAdministrator(Exception error)
+    {
+        if (AdministratorRestart.IsPermissionFailure(error)) { administratorSuggested = true; Changed(nameof(AdministratorRestartVisibility)); }
+    }
     private CancellationTokenSource? operationCancellation;
     private string title = "Your first LEAPP starts here", detail = "Install an app below, or install your missing apps together.", phase = "", log = "";
     private double progress;
@@ -76,7 +92,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public string Log { get => log; set { log = value; Changed(); } }
     public double Progress { get => progress; set { progress = value; Changed(); } }
     public bool DetailsExpanded { get; set; }
-    public bool ActionsEnabled => !busy;
+    public bool ActionsEnabled => !busy && !restarting;
     public bool StopEnabled => busy && !stopping;
     public string StopLabel => stopping ? "Stopping…" : "Stop";
     public Visibility ProgressVisibility => busy ? Visibility.Visible : Visibility.Collapsed;
@@ -90,7 +106,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public string MissingLabel => $"Install missing apps ({MissingCount})";
     public Visibility MissingVisibility => !busy && MissingCount > 0 ? Visibility.Visible : Visibility.Collapsed;
     public bool InstallMissingEnabled => !busy && MissingCount > 0;
-    public string InstallFolder => "Suggested location for new apps: " + store.Root;
+    public string InstallFolder => "New apps install in: " + store.Root;
     public event PropertyChangedEventHandler? PropertyChanged;
     private void Changed([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new(name));
     private void RefreshControls()
@@ -146,7 +162,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     }
     private async void RemoveOldClicked(object sender, RoutedEventArgs e)
     {
-        if (busy || demo) return;
+        if (busy || restarting || demo) return;
         operationCancellation = new CancellationTokenSource();
         var cancellation = operationCancellation.Token;
         busy = true; stopping = false; Progress = 0; Phase = "Finding old uLEAPP-managed installs"; RefreshControls();
@@ -191,7 +207,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     }
     private async Task RunAsync(bool check, IEnumerable<ToolRow> selected)
     {
-        if (busy) return;
+        if (busy || restarting) return;
         var targets = selected.ToArray(); if (targets.Length == 0) return;
         if (!check && !ConfirmLava(targets)) return;
         operationCancellation = new CancellationTokenSource();
@@ -199,7 +215,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         busy = true; stopping = false; Log = ""; Progress = 0; RefreshControls();
         StatusTitle = check ? "Looking for the latest LEAPPs" : "Keeping your LEAPPs current";
         StatusDetail = check ? "Checking official releases for your Windows architecture." : "Keep your LEAPP apps closed. Official setup windows may ask you to finish installation.";
-        int failures = 0, complete = 0, available = 0, shortcutWarnings = 0, skipped = 0;
+        int failures = 0, complete = 0, available = 0, shortcutWarnings = 0;
         try
         {
             if (!demo)
@@ -243,19 +259,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                             row.Status = row.IsInstalled ? "Updating" : "Installing";
                             WriteLog($"{row.Name}: official {release.Asset.Name}; SHA-256 {release.Asset.Sha256}");
                             var existing = row.Installed;
-                            string? newFolder = null;
-                            if (existing == null && !release.Asset.IsInstaller) {
-                                var picker = new OpenFolderDialog { Title = "Choose an empty installation folder for " + row.Name, InitialDirectory = Directory.Exists(store.Root) ? store.Root : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) };
-                                if (picker.ShowDialog(this) != true) {
-                                    row.Status = "Not installed"; skipped++;
-                                    WriteLog(row.Name + ": installation skipped; no folder chosen.");
-                                    continue;
-                                }
-                                newFolder = picker.FolderName;
-                            }
                             var installed = await Task.Run(() => installer.InstallAsync(row.Tool, release, existing,
                                 text => Dispatcher.Invoke(() => { Phase = text; row.Status = text.StartsWith("Downloading") ? "Downloading" : text.StartsWith("Complete") ? "Finish setup" : "Installing"; }),
-                                fraction => Dispatcher.Invoke(() => { Progress = (complete + fraction * 0.7) / targets.Length; }), cancellation, newFolder));
+                                fraction => Dispatcher.Invoke(() => { Progress = (complete + fraction * 0.7) / targets.Length; }), cancellation));
                             ApplyInstalled(row, installed); row.Status = "Up to date";
                         }
                         if (!check && CreateStartMenuShortcuts && row.Installed != null) {
@@ -277,14 +283,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 }
                 catch (Exception error)
                 {
-                    row.Status = "Needs attention"; failures++; WriteLog(row.Name + ": " + error.Message);
+                    row.Status = "Needs attention"; failures++; SuggestAdministrator(error); WriteLog(row.Name + ": " + error.Message);
                 }
                 finally { row.Working = false; complete++; Progress = (double)complete / targets.Length; RefreshControls(); }
             }
             if (stopping) { StatusTitle = "Stopped safely"; StatusDetail = "Completed work has been kept. Continue whenever you're ready."; }
             else if (failures > 0) { StatusTitle = "A few things need attention"; StatusDetail = "Open Details to see what happened, then try again."; DetailsExpanded = true; Changed(nameof(DetailsExpanded)); }
             else if (check) { StatusTitle = available > 0 ? $"{available} updates are ready" : "Your check is complete"; StatusDetail = InstalledCount == 0 ? "Choose Install beside an app, or install your missing apps together." : "Your installed tools have been checked. Missing tools are available to install."; }
-            else if (skipped > 0) { StatusTitle = "Some installations were skipped"; StatusDetail = "No folder was chosen for " + skipped + (skipped == 1 ? " app. " : " apps. ") + "Other completed work has been kept. Open Details for the results."; DetailsExpanded = true; Changed(nameof(DetailsExpanded)); }
             else if (shortcutWarnings > 0) { StatusTitle = "Your LEAPP apps are ready"; StatusDetail = "Apps are current, but some Start menu shortcuts could not be created. Open Details for the reason."; DetailsExpanded = true; Changed(nameof(DetailsExpanded)); }
             else { StatusTitle = "Your LEAPP apps are ready"; StatusDetail = "Installed apps are current. Existing locations and rollback copies have been kept."; }
         }
@@ -312,7 +317,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     }
     private void UseExistingInstallation(ToolRow row)
     {
-        if (busy || demo) return;
+        if (busy || restarting || demo) return;
         var picker = new OpenFileDialog { Title = "Select the existing " + row.Name + " application", Filter = "Windows applications (*.exe)|*.exe", CheckFileExists = true };
         if (picker.ShowDialog(this) != true) return;
         try {
@@ -334,8 +339,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void CopyLogClicked(object sender, RoutedEventArgs e) { try { Clipboard.SetText(Log); } catch (System.Runtime.InteropServices.COMException) { StatusDetail = "The clipboard is busy. Try copying the log again."; } }
     private void ChooseFolderClicked(object sender, RoutedEventArgs e)
     {
-        var picker = new OpenFolderDialog { Title = "Choose a Windows folder for portable LEAPP apps", InitialDirectory = store.Root };
-        if (picker.ShowDialog(this) == true) { try { store.ChangeRoot(picker.FolderName); RefreshControls(); } catch (Exception error) { StatusDetail = error.Message; } }
+        if (busy || restarting || demo) return;
+        var picker = new OpenFolderDialog { Title = "Choose where new LEAPP apps will be installed", InitialDirectory = Directory.Exists(store.Root) ? store.Root : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) };
+        if (picker.ShowDialog(this) == true) {
+            try {
+                store.ChangeRoot(picker.FolderName);
+                // Existing selections keep their paths. Only missing rows discover
+                // apps already present under the newly chosen parent folder.
+                foreach (var row in Rows.Where(r => !r.IsInstalled)) ApplyInstalled(row,store.Find(row.Tool));
+                RefreshControls(); StatusDetail = "New apps will install under " + store.Root + ". Existing apps stay where they are.";
+            } catch (Exception error) { SuggestAdministrator(error); StatusDetail = error.Message; }
+        }
     }
     private void LaunchClicked(object sender, RoutedEventArgs e)
     {
@@ -345,7 +359,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     }
     private void WindowClosing(object? sender, CancelEventArgs e)
     {
-        if (busy) { e.Cancel = true; StatusDetail = "Keep uLEAPP open while this app finishes. Choose Stop to cancel downloads; an installer already running will finish safely."; }
+        if (restarting) { e.Cancel = true; StatusDetail = "Finish or cancel the Windows administrator prompt before closing uLEAPP."; }
+        else if (busy) { e.Cancel = true; StatusDetail = "Keep uLEAPP open while this app finishes. Choose Stop to cancel downloads; an installer already running will finish safely."; }
         else releases.Dispose();
     }
     public static SolidColorBrush Brush(string color) => (SolidColorBrush)new BrushConverter().ConvertFromString(color)!;

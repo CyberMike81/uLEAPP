@@ -39,10 +39,11 @@ are kept for manual review because they can contain case data. Extra disk space
 is needed to stage the complete folder. Existing case files should be stored
 outside app folders where possible. Do not edit the app folder during an update.
 
-For a first portable installation, uLEAPP asks you to choose an empty, dedicated
-app folder. Cancelling skips that app. Settings → Choose folder only changes the
-suggested location, not existing apps. The default suggestion is a LEAPPs folder
-under your user profile. uLEAPP keeps its settings and logs in AppData.
+New portable apps install automatically into their own tool folders under the saved
+destination. New users default to `%LOCALAPPDATA%\LEAPPs`. Settings → Choose folder
+changes that saved parent folder for future installs; no per-app folder question
+is shown. Existing saved destinations and selected app paths are preserved.
+uLEAPP keeps its settings and logs in AppData.
 
 Existing Windows installer records and saved selections are detected. The row's
 ⋯ menu → **Use existing installation…** lets you select an app elsewhere, including
@@ -51,8 +52,12 @@ Selection does not move, remove or update either copy. A portable update to a
 previous installer location is tracked by uLEAPP; the old Windows uninstall record
 is left unchanged. Full publisher installers still control their own setup.
 
-Program Files updates require Windows permission: if access is denied, reopen
-uLEAPP as administrator and retry. No fallback copy is installed in AppData.
+Program Files updates require Windows permission. If access is denied, choose
+**Restart as administrator** in the status card, or use the same option in Settings.
+Windows shows its UAC prompt. Cancellation leaves the current window open. The
+restart must use the same Windows account, preserving selected apps and per-user
+shortcuts. Once the elevated window opens, choose Update again: installs are never
+retried automatically. No fallback copy is installed in AppData.
 Linked or shared app folders are refused. Failed checksums, cancellation or saving
 selection leave the working installation in place; an interrupted folder swap is
 recovered on the next start. Start menu shortcuts refresh after success.
@@ -143,7 +148,7 @@ result. GitHub’s unauthenticated limit is shared by source IP (typically 60/ho
 conditional requests are not exempt without authentication. Details show the
 remaining quota and reset timestamp on HTTP 403/429. No GitHub token is stored.
 
-## Companion tools (0.3.14)
+## Companion tools (0.3.15)
 
 GLEAPP Map Downloader can be checked, installed, updated and launched on Mac,
 Windows and Linux, with native x64 and ARM64 packages where published. It downloads
@@ -161,12 +166,12 @@ Companion updates use the same location and rollback-copy rules as other Windows
 tools. Cleanup of older version-folder installs remains available. Manually selected
 external app folders and the new rollback copies are outside automatic cleanup.
 
-0.3.14 groups preferences under Settings and logs under Details. Tool status
+0.3.15 groups preferences under Settings and logs under Details. Tool status
 pills include versions; hover for check evidence. Row menus reveal installed
 copies and open release notes. All platforms use official publisher releases;
 there is no update-method choice.
 
-## Start menu shortcuts (0.3.14)
+## Start menu shortcuts (0.3.15)
 
 “Create Start menu shortcuts” in Settings is enabled by default. After a successful
 install or update, uLEAPP creates or refreshes a shortcut under your own Start menu

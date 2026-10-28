@@ -192,6 +192,7 @@ public static class SelfChecks
         try
         {
             CheckSettingsRecovery(scratch);
+            await CheckAutomaticFoldersAsync(scratch);
             foreach (string unsafeName in new[] { "../outside.exe", @"..\outside.exe", "/absolute.exe", "C:/absolute.exe", "CON.txt", "folder/trailing. ", "folder/file:stream" })
             {
                 string zip = Path.Combine(scratch, Guid.NewGuid().ToString("N") + ".zip");
@@ -300,8 +301,8 @@ public static class SelfChecks
                 string nonempty = Path.Combine(integrationRoot,"occupied"); Directory.CreateDirectory(nonempty); File.WriteAllText(Path.Combine(nonempty,"case.txt"),"keep");
                 try { await installer.InstallAsync(tool,release,null,_ => { },_ => { },CancellationToken.None,nonempty); throw new Exception("Occupied folder accepted"); }
                 catch (IOException) { Check(File.ReadAllText(Path.Combine(nonempty,"case.txt")) == "keep","first installs refuse an occupied folder without changing its contents"); }
-                try { await installer.InstallAsync(tool,release,null,_ => { },_ => { },CancellationToken.None); throw new Exception("Implicit folder accepted"); }
-                catch (IOException) { Check(true,"first portable installs require an explicit folder choice"); }
+                var rediscovered = await installer.InstallAsync(tool,release,null,_ => { },_ => { },CancellationToken.None);
+                Check(rediscovered.Path == fifth.Path && rediscovered.Version == fifth.Version,"automatic installs rediscover an existing copy without relocating or downgrading it");
                 var cancelledInstall = new CancellationTokenSource(); cancelledInstall.Cancel();
                 try { await installer.InstallAsync(tool,release with { Version="1.2.8" },fifth,_ => { },_ => { },cancelledInstall.Token); throw new Exception("Cancelled update accepted"); }
                 catch (OperationCanceledException) { Check(store.Find(tool)?.Version == "1.2.7" && File.Exists(fifth.Path),"cancelled update keeps the existing working installation"); }
@@ -463,6 +464,39 @@ public static class SelfChecks
         public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
         public override void SetLength(long value) => throw new NotSupportedException();
         public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
+    private static async Task CheckAutomaticFoldersAsync(string scratch)
+    {
+        var info = AdministratorRestart.StartInfo(@"C:\Some Folder\uLEAPP.exe",@"Local\uLEAPP-elevate-" + new string('a',32),123,"S-1-5-21-test",true);
+        Check(info.UseShellExecute && info.Verb == "runas" && info.FileName == @"C:\Some Folder\uLEAPP.exe","administrator restart requests the Windows runas UAC flow with the exact executable path");
+        Check(info.ArgumentList.Contains("--no-update-check") && info.ArgumentList.Contains("--elevation-parent") && info.ArgumentList.Contains("--elevation-user") && !info.ArgumentList.Contains("--update"),"administrator handoff preserves opt-out, identifies the parent/account and never retries an update automatically");
+        Check(AdministratorRestart.IsCancellation(new System.ComponentModel.Win32Exception(1223)) && !AdministratorRestart.IsCancellation(new System.ComponentModel.Win32Exception(5)),"cancelled UAC is distinguished from permission failure");
+        Check(AdministratorRestart.IsPermissionFailure(new IOException("wrapped",new UnauthorizedAccessException())) && !AdministratorRestart.IsPermissionFailure(new System.ComponentModel.Win32Exception(1223)),"wrapped access denial offers administrator restart but cancelled UAC does not");
+        Check(AdministratorRestart.HasRestartArguments(["--elevation-ready","event"]) && !AdministratorRestart.HasRestartArguments(["--no-update-check"]),"ordinary launches do not enter the elevation handoff");
+        var store = new InstallationStore(Path.Combine(scratch,"automatic-state"));
+        Check(store.Root == Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"LEAPPs"),"new users default to the per-user AppData LEAPPs folder");
+        string firstRoot = Path.Combine(scratch,"chosen parent"); store.ChangeRoot(firstRoot);
+        string zip = Path.Combine(scratch,"automatic.zip"); MakeZip(zip,["vleapp.exe","LICENSE.txt"]);
+        byte[] bytes = File.ReadAllBytes(zip);
+        var tool = Catalog.All.Single(t => t.Id == "vleapp");
+        var release = new Release("1.2.3",new("VLEAPP-windows-arm64-portable.zip",new Uri("https://github.com/abrignoni/VLEAPP/releases/download/v1.2.3/test.zip"),Convert.ToHexString(SHA256.HashData(bytes)),bytes.Length,false,"arm64"),"https://github.com/abrignoni/VLEAPP/releases/tag/v1.2.3");
+        using var client = new ReleaseClient(new FakeHandler(bytes)); var installer = new Installer(client,store);
+        var first = await installer.InstallAsync(tool,release,null,_=>{},_=>{},CancellationToken.None);
+        Check(first.Path == Path.Combine(firstRoot,tool.Name,"vleapp.exe"),"a new portable install uses the saved Choose folder destination without another question");
+        string secondRoot = Path.Combine(scratch,"new chosen parent"); store.ChangeRoot(secondRoot);
+        var reloaded = new InstallationStore(store.DataDirectory);
+        Check(reloaded.Root == secondRoot && reloaded.Find(tool)?.Path == first.Path,"Choose folder persists across restart and preserves existing selected app locations");
+        var updated = await installer.InstallAsync(tool,release with { Version="1.2.4" },first,_=>{},_=>{},CancellationToken.None);
+        Check(updated.Path == first.Path && !Directory.Exists(Path.Combine(secondRoot,tool.Name)),"changing the new-install folder does not relocate an existing app update");
+        var other = Catalog.All.Single(t => t.Id == "ileapp");
+        string secondZip = Path.Combine(scratch,"automatic-other.zip"); MakeZip(secondZip,["ileapp.exe","LICENSE.txt"]);
+        byte[] secondBytes = File.ReadAllBytes(secondZip);
+        using var otherClient = new ReleaseClient(new FakeHandler(secondBytes));
+        var otherRelease = release with { Asset=release.Asset with { Url=new Uri("https://github.com/abrignoni/iLEAPP/releases/download/v1.2.3/test.zip"), Size=secondBytes.Length, Sha256=Convert.ToHexString(SHA256.HashData(secondBytes)) } };
+        var installedOther = await new Installer(otherClient,reloaded).InstallAsync(other,otherRelease,null,_=>{},_=>{},CancellationToken.None);
+        Check(installedOther.Path == Path.Combine(secondRoot,other.Name,"ileapp.exe"),"a different missing tool installs under the newly saved destination");
+        InstallationStore.ValidateRoot(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles));
+        Check(true,"Choose folder can save Program Files as a parent while Windows retains its access checks");
     }
     private static void CheckStartMenuShortcuts()
     {

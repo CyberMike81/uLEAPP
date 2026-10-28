@@ -49,6 +49,7 @@
       <StackPanel>
         <TextBlock Text="{Binding StatusTitle}" FontSize="16" FontWeight="SemiBold" Foreground="#8EE563" />
         <TextBlock Text="{Binding StatusDetail}" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Muted}" Margin="0,7,0,0" />
+        <Button Content="Restart as administrator" Click="RestartAdministratorClicked" IsEnabled="{Binding ActionsEnabled}" Visibility="{Binding AdministratorRestartVisibility}" HorizontalAlignment="Left" Margin="0,8,0,0" Padding="10,6" FontSize="11" />
         <ProgressBar Maximum="1" Value="{Binding Progress}" Height="5" Margin="0,14,0,0" Foreground="#8EE563" Background="#303C32" BorderThickness="0" Visibility="{Binding ProgressVisibility}" />
         <TextBlock Text="{Binding Phase}" FontSize="11" Foreground="{StaticResource Muted}" Margin="0,8,0,0" Visibility="{Binding ProgressVisibility}" />
       </StackPanel>
@@ -99,6 +100,7 @@
         <TextBlock Text="Checks run at startup and once a day. Downloading an update is your choice." FontSize="10" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,6" />
         <CheckBox Content="Create Start menu shortcuts" IsChecked="{Binding CreateStartMenuShortcuts}" IsEnabled="{Binding ShortcutPreferenceEnabled}" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,0,0,6" />
         <TextBlock Text="Adds shortcuts after successful installs and updates. Your own shortcuts are kept." FontSize="10" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,6" />
+        <Button Content="Restart as administrator" Click="RestartAdministratorClicked" IsEnabled="{Binding ActionsEnabled}" Visibility="{Binding AdministratorOptionVisibility}" HorizontalAlignment="Left" Padding="8,5" FontSize="10" Background="Transparent" Foreground="#8EE563" Margin="0,0,0,6" />
         <DockPanel>
           <Button Content="Choose folder" DockPanel.Dock="Right" Click="ChooseFolderClicked" IsEnabled="{Binding ActionsEnabled}" Padding="8,5" FontSize="10" Background="Transparent" Foreground="#8EE563" />
           <TextBlock Text="{Binding InstallFolder}" TextTrimming="CharacterEllipsis" Foreground="{StaticResource Muted}" FontSize="10" VerticalAlignment="Center" ToolTip="{Binding InstallFolder}" />

@@ -8,7 +8,7 @@ No package-manager setup is needed.
 
 ## Install and use
 
-Download the Mac package from the [0.3.14 Community Preview](https://github.com/CyberMike81/uLEAPP/releases/tag/v0.3.14), extract it and copy uLEAPP.app into Applications.
+Download the Mac package from the [0.3.15 Community Preview](https://github.com/CyberMike81/uLEAPP/releases/tag/v0.3.15), extract it and copy uLEAPP.app into Applications.
 
 **Check for updates** reads official release metadata. **Update apps** installs
 newer compatible releases; **Install** adds a missing tool. Close LEAPP apps first.

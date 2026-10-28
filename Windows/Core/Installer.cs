@@ -23,13 +23,16 @@ public sealed class Installer(ReleaseClient releases, InstallationStore store)
     public async Task<Installation> InstallAsync(Tool tool, Release release, Installation? existing,
         Action<string> status, Action<double> progress, CancellationToken cancellation, string? newFolder = null)
     {
-        if (existing != null) EnsureClosed(existing.Path);
         store.EnsureSettingsWritable();
         if (!release.Asset.IsInstaller) {
-            if (existing == null && string.IsNullOrWhiteSpace(newFolder))
-                throw new IOException("Choose an installation folder for this app first.");
+            if (existing == null && newFolder == null) {
+                existing = store.Find(tool);
+                newFolder = Path.Combine(store.Root,tool.Name);
+            }
             InPlaceUpdate.ValidateFolder(existing == null ? newFolder! : Path.GetDirectoryName(existing.Path)!);
         }
+        if (existing != null && !NeedsUpdate(existing.Version,release.Version)) return existing;
+        if (existing != null) EnsureClosed(existing.Path);
         string temporary = Path.Combine(Path.GetTempPath(), "uLEAPP", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(temporary);
         try

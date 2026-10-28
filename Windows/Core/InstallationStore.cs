@@ -23,7 +23,7 @@ public sealed class InstallationStore
             settingsWriteBlocked = true;
             RecoveryMessage = "An interrupted app update needs attention: " + error.Message + " Rollback copies were kept. Restore folder access and reopen uLEAPP before updating.";
         }
-        Root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "LEAPPs");
+        Root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LEAPPs");
         try
         {
             var state = JsonSerializer.Deserialize<State>(File.ReadAllText(statePath))
@@ -79,9 +79,9 @@ public sealed class InstallationStore
             Path.GetFullPath(root).Equals(Path.GetPathRoot(root), StringComparison.OrdinalIgnoreCase))
             throw new IOException("Choose a folder on a Windows drive, such as C:\\Users\\YourName\\LEAPPs.");
         string path = Path.GetFullPath(root);
-        string[] protectedRoots = [Environment.GetFolderPath(Environment.SpecialFolder.Windows), Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)];
+        string[] protectedRoots = [Environment.GetFolderPath(Environment.SpecialFolder.Windows)];
         if (protectedRoots.Any(p => !string.IsNullOrEmpty(p) && (path.Equals(p, StringComparison.OrdinalIgnoreCase) || path.StartsWith(p + "\\", StringComparison.OrdinalIgnoreCase))))
-            throw new IOException("Choose a folder in your own account for portable LEAPP apps.");
+            throw new IOException("Choose an app folder outside the Windows system folder.");
     }
     public void Record(Installation installation)
     {

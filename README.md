@@ -6,18 +6,18 @@ One place to install, update and launch the LEAPP tools on Mac, Windows and Linu
 Every platform checks the tools’ official GitHub releases and chooses the matching
 published package. There is no package-manager setup or update-method choice.
 
-**Community Preview 0.3.14** is available for testing and feedback.
+**Community Preview 0.3.15** is available for testing and feedback.
 
 ## Download
 
-Get the matching package from the [Community Preview release](https://github.com/CyberMike81/uLEAPP/releases/tag/v0.3.14), extract it, and open uLEAPP. Keep its included notices.
+Get the matching package from the [Community Preview release](https://github.com/CyberMike81/uLEAPP/releases/tag/v0.3.15), extract it, and open uLEAPP. Keep its included notices.
 
 | Platform | Download | Requirements |
 | --- | --- | --- |
-| Mac | `uLEAPP-0.3.14-macOS.zip` | macOS 13+; Apple silicon or Intel |
-| Windows x64 | `uLEAPP-0.3.14-Windows-x64.zip` | 64-bit Intel/AMD Windows; runtime included |
-| Windows ARM64 | `uLEAPP-0.3.14-Windows-ARM64.zip` | Windows 11 ARM; runtime included |
-| Linux | `uLEAPP-0.3.14-Linux.tar.gz` | Python 3.10+ and Tk; x64 or ARM64 |
+| Mac | `uLEAPP-0.3.15-macOS.zip` | macOS 13+; Apple silicon or Intel |
+| Windows x64 | `uLEAPP-0.3.15-Windows-x64.zip` | 64-bit Intel/AMD Windows; runtime included |
+| Windows ARM64 | `uLEAPP-0.3.15-Windows-ARM64.zip` | Windows 11 ARM; runtime included |
+| Linux | `uLEAPP-0.3.15-Linux.tar.gz` | Python 3.10+ and Tk; x64 or ARM64 |
 
 uLEAPP is ad hoc signed on Mac and unsigned on Windows. This preview is not
 notarized. Publisher tools retain their own signing and platform requirements.
@@ -28,7 +28,7 @@ notarized. Publisher tools retain their own signing and platform requirements.
 - **Install** adds a missing tool; **Install missing apps** adds the available missing tools together.
 - **Update apps** downloads and installs newer releases after you choose it. Close LEAPP apps first.
 - **Launch** opens the latest successfully installed, selected copy. A failed update keeps the previous selection working.
-- On Windows, updates keep the selected app's folder. First portable installs ask for a location; use the row menu's **Use existing installation…** to select a copy elsewhere. Program Files may require administrator permission. Same-location rollback copies are kept for manual review.
+- On Windows, updates keep the selected app's folder. New portable apps use the saved destination from Settings → Choose folder; use the row menu's **Use existing installation…** to select a copy elsewhere. Program Files updates can offer Restart as administrator through Windows UAC. Same-location rollback copies are kept for manual review.
 - **Remove old installs** reviews eligible old managed copies before moving them to Trash or Recycle Bin. The current and one previous version are kept; unknown or changed folders and case data are preserved.
 
 A row’s pill shows its status and version. Hover for check evidence. The row’s

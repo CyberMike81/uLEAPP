@@ -29,6 +29,7 @@ public static class Program
                 int fixtureFlag = Array.IndexOf(args,"--release-fixtures");
                 SelfChecks.RunAsync(fixtureFlag >= 0 && fixtureFlag + 1 < args.Length ? args[fixtureFlag+1] : null).GetAwaiter().GetResult(); return 0;
             }
+            if (AdministratorRestart.HasRestartArguments(args)) AdministratorRestart.AcceptRestart(args);
             using var singleInstance = new Mutex(true, @"Local\uLEAPP-" + Environment.UserName, out bool first);
             if (!first) { MessageBox.Show("uLEAPP is already open in this Windows session.", "uLEAPP"); return 0; }
             var application = new Application();
